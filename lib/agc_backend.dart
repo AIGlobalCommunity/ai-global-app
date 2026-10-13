@@ -11,6 +11,7 @@ class AgcBackend {
   static const projectPublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY',
     defaultValue: 'sb_publishable_Ty3Beae5ztODv0MM3Z_HDA_WEGwOyLP');
   static bool _initialized = false;
+  static const publicPreview = bool.fromEnvironment('AGC_PUBLIC_PREVIEW', defaultValue: false);
   static bool get configured => _initialized;
 
   static SupabaseClient get client => Supabase.instance.client;
@@ -111,10 +112,10 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!AgcBackend.configured) {
+    if (!AgcBackend.configured || AgcBackend.publicPreview) {
       return const Center(child: Padding(
         padding: EdgeInsets.all(24),
-        child: Text('TRYB DEMO\n\nAby korzystać z prawdziwych kont, podłącz projekt Supabase. Instrukcje w supabase/README.md.',
+        child: Text('WERSJA POKAZOWA\n\nRejestracja jest tymczasowo wyłączona w publicznej wersji Safari. Ranking DEMO jest fikcyjny, a prawdziwy ranking pokaże wyłącznie rzeczywiste konta.',
           textAlign: TextAlign.center),
       ));
     }
