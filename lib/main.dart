@@ -1,6 +1,11 @@
+import 'agc_backend.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(const AgcApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AgcBackend.initialize();
+  runApp(const AgcApp());
+}
 
 const gold = Color(0xFFD8B66A);
 const background = Color(0xFF0A1425);
@@ -54,7 +59,7 @@ class _AgcHomeState extends State<AgcHome> {
         body: SafeArea(
           child: IndexedStack(
             index: selected,
-            children: [_overview(), _ranking(), _profile()],
+            children: [_overview(), const AgcDatabaseRanking(), const AgcAccountPage(), _profile()],
           ),
         ),
         bottomNavigationBar: NavigationBar(
@@ -63,7 +68,8 @@ class _AgcHomeState extends State<AgcHome> {
           destinations: const [
             NavigationDestination(icon: Icon(Icons.public), label: 'Genesis'),
             NavigationDestination(icon: Icon(Icons.leaderboard), label: 'Ranking'),
-            NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profil'),
+            NavigationDestination(icon: Icon(Icons.person_outline), label: 'Konto'),
+            NavigationDestination(icon: Icon(Icons.tune), label: 'Symulator'),
           ],
         ),
       );
@@ -108,56 +114,6 @@ class _AgcHomeState extends State<AgcHome> {
           const Text(
             'PROTOTYP • dane demonstracyjne',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-        ],
-      );
-
-  Widget _ranking() => ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const Text(
-            'GENESIS LIVE',
-            style: TextStyle(
-              fontSize: 28,
-              color: gold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text('Publiczny ranking • przykład, nie rzeczywiste wyniki'),
-          const SizedBox(height: 16),
-          _tile('TWÓJ WYNIK', '$points GP • status: Global Member'),
-          const SizedBox(height: 12),
-          for (final entry in const [
-            ('1', 'Genesis_001', '8 900 GP'),
-            ('2', 'Awakening_77', '8 450 GP'),
-            ('3', 'AISeeker', '8 100 GP'),
-            ('4', 'FutureMind', '7 750 GP'),
-          ])
-            Card(
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: background,
-                  child: Text(
-                    entry.$1,
-                    style: const TextStyle(color: gold),
-                  ),
-                ),
-                title: Text(entry.$2),
-                trailing: Text(
-                  entry.$3,
-                  style: const TextStyle(color: gold),
-                ),
-              ),
-            ),
-          const SizedBox(height: 16),
-          _tile('TOP 100', 'Genesis Eternal'),
-          _tile('101–1000', 'Gold Genesis'),
-          _tile('1001–10 000', 'Silver Genesis'),
-          const Text(
-            'Pozycje i punkty są przykładowe. Statusy zostaną wyliczone '
-            'po uruchomieniu serwera.',
             style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],

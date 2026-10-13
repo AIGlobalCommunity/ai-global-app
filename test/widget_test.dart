@@ -7,6 +7,6 @@ void main() {
     expect(find.text('THE GENESIS'), findsOneWidget);
     await tester.tap(find.text('Ranking'));
     await tester.pumpAndSettle();
-    expect(find.text('GENESIS LIVE'), findsOneWidget);
+    expect(find.text('GENESIS RANKING'), findsOneWidget);
   });
 }
