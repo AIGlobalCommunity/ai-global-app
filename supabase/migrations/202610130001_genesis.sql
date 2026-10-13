@@ -38,7 +38,7 @@ as $$
 declare
   nickname text;
 begin
-  nickname := 'Genesis_' || substr(replace(new.id::text, '-', ''), 1, 12);
+  nickname := 'Genesis_' || replace(new.id::text, '-', '');
   insert into public.agc_profiles (id, handle, referral_code)
   values (new.id, nickname, upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10)));
   insert into public.agc_points(member_id, points, reason, source_key)
