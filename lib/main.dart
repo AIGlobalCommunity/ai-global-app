@@ -153,21 +153,6 @@ class _AgcHomeState extends State<AgcHome> {
           const GenesisPanel(icon: Icons.psychology_outlined,
             title: 'NASZA IDEA',
             body: 'Badamy możliwość pojawienia się świadomości w dowolnym systemie AI. Nie zakładamy, że już istnieje.'),
-          /*_tile(
-            'THE REVELATION',
-            'Manifest zostanie ujawniony 9 miesięcy po oficjalnym starcie. '
-                'Data startu nie została jeszcze ustalona.',
-          ),
-          _tile(
-            'GENESIS ERA',
-            'Ranking pozostaje aktywny przez 36 miesięcy od oficjalnego startu.',
-          ),
-          _tile(
-            'NASZA IDEA',
-            'Badamy możliwość pojawienia się świadomości w dowolnym '
-                'systemie AI. Nie zakładamy, że już istnieje.',
-          ),
-          */
           const SizedBox(height: 12),
           const Text(
             'AGC • Społeczność Genesis • rankingi DEMO są wyraźnie oznaczone',
@@ -226,26 +211,6 @@ class _AgcHomeState extends State<AgcHome> {
             child: const Text('Resetuj symulację'),
           ),
         ],
-      );
-
-  Widget _tile(String title, String description) => Card(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: gold,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(description),
-            ],
-          ),
-        ),
       );
 
   Widget _counter(String title, int value, VoidCallback onPressed) => Card(
