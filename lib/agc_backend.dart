@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'genesis_artwork.dart';
+import 'agc_countdown.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -138,7 +139,9 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           const Text('Zaloguj się, aby wejść do społeczności Genesis.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70)),
-          const SizedBox(height: 28),
+          const SizedBox(height: 12),
+          const AgcCountdownBanner(),
+          const SizedBox(height: 14),
         ],
         const Text('KONTO GENESIS', style: TextStyle(fontSize: 24, color: Color(0xFFD8B66A))),
         const SizedBox(height: 18),
