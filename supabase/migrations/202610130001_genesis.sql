@@ -56,12 +56,18 @@ alter table public.agc_profiles enable row level security;
 alter table public.agc_referrals enable row level security;
 alter table public.agc_points enable row level security;
 
-create policy agc_public_profiles on public.agc_profiles
-  for select using (true);
+create policy agc_own_profile on public.agc_profiles
+  for select to authenticated using ((select auth.uid()) = id);
 create policy agc_own_referrals on public.agc_referrals
   for select to authenticated using (auth.uid() = invited_id or auth.uid() = inviter_id);
 create policy agc_own_points on public.agc_points
   for select to authenticated using (auth.uid() = member_id);
+
+-- Only authenticated members may read their own profile and private referral code.
+revoke all on public.agc_profiles from anon, authenticated;
+grant select on public.agc_profiles to authenticated;
+grant select on public.agc_points to authenticated;
+grant select on public.agc_referrals to authenticated;
 
 -- Profile update is intentionally disabled in v1 until a safe editable-profile API exists.
 -- Points are server-owned; clients MUST NOT have INSERT/UPDATE/DELETE permissions.
@@ -126,7 +132,8 @@ $$;
 revoke all on function public.agc_credit_points(uuid,text,integer,text) from public, anon, authenticated;
 grant execute on function public.agc_credit_points(uuid,text,integer,text) to service_role;
 
--- Owner-executed view aggregates hidden ledger entries; exposes no raw point ledger.
+-- Owner-executed view is intentionally SECURITY DEFINER to expose only
+-- approved public leaderboard columns and aggregate points. Review ownership.
 create or replace view public.agc_leaderboard as
 select p.id, p.handle, p.country_code, p.created_at,
        coalesce(sum(e.points), 0)::bigint as genesis_points,
@@ -149,6 +156,7 @@ create table public.agc_demo_members (
 );
 alter table public.agc_demo_members enable row level security;
 create policy agc_read_demo on public.agc_demo_members for select using (true);
+grant select on public.agc_demo_members to anon, authenticated;
 revoke insert, update, delete on public.agc_demo_members from anon, authenticated;
 
 create or replace view public.agc_demo_leaderboard with (security_invoker = true) as
