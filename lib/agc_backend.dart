@@ -1,19 +1,24 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Supabase is optional in development. Without credentials the app remains a demo.
 class AgcBackend {
-  static bool get configured =>
-      const String.fromEnvironment('SUPABASE_URL').isNotEmpty &&
-      const String.fromEnvironment('SUPABASE_ANON_KEY').isNotEmpty;
+  // Project URL and publishable key are intentionally public client credentials.
+  // Never add a service role / secret key to the app.
+  static const projectUrl = String.fromEnvironment('SUPABASE_URL',
+    defaultValue: 'https://gjnddmurmegbklvedhnp.supabase.co');
+  static const projectPublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY',
+    defaultValue: 'sb_publishable_Ty3Beae5ztODv0MM3Z_HDA_WEGwOyLP');
+  static bool get configured => projectUrl.isNotEmpty && projectPublishableKey.isNotEmpty;
 
   static SupabaseClient get client => Supabase.instance.client;
 
   static Future<void> initialize() async {
     if (!configured) return;
     await Supabase.initialize(
-      url: const String.fromEnvironment('SUPABASE_URL'),
-      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
+      url: projectUrl,
+      publishableKey: projectPublishableKey,
     );
   }
 
@@ -69,12 +74,24 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
   final invite = TextEditingController();
   String status = '';
   bool busy = false;
+  StreamSubscription<AuthState>? authListener;
+
+  @override
+  void initState() {
+    super.initState();
+    if (AgcBackend.configured) {
+      authListener = AgcBackend.client.auth.onAuthStateChange.listen((_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
 
   @override
   void dispose() {
     email.dispose();
     password.dispose();
     invite.dispose();
+    authListener?.cancel();
     super.dispose();
   }
 
