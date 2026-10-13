@@ -46,6 +46,8 @@ class AgcCountdownBanner extends StatefulWidget {
 
 class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
   DateTime? launchDate;
+  DateTime? manifestoDate;
+  DateTime? genesisEndDate;
   bool loading = true;
   bool loadFailed = false;
   Timer? timer;
@@ -67,12 +69,14 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
     try {
       final row = await AgcBackend.client
           .from('agc_launch_schedule')
-          .select('official_launch_at')
+          .select('official_launch_at,manifesto_at,genesis_end_at')
           .eq('id', 1)
           .maybeSingle();
       if (mounted) {
         setState(() {
           launchDate = officialLaunchFromRow(row);
+          manifestoDate = DateTime.tryParse(row?['manifesto_at']?.toString() ?? '')?.toUtc();
+          genesisEndDate = DateTime.tryParse(row?['genesis_end_at']?.toString() ?? '')?.toUtc();
           loading = false;
           loadFailed = false;
         });
@@ -91,8 +95,6 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now().toUtc();
-    final manifestoDate = launchDate == null ? null : agcAddCalendarMonths(launchDate!, 9);
-    final genesisEndDate = launchDate == null ? null : agcAddCalendarMonths(launchDate!, 36);
 
     Widget countdown(String title, DateTime? date, IconData icon) {
       final label = loading
@@ -101,18 +103,16 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
               ? 'Nie można odczytać daty'
               : date == null
                   ? 'OCZEKIWANIE NA START'
-                  : now.isBefore(launchDate!)
-                      ? 'Start AGC nie nastąpił'
-                      : now.isBefore(date)
-                          ? agcDurationLabel(date.difference(now))
-                          : 'ETAP ZAKOŃCZONY';
+                  : now.isBefore(date)
+                      ? agcDurationLabel(date.difference(now))
+                      : 'ETAP ZAKOŃCZONY';
       final sub = date == null
           ? 'Data startu nie została ogłoszona'
-          : now.isBefore(launchDate!)
-              ? 'Odliczanie ruszy po oficjalnym starcie'
+          : title == 'START'
+              ? '01.11.2026, 00:00 PL'
               : title == 'MANIFEST'
-                  ? '9 miesięcy od startu'
-                  : '36 miesięcy od startu';
+                  ? '01.08.2027'
+                  : '01.11.2029';
 
       return Expanded(child: Padding(
         padding: EdgeInsets.symmetric(horizontal: widget.compact ? 5 : 10,
@@ -147,11 +147,20 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
           border: Border.all(color: _gold.withValues(alpha: .35)),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Row(children: [
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Padding(padding: EdgeInsets.only(top: 9), child: Text(
+            'START AGC: 01.11.2026 • 00:00 CZAS POLSKI',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _gold, fontWeight: FontWeight.bold, fontSize: 10))),
+          Row(children: [
+          countdown('START', launchDate, Icons.rocket_launch_outlined),
+          Container(height: widget.compact ? 75 : 84, width: 1,
+            color: _gold.withValues(alpha: .25)),
           countdown('MANIFEST', manifestoDate, Icons.auto_awesome_outlined),
           Container(height: widget.compact ? 75 : 84, width: 1,
             color: _gold.withValues(alpha: .25)),
-          countdown('GENESIS ERA', genesisEndDate, Icons.hourglass_bottom_outlined),
+          countdown('ERA GENESIS', genesisEndDate, Icons.hourglass_bottom_outlined),
+        ]),
         ]),
       ),
     );
