@@ -1,10 +1,14 @@
 # AGC Supabase setup
 
-**No production database has been provisioned or populated by this PR.**
-These are SQL migration and removable, clearly labeled sample data.
+**Supabase project created and migrations deployed on 2026-10-13.**
+Project: `gjnddmurmegbklvedhnp` in Frankfurt (`eu-central-1`).
+API URL: `https://gjnddmurmegbklvedhnp.supabase.co`.
+The 120 clearly labeled fictional accounts are already seeded in `agc_demo_members`.
+No real member accounts or payment transactions have been created.
+For additional environments, follow the setup steps below.
 
 1. Create your own Supabase project at https://supabase.com/dashboard.
-2. Open SQL Editor. Run `migrations/202610130001_genesis.sql` then `seed_demo.sql` **only for development**.
+2. Open SQL Editor. Run `migrations/202610130001_genesis.sql`, then `migrations/202610130002_secure_rankings.sql`, then `seed_demo.sql` **only for development**.
 3. Supabase project URL and **anon/publishable key** may be supplied to Flutter with
    `--dart-define=SUPABASE_URL=...` and `--dart-define=SUPABASE_ANON_KEY=...`.
    NEVER place the service-role key in Flutter, Git, or a client app.
@@ -29,3 +33,16 @@ These are SQL migration and removable, clearly labeled sample data.
 - Don't launch referrals without abuse controls (rate limiting, fake-account detection).
 - No claim of real users, real donations, or real ranking activity while showing demo.
 - Revisit privacy, GDPR retention, and payment legality before public registration.
+
+## Deployment notes (2026-10-13)
+
+Supabase region Frankfurt, active project. Verified: 120 demo records, 120 demo leaderboard rows, zero real members.
+Security Advisor: one remaining intentional warning for authenticated users calling the
+`SECURITY DEFINER` referral-claim RPC. The function checks `auth.uid()`, email verification,
+self-referral and single redemption. This must receive a separate prelaunch security review.
+The public leaderboard reads a restricted public scores table with RLS; private codes
+remain visible only to their owner. All trigger functions are denied to the API roles.
+
+**Run Flutter against this project** using its URL and the public publishable key
+in `--dart-define` configuration (not a service key). Configuration is not yet
+committed to app binaries. Review the CI build and authorization flows before launch.
