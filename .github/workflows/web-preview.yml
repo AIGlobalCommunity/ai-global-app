@@ -1,0 +1,36 @@
+name: AGC Safari Web Preview
+on:
+  push:
+    branches:
+      - feat/iphone-safari-web
+  pull_request:
+    paths:
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/web-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Generate web target
+        run: flutter create --platforms=web .
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build Safari-compatible web app
+        run: flutter build web --release
+      - name: Archive compiled web app
+        uses: actions/upload-artifact@v4
+        with:
+          name: agc-safari-web
+          path: build/web/
+          if-no-files-found: error
