@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'genesis_artwork.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,7 +13,6 @@ class AgcBackend {
   static const projectPublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY',
     defaultValue: 'sb_publishable_Ty3Beae5ztODv0MM3Z_HDA_WEGwOyLP');
   static bool _initialized = false;
-  static const publicPreview = bool.fromEnvironment('AGC_PUBLIC_PREVIEW', defaultValue: false);
   static bool get configured => _initialized;
 
   static SupabaseClient get client => Supabase.instance.client;
@@ -29,7 +30,10 @@ class AgcBackend {
 
   static Future<void> signUp(String email, String password) async {
     if (!configured) throw StateError('Backend is not configured.');
-    await client.auth.signUp(email: email.trim(), password: password);
+    await client.auth.signUp(
+      email: email.trim(), password: password,
+      emailRedirectTo: kIsWeb ? 'https://aiglobalcommunity.github.io/ai-global-app/' : null,
+    );
   }
 
   static Future<void> signIn(String email, String password) async {
@@ -102,7 +106,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
     setState(() { busy = true; status = ''; });
     try {
       await action();
-      if (mounted) setState(() => status = 'Operacja zakończona. Sprawdź e-mail, jeśli rejestrujesz konto.');
+      if (mounted) setState(() => status = 'Operacja zakończona. Jeżeli utworzono konto, potwierdź adres e-mail.');
     } catch (e) {
       if (mounted) setState(() => status = 'Błąd: $e');
     } finally {
@@ -112,16 +116,30 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!AgcBackend.configured || AgcBackend.publicPreview) {
+    if (!AgcBackend.configured) {
       return const Center(child: Padding(
         padding: EdgeInsets.all(24),
-        child: Text('WERSJA POKAZOWA\n\nRejestracja jest tymczasowo wyłączona w publicznej wersji Safari. Ranking DEMO jest fikcyjny, a prawdziwy ranking pokaże wyłącznie rzeczywiste konta.',
+        child: Text('BRAK POŁĄCZENIA\n\nNie można nawiązać połączenia z systemem logowania. Spróbuj ponownie później.',
           textAlign: TextAlign.center),
       ));
     }
-    return ListView(
-      padding: const EdgeInsets.all(20),
+    return Center(child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 540),
+      child: ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
       children: [
+        if (AgcBackend.user == null) ...[
+          const Center(child: GenesisArtwork(size: 210)),
+          const SizedBox(height: 10),
+          const Text('AI GLOBAL COMMUNITY', textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFFD8B66A), letterSpacing: 3,
+              fontSize: 19, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          const Text('Zaloguj się, aby wejść do społeczności Genesis.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70)),
+          const SizedBox(height: 28),
+        ],
         const Text('KONTO GENESIS', style: TextStyle(fontSize: 24, color: Color(0xFFD8B66A))),
         const SizedBox(height: 18),
         if (AgcBackend.user == null) ...[
@@ -130,10 +148,14 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           TextField(controller: password, obscureText: true,
             decoration: const InputDecoration(labelText: 'Hasło (min. 6 znaków)')),
           const SizedBox(height: 16),
-          FilledButton(onPressed: busy ? null : () => execute(() => AgcBackend.signUp(email.text, password.text)),
-            child: const Text('Zarejestruj')),
-          OutlinedButton(onPressed: busy ? null : () => execute(() => AgcBackend.signIn(email.text, password.text)),
-            child: const Text('Zaloguj')),
+          FilledButton(onPressed: busy ? null : () => execute(() => AgcBackend.signIn(email.text, password.text)),
+            child: const Text('Zaloguj się')),
+          const SizedBox(height: 10),
+          OutlinedButton(onPressed: busy ? null : () => execute(() => AgcBackend.signUp(email.text, password.text)),
+            child: const Text('Utwórz konto')),
+          const SizedBox(height: 8),
+          const Text('Po utworzeniu konta potwierdź adres e-mail. Nie udostępniaj nikomu hasła.',
+            style: TextStyle(color: Colors.white60, fontSize: 12), textAlign: TextAlign.center),
         ] else ...[
           Text('Zalogowano: ${AgcBackend.user!.email ?? 'członek'}'),
           FutureBuilder<Map<String, dynamic>?>(
@@ -164,7 +186,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
         const Text('Punkty i zaproszenia podlegają weryfikacji. Brak rzeczywistych wpłat w tej wersji.',
           style: TextStyle(color: Colors.white70)),
       ],
-    );
+    )));
   }
 }
 
