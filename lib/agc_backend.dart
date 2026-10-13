@@ -130,7 +130,9 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
       children: [
         if (AgcBackend.user == null) ...[
-          const Center(child: GenesisArtwork(size: 210)),
+          const AgcCountdownBanner(),
+          const SizedBox(height: 8),
+          const Center(child: GenesisArtwork(size: 170)),
           const SizedBox(height: 10),
           const Text('AI GLOBAL COMMUNITY', textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFFD8B66A), letterSpacing: 3,
@@ -139,8 +141,6 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           const Text('Zaloguj się, aby wejść do społeczności Genesis.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70)),
-          const SizedBox(height: 12),
-          const AgcCountdownBanner(),
           const SizedBox(height: 14),
         ],
         const Text('KONTO GENESIS', style: TextStyle(fontSize: 24, color: Color(0xFFD8B66A))),
