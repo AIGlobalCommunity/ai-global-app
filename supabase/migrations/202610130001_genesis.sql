@@ -126,7 +126,8 @@ $$;
 revoke all on function public.agc_credit_points(uuid,text,integer,text) from public, anon, authenticated;
 grant execute on function public.agc_credit_points(uuid,text,integer,text) to service_role;
 
-create or replace view public.agc_leaderboard with (security_invoker = true) as
+-- Owner-executed view aggregates hidden ledger entries; exposes no raw point ledger.
+create or replace view public.agc_leaderboard as
 select p.id, p.handle, p.country_code, p.created_at,
        coalesce(sum(e.points), 0)::bigint as genesis_points,
        row_number() over (
