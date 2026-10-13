@@ -165,6 +165,13 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
   }
 }
 
+String agcTier(int place) {
+  if (place <= 100) return 'Genesis Eternal';
+  if (place <= 1000) return 'Gold Genesis';
+  if (place <= 10000) return 'Silver Genesis';
+  return 'Global Member';
+}
+
 class AgcDatabaseRanking extends StatefulWidget {
   const AgcDatabaseRanking({super.key});
 
@@ -206,7 +213,7 @@ class _AgcDatabaseRankingState extends State<AgcDatabaseRanking> {
               Card(child: ListTile(
                 leading: CircleAvatar(child: Text('${row['place']}')),
                 title: Text('${row['handle']}'),
-                subtitle: Text(demo ? 'KONTO TESTOWE' : (row['country_code']?.toString() ?? '')),
+                subtitle: Text(demo ? 'DEMO • ${agcTier((row['place'] as num).toInt())}' : agcTier((row['place'] as num).toInt())),
                 trailing: Text('${row['genesis_points']} GP'),
               )),
           ]);
