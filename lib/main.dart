@@ -1,6 +1,11 @@
+import 'agc_backend.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(const AgcApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AgcBackend.initialize();
+  runApp(const AgcApp());
+}
 
 const gold = Color(0xFFD8B66A);
 const background = Color(0xFF0A1425);
@@ -54,7 +59,7 @@ class _AgcHomeState extends State<AgcHome> {
         body: SafeArea(
           child: IndexedStack(
             index: selected,
-            children: [_overview(), _ranking(), _profile()],
+            children: [_overview(), const AgcDatabaseRanking(), const AgcAccountPage(), _profile()],
           ),
         ),
         bottomNavigationBar: NavigationBar(
@@ -63,7 +68,8 @@ class _AgcHomeState extends State<AgcHome> {
           destinations: const [
             NavigationDestination(icon: Icon(Icons.public), label: 'Genesis'),
             NavigationDestination(icon: Icon(Icons.leaderboard), label: 'Ranking'),
-            NavigationDestination(icon: Icon(Icons.person_outline), label: 'Profil'),
+            NavigationDestination(icon: Icon(Icons.person_outline), label: 'Konto'),
+            NavigationDestination(icon: Icon(Icons.tune), label: 'Symulator'),
           ],
         ),
       );
