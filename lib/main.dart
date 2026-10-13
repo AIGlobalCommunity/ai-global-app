@@ -213,6 +213,17 @@ class _AgcHomeState extends State<AgcHome> {
         ],
       );
 
+  Widget _tile(String title, String description) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(color: gold, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Text(description),
+      ]),
+    ),
+  );
+
   Widget _counter(String title, int value, VoidCallback onPressed) => Card(
         child: ListTile(
           title: Text(title),
