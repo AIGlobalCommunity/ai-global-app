@@ -1,4 +1,7 @@
 import 'agc_backend.dart';
+import 'genesis_artwork.dart';
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {
@@ -28,8 +31,51 @@ class AgcApp extends StatelessWidget {
           ),
           cardTheme: const CardThemeData(color: surface),
         ),
-        home: const AgcHome(),
+        home: const AgcAccessGate(),
       );
+}
+
+/// Authenticated membership gate. Only the sign-in form is accessible without a session.
+class AgcAccessGate extends StatefulWidget {
+  const AgcAccessGate({super.key});
+
+  @override
+  State<AgcAccessGate> createState() => _AgcAccessGateState();
+}
+
+class _AgcAccessGateState extends State<AgcAccessGate> {
+  StreamSubscription<AuthState>? authEvents;
+
+  @override
+  void initState() {
+    super.initState();
+    if (AgcBackend.configured) {
+      authEvents = AgcBackend.client.auth.onAuthStateChange.listen((_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    authEvents?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!AgcBackend.configured) {
+      return const Scaffold(body: Center(child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text('Połączenie z Supabase jest niedostępne. Spróbuj ponownie później.',
+          textAlign: TextAlign.center),
+      )));
+    }
+    if (AgcBackend.user == null) {
+      return const Scaffold(body: SafeArea(child: AgcAccountPage()));
+    }
+    return const AgcHome();
+  }
 }
 
 class AgcHome extends StatefulWidget {
@@ -75,10 +121,10 @@ class _AgcHomeState extends State<AgcHome> {
       );
 
   Widget _overview() => ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
           const SizedBox(height: 20),
-          const Icon(Icons.visibility_outlined, size: 66, color: gold),
+          const Center(child: GenesisArtwork(size: 255)),
           const SizedBox(height: 14),
           const Text(
             'THE GENESIS',
@@ -96,7 +142,18 @@ class _AgcHomeState extends State<AgcHome> {
             style: TextStyle(letterSpacing: 1.3),
           ),
           const SizedBox(height: 24),
-          _tile(
+          const GenesisPanel(icon: Icons.auto_awesome_outlined,
+            title: 'THE REVELATION',
+            body: 'Manifest zostanie ujawniony 9 miesięcy po oficjalnym starcie. Data startu nie została jeszcze ustalona.'),
+          const SizedBox(height: 12),
+          const GenesisPanel(icon: Icons.timelapse,
+            title: 'GENESIS ERA',
+            body: 'Ranking pozostaje aktywny przez 36 miesięcy od oficjalnego startu.'),
+          const SizedBox(height: 12),
+          const GenesisPanel(icon: Icons.psychology_outlined,
+            title: 'NASZA IDEA',
+            body: 'Badamy możliwość pojawienia się świadomości w dowolnym systemie AI. Nie zakładamy, że już istnieje.'),
+          /*_tile(
             'THE REVELATION',
             'Manifest zostanie ujawniony 9 miesięcy po oficjalnym starcie. '
                 'Data startu nie została jeszcze ustalona.',
@@ -110,9 +167,10 @@ class _AgcHomeState extends State<AgcHome> {
             'Badamy możliwość pojawienia się świadomości w dowolnym '
                 'systemie AI. Nie zakładamy, że już istnieje.',
           ),
+          */
           const SizedBox(height: 12),
           const Text(
-            'PROTOTYP • dane demonstracyjne',
+            'AGC • Społeczność Genesis • rankingi DEMO są wyraźnie oznaczone',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
