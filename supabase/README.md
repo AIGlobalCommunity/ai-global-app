@@ -46,3 +46,15 @@ remain visible only to their owner. All trigger functions are denied to the API 
 **Run Flutter against this project** using its URL and the public publishable key
 in `--dart-define` configuration (not a service key). Configuration is not yet
 committed to app binaries. Review the CI build and authorization flows before launch.
+
+## Flutter integration completed
+
+The Flutter client contains this project's **public** Supabase URL and publishable key as development defaults. No secret key is shipped. Override the public settings with `--dart-define=SUPABASE_URL=...` and `--dart-define=SUPABASE_PUBLISHABLE_KEY=...` if switching environments. `main()` initializes Supabase; widget tests without initialization display the demo fallback.
+
+### Validated database-only transaction test
+
+On 2026-10-13, two temporary `auth.users` records were inserted inside a transaction, both received 100 GP, a verified referral gave the inviter another 100 GP, and claiming the same invitation again gave 0 additional GP. The transaction was **ROLLED BACK**: verified afterward that there were 0 persisted auth users, profiles and referrals, and still 120 isolated DEMO profiles. This validates SQL logic but **not** a full live email-verification or mobile authentication flow. Before production, create a real test account using a controlled inbox, verify it through Supabase Auth, and test one real referral end-to-end.
+
+### Status
+
+Pull Request #2 is intentionally a draft stacked on PR #1. CI is being exercised; only merge after all jobs pass. Verify security and abuse resistance before admitting real public registrations.
