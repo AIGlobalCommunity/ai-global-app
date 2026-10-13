@@ -10,16 +10,18 @@ class AgcBackend {
     defaultValue: 'https://gjnddmurmegbklvedhnp.supabase.co');
   static const projectPublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY',
     defaultValue: 'sb_publishable_Ty3Beae5ztODv0MM3Z_HDA_WEGwOyLP');
-  static bool get configured => projectUrl.isNotEmpty && projectPublishableKey.isNotEmpty;
+  static bool _initialized = false;
+  static bool get configured => _initialized;
 
   static SupabaseClient get client => Supabase.instance.client;
 
   static Future<void> initialize() async {
-    if (!configured) return;
+    if (projectUrl.isEmpty || projectPublishableKey.isEmpty) return;
     await Supabase.initialize(
       url: projectUrl,
       publishableKey: projectPublishableKey,
     );
+    _initialized = true;
   }
 
   static User? get user => configured ? client.auth.currentUser : null;
