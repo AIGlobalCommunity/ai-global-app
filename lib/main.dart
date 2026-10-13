@@ -1,5 +1,6 @@
 import 'agc_backend.dart';
 import 'genesis_artwork.dart';
+import 'agc_countdown.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
@@ -103,10 +104,13 @@ class _AgcHomeState extends State<AgcHome> {
           foregroundColor: gold,
         ),
         body: SafeArea(
-          child: IndexedStack(
-            index: selected,
-            children: [_overview(), const AgcDatabaseRanking(), const AgcAccountPage(), _profile()],
-          ),
+          child: Column(children: [
+            const AgcCountdownBanner(compact: true),
+            Expanded(child: IndexedStack(
+              index: selected,
+              children: [_overview(), const AgcDatabaseRanking(), const AgcAccountPage(), _profile()],
+            )),
+          ]),
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: selected,
