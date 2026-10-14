@@ -7,7 +7,7 @@ const _gold = Color(0xFFD8B66A);
 class GenesisStatusGuide extends StatelessWidget {
   const GenesisStatusGuide({super.key});
 
-  static final _tierDescriptions = <({IconData icon, String name, String range, String meaning})>[
+  static List<({IconData icon, String name, String range, String meaning})> get _tierDescriptions => <({IconData icon, String name, String range, String meaning})>[
     (icon: Icons.workspace_premium, name: 'Genesis Eternal', range: GenesisLanguage.copy('Miejsca 1–100', 'Places 1–100'),
      meaning: GenesisLanguage.copy('Najwyższa ranga założycielska. Otrzymują ją osoby zajmujące pierwsze 100 miejsc w rzeczywistym rankingu Genesis.', 'The highest founder tier, awarded to members holding the top 100 places in the real Genesis ranking.')),
     (icon: Icons.emoji_events_outlined, name: 'Gold Genesis', range: GenesisLanguage.copy('Miejsca 101–1000', 'Places 101–1000'),
