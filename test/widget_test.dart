@@ -1,4 +1,5 @@
 import 'package:ai_global_community/agc_countdown.dart';
+import 'package:ai_global_community/agc_backend.dart';
 import 'package:ai_global_community/genesis_language.dart';
 import 'package:ai_global_community/genesis_currency.dart';
 import 'package:ai_global_community/genesis_rank_simulator.dart';
@@ -13,6 +14,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   agcCountdownUnitTests();
+  test('Real leaderboard sorting options use stable database columns', () {
+    expect(AgcRankingSort.pointsHigh.column, 'genesis_points');
+    expect(AgcRankingSort.pointsHigh.ascending, false);
+    expect(AgcRankingSort.newest.column, 'created_at');
+    expect(AgcRankingSort.oldest.ascending, true);
+    expect(AgcRankingSort.numberLow.column, 'member_number');
+    expect(AgcRankingSort.numberHigh.ascending, false);
+    expect(AgcRankingSort.nickname.column, 'handle');
+  });
+  test('Registration date formats and invalid dates safely', () {
+    expect(agcRegistrationDate('2026-10-14'), '14.10.2026');
+    expect(agcRegistrationDate(null), '—');
+    expect(agcRegistrationDate('not a date'), '—');
+  });
+
   test('Real simulator baseline sums only recorded GP', () {
     const snapshot = GenesisActualSnapshot(
       handle: 'Member',
