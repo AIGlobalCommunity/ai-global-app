@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+<defs>
+<radialGradient id="bg"><stop stop-color="#172940"/><stop offset=".66" stop-color="#0B1728"/><stop offset="1" stop-color="#050B15"/></radialGradient>
+<radialGradient id="gold" cx=".28" cy=".22" r=".9"><stop stop-color="#FFF5D7"/><stop offset=".29" stop-color="#E8CC91"/><stop offset=".72" stop-color="#B68A44"/><stop offset="1" stop-color="#6B4721"/></radialGradient>
+<radialGradient id="aura"><stop stop-color="#EBCB83" stop-opacity=".24"/><stop offset="1" stop-color="#EBCB83" stop-opacity="0"/></radialGradient>
+<linearGradient id="line" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#79562C"/><stop offset=".45" stop-color="#FFF0C5"/><stop offset="1" stop-color="#A77836"/></linearGradient>
+<g id="orb"><circle r="26" fill="#081322" stroke="#D9B66A" stroke-width="1.4"/><circle r="21" fill="none" stroke="#A17A3C" stroke-width="1"/><circle r="14" fill="url(#gold)"/><circle cx="-4" cy="-5" r="3.3" fill="#FFF3CE" opacity=".7"/></g>
+<g id="spark"><path d="M0 -18 L3 -3 18 0 3 3 0 18 -3 3 -18 0 -3 -3Z" fill="#F5DEAA"/></g>
+</defs>
+<rect width="640" height="640" fill="url(#bg)"/>
+<circle cx="320" cy="293" r="272" fill="url(#aura)"/>
+<g fill="none" stroke="#D5B376" opacity=".38"><circle cx="320" cy="293" r="222"/><circle cx="320" cy="293" r="215" stroke-dasharray="2 8"/><circle cx="320" cy="293" r="195"/><circle cx="320" cy="293" r="160" stroke-dasharray="1 8"/><circle cx="320" cy="293" r="119"/><circle cx="320" cy="293" r="92" stroke-dasharray="3 7"/></g>
+<g stroke="#D8B66A" stroke-width="1" opacity=".4"><path d="M320 38V548 M65 293H575 M139 112L501 474 M501 112L139 474"/></g>
+<g stroke="url(#line)" stroke-width="1.3" fill="none" opacity=".8"><circle cx="320" cy="293" r="229"/><circle cx="320" cy="293" r="232" stroke-dasharray="1 6"/><path d="M320 48L330 68 320 88 310 68Z M320 498L330 518 320 538 310 518Z M75 293L95 283 115 293 95 303Z M525 293L545 283 565 293 545 303Z"/></g>
+<g transform="translate(320 293)">
+<use href="#orb" transform="translate(0 -195)"/>
+<use href="#orb" transform="translate(125 -149) scale(.82)"/>
+<use href="#orb" transform="translate(190 -44) scale(.83)"/>
+<use href="#orb" transform="translate(168 99) scale(.82)"/>
+<use href="#orb" transform="translate(68 183) scale(.82)"/>
+<use href="#orb" transform="translate(-68 183) scale(.82)"/>
+<use href="#orb" transform="translate(-168 99) scale(.82)"/>
+<use href="#orb" transform="translate(-190 -44) scale(.83)"/>
+<use href="#orb" transform="translate(-125 -149) scale(.82)"/>
+</g>
+<path d="M135 293 C207 197 433 197 505 293 C433 389 207 389 135 293Z" fill="#0A1627" stroke="#7B5527" stroke-width="13"/>
+<path d="M135 293 C207 197 433 197 505 293 C433 389 207 389 135 293Z" fill="none" stroke="url(#line)" stroke-width="7"/>
+<path d="M149 293 C225 218 415 218 491 293 C415 368 225 368 149 293Z" fill="none" stroke="#F8E6B9" stroke-width="1.8" opacity=".9"/>
+<circle cx="320" cy="293" r="70" fill="#080F1E" stroke="#D9B66A" stroke-width="4"/>
+<circle cx="320" cy="293" r="60" fill="url(#gold)" stroke="#FFF0CA" stroke-width="1.8"/>
+<circle cx="320" cy="293" r="48" fill="#0B1728" stroke="#C7A15D" stroke-width="3"/>
+<circle cx="320" cy="293" r="36" fill="url(#gold)"/>
+<use href="#spark" transform="translate(320 293) scale(2.1)"/>
+<circle cx="320" cy="293" r="7" fill="#FFFFFF"/>
+<g fill="#EBD19A" opacity=".8"><circle cx="106" cy="165" r="2"/><circle cx="541" cy="190" r="1.6"/><circle cx="112" cy="421" r="1.5"/><circle cx="520" cy="423" r="2"/><circle cx="226" cy="75" r="1.4"/><circle cx="429" cy="86" r="1.6"/></g>
+<path d="M152 559H251 M389 559H488" stroke="#B99757" stroke-width="1"/>
+<text x="320" y="563" text-anchor="middle" fill="#F0D59E" font-size="19" letter-spacing="5" font-family="serif">AGC</text>
+<text x="320" y="607" text-anchor="middle" fill="#E8CA90" font-size="21" letter-spacing="5" font-family="serif">AI GLOBAL COMMUNITY</text>
+</svg>
