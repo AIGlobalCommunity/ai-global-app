@@ -60,6 +60,19 @@ class AgcBackend {
     );
   }
 
+  static Future<void> resendConfirmation(String email) async {
+    if (!configured) throw StateError('Backend is not configured.');
+    final address = email.trim();
+    if (validateAgcEmail(address) != null) {
+      throw FormatException(validateAgcEmail(address)!);
+    }
+    await client.auth.resend(
+      type: OtpType.signup,
+      email: address,
+      emailRedirectTo: 'https://aiglobalcommunity.github.io/ai-global-app/',
+    );
+  }
+
   static Future<void> signIn(String email, String password) async {
     if (!configured) throw StateError('Backend is not configured.');
     if (email.trim().isEmpty || password.isEmpty) {
@@ -121,6 +134,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
   String status = '';
   bool busy = false;
   bool loginExpanded = false;
+  bool resendExpanded = false;
   StreamSubscription<AuthState>? authListener;
 
   @override
@@ -165,6 +179,14 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
     }
   }
 
+  bool get confirmationLinkExpired {
+    final uri = Uri.base;
+    final fragment = Uri.splitQueryString(
+      uri.fragment.contains('?') ? uri.fragment.split('?').last : uri.fragment);
+    return uri.queryParameters['error_code'] == 'otp_expired' ||
+        fragment['error_code'] == 'otp_expired';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!AgcBackend.configured) {
@@ -180,6 +202,21 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
       children: [
         if (AgcBackend.user == null) ...[
+          if (confirmationLinkExpired) Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Card(
+              color: const Color(0xFF30231D),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Link aktywacyjny jest nieważny lub wygasł. '
+                  'Wpisz poniżej swój e-mail i poproś o nowy link. '
+                  'Jeżeli konto jest już aktywne, spróbuj się zalogować.',
+                  style: TextStyle(color: AgcLuxury.ivory),
+                ),
+              ),
+            ),
+          ),
           const AgcCountdownBanner(),
           const SizedBox(height: 8),
           Center(child: LayoutBuilder(builder: (context, constraints) =>
@@ -254,6 +291,38 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                   ),
                 ],
               ),
+            ),
+          ),
+          Center(
+            child: TextButton.icon(
+              onPressed: busy ? null : () => setState(
+                () => resendExpanded = !resendExpanded),
+              icon: const Icon(Icons.mark_email_unread_outlined),
+              label: const Text('Nie dotarł e-mail? Wyślij link ponownie'),
+            ),
+          ),
+          if (resendExpanded) Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  key: const Key('resend_confirmation_email'),
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Adres e-mail do aktywacji',
+                    prefixIcon: Icon(Icons.mail_outline),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                FilledButton(
+                  key: const Key('resend_confirmation_submit'),
+                  onPressed: busy ? null : () => execute(
+                    () => AgcBackend.resendConfirmation(email.text)),
+                  child: const Text('Wyślij nowy link aktywacyjny'),
+                ),
+              ],
             ),
           ),
           AnimatedSize(
