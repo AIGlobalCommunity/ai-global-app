@@ -117,7 +117,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                   fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Text('Wysłaliśmy prośbę o potwierdzenie adresu ${email.text.trim()}. '
-                'Kliknij link z wiadomości, a następnie zaloguj się do AGC.',
+                'Kliknij link z wiadomości, a następnie zaloguj się do GENESIS ERA.',
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               const Text('Jeżeli wiadomości nie ma, sprawdź folder SPAM.',
@@ -136,7 +136,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rejestracja AGC'),
+        title: const Text('Rejestracja GENESIS ERA'),
         foregroundColor: _gold,
       ),
       body: Center(child: ConstrainedBox(
@@ -180,7 +180,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 setState(() => showNickPublicly = value ?? false),
               title: const Text('Pokazuj mój nick publicznie'),
               subtitle: Text(showNickPublicly
-                ? 'Twój nick będzie widoczny w rankingu AGC.'
+                ? 'Twój nick będzie widoczny w rankingu GENESIS ERA.'
                 : 'Twój nick pozostanie prywatny. W rankingu pojawi się anonimowy identyfikator.'),
             ),
             const SizedBox(height: 10),
