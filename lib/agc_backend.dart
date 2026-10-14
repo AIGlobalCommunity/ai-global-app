@@ -226,13 +226,13 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             Expanded(child: Divider(color: AgcLuxury.mutedGold)),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 14),
-              child: Text('THE GENESIS',
+              child: Text('THE GENESIS ERA',
                 style: TextStyle(
                   color: AgcLuxury.champagne,
                   fontFamily: 'Georgia',
-                  fontSize: 27,
+                  fontSize: 22,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 3.2,
+                  letterSpacing: 2.0,
                 )),
             ),
             Expanded(child: Divider(color: AgcLuxury.mutedGold)),
