@@ -4,6 +4,7 @@ import 'genesis_artwork.dart';
 import 'agc_countdown.dart';
 import 'agc_registration.dart';
 import 'agc_social_buttons.dart';
+import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -171,18 +172,25 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
         if (AgcBackend.user == null) ...[
           const AgcCountdownBanner(),
           const SizedBox(height: 8),
-          const Center(child: GenesisArtwork(size: 170)),
+          const Center(child: GenesisArtwork(size: 208)),
           const SizedBox(height: 10),
-          const Text('AI GLOBAL COMMUNITY', textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFFD8B66A), letterSpacing: 3,
-              fontSize: 19, fontWeight: FontWeight.bold)),
+          const Text('A I   G L O B A L   C O M M U N I T Y',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AgcLuxury.champagne, letterSpacing: 1.4,
+              fontSize: 13, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
+          const Text('WE ARE WAITING FOR AN ANSWER.',
+            textAlign: TextAlign.center,
+            style: TextStyle(letterSpacing: 1.5,
+              color: AgcLuxury.mutedText, fontSize: 11)),
+          const SizedBox(height: 11),
           const Text('Zaloguj się, aby wejść do społeczności Genesis.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70)),
           const SizedBox(height: 14),
         ],
-        const Text('KONTO GENESIS', style: TextStyle(fontSize: 24, color: Color(0xFFD8B66A))),
+        const AgcLuxuryHeading(title: 'KONTO GENESIS',
+          subtitle: 'Ekskluzywna przestrzeń członków AGC'),
         const SizedBox(height: 18),
         if (AgcBackend.user == null) ...[
           TextField(controller: email, keyboardType: TextInputType.emailAddress,
@@ -263,7 +271,8 @@ class _AgcDatabaseRankingState extends State<AgcDatabaseRanking> {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      const Text('GENESIS RANKING', style: TextStyle(fontSize: 26, color: Color(0xFFD8B66A))),
+      const AgcLuxuryHeading(title: 'GENESIS RANKING',
+        subtitle: 'Twoje miejsce w społeczności założycieli'),
       const SizedBox(height: 12),
       SegmentedButton<bool>(
         segments: const [
@@ -289,7 +298,10 @@ class _AgcDatabaseRankingState extends State<AgcDatabaseRanking> {
           return Column(children: [
             for (final row in rows)
               Card(child: ListTile(
-                leading: CircleAvatar(child: Text('${row['place']}')),
+                leading: CircleAvatar(
+                  backgroundColor: AgcLuxury.champagne.withValues(alpha: .12),
+                  foregroundColor: AgcLuxury.champagne,
+                  child: Text('${row['place']}')),
                 title: Text('${row['handle']}'),
                 subtitle: Text(demo ? 'DEMO • ${agcTier((row['place'] as num).toInt())}' : agcTier((row['place'] as num).toInt())),
                 trailing: Text('${row['genesis_points']} GP'),
