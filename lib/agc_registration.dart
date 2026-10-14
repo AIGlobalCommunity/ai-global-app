@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'agc_social_buttons.dart';
+import 'agc_luxury_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const _gold = Color(0xFFD8B66A);
+const _gold = AgcLuxury.champagne;
 
 String? validateAgcEmail(String? value) {
   final email = (value ?? '').trim();
@@ -142,11 +143,15 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
         child: Form(key: formKey, child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Icon(Icons.person_add_alt_1_outlined, color: _gold, size: 54),
+            const Icon(Icons.diamond_outlined, color: _gold, size: 50),
             const SizedBox(height: 14),
+            const Center(child: Text('✦   G E N E S I S   M E M B E R S H I P   ✦',
+              style: TextStyle(fontSize: 10,
+                color: AgcLuxury.mutedText, letterSpacing: 1))),
+            const SizedBox(height: 15),
             const Text('UTWÓRZ KONTO GENESIS', textAlign: TextAlign.center,
               style: TextStyle(color: _gold, fontSize: 22,
-                fontWeight: FontWeight.bold)),
+                fontWeight: FontWeight.bold, letterSpacing: 1.4)),
             const SizedBox(height: 6),
             const Text('Wypełnij pola poniżej. Wszystkie są wymagane.',
               textAlign: TextAlign.center),
