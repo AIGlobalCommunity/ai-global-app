@@ -85,7 +85,7 @@ class AgcBackend {
     if (!configured) throw StateError('Backend is not configured.');
     if (!kIsWeb) {
       throw UnsupportedError(
-        'Logowanie Google/Facebook jest na razie przygotowane dla strony internetowej GENESIS ERA.');
+        'Logowanie Google/Facebook jest na razie przygotowane dla strony internetowej THE GENESIS ERA.');
     }
     await client.auth.signInWithOAuth(
       provider,
@@ -163,7 +163,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
       if (mounted) setState(() => status = 'Operacja zakończona. Jeżeli utworzono konto, potwierdź adres e-mail.');
     } on AuthException catch (e) {
       final hint = e.code == 'anonymous_provider_disabled'
-          ? 'Podaj adres e-mail i hasło; rejestracja anonimowa w GENESIS ERA jest wyłączona.'
+          ? 'Podaj adres e-mail i hasło; rejestracja anonimowa w THE GENESIS ERA jest wyłączona.'
           : e.code == 'email_exists' || e.code == 'user_already_exists'
               ? 'Ten adres może już mieć konto. Spróbuj się zalogować.'
               : e.code == 'over_email_send_rate_limit' || e.code == 'over_request_rate_limit'
@@ -388,7 +388,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           ),
         ] else ...[
           const AgcLuxuryHeading(title: 'KONTO GENESIS',
-            subtitle: 'Ekskluzywna przestrzeń członków GENESIS ERA'),
+            subtitle: 'Ekskluzywna przestrzeń członków THE GENESIS ERA'),
           const SizedBox(height: 18),
           Text('Zalogowano: ${AgcBackend.user!.email ?? 'członek'}'),
           FutureBuilder<Map<String, dynamic>?>(
