@@ -154,7 +154,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               style: TextStyle(color: _gold, fontSize: 22,
                 fontWeight: FontWeight.bold, letterSpacing: 1.4)),
             const SizedBox(height: 6),
-            const Text('Wypełnij pola poniżej. Wszystkie są wymagane.',
+            const Text('Wypełnij dane konta. Widoczność nicku wybierasz samodzielnie.',
               textAlign: TextAlign.center),
             const SizedBox(height: 24),
             TextFormField(
