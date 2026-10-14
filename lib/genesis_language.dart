@@ -509,6 +509,10 @@ class GenesisLanguage {
     'account': 'Asusu'
   }
 };
+  /// Polish source and English fallback for long-form copy until each locale is reviewed.
+  static String copy(String polish, String english) =>
+      selected.value == 'pl' ? polish : english;
+
   static String t(String key) =>
       translations[selected.value]?[key] ??
       translations['en']?[key] ?? key;
