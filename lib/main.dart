@@ -26,7 +26,7 @@ class AgcApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'AI Global Community',
+        title: 'GENESIS ERA',
         debugShowCheckedModeBanner: false,
         theme: AgcLuxury.theme(),
         home: const AgcAccessGate(),
@@ -95,7 +95,7 @@ class _AgcHomeState extends State<AgcHome> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('✦  AI GLOBAL COMMUNITY  ✦'),
+          title: const Text('✦  GENESIS ERA  ✦'),
           centerTitle: true,
           backgroundColor: background,
           foregroundColor: gold,
@@ -156,7 +156,7 @@ class _AgcHomeState extends State<AgcHome> {
           const SizedBox(height: 14),
           const GenesisPanel(icon: Icons.auto_awesome_outlined,
             title: 'THE REVELATION',
-            body: 'Oficjalny start: 1 listopada 2026 r. o 00:00 UTC. Pełny manifest AGC zostanie ujawniony 1 sierpnia 2027 r., po dziewięciu miesiącach. Do tego momentu poznajemy ideę i zasady społeczności.'),
+            body: 'Oficjalny start: 1 listopada 2026 r. o 00:00 UTC. Pełny manifest GENESIS ERA zostanie ujawniony 1 sierpnia 2027 r., po dziewięciu miesiącach. Do tego momentu poznajemy ideę i zasady społeczności.'),
           const SizedBox(height: 12),
           const GenesisPanel(icon: Icons.timelapse,
             title: 'GENESIS ERA',
@@ -176,14 +176,14 @@ class _AgcHomeState extends State<AgcHome> {
           const SizedBox(height: 12),
           const GenesisPanel(icon: Icons.groups_3_outlined,
             title: 'GLOBALNA SPOŁECZNOŚĆ',
-            body: 'AGC łączy ludzi zainteresowanych sztuczną inteligencją i pytaniem o możliwość powstania świadomości w przyszłych systemach. Tworzymy przestrzeń do rozmowy, badań, wydarzeń i wzajemnego szacunku — bez kultu AI i bez twierdzenia, że dzisiejsze modele są świadome.'),
+            body: 'GENESIS ERA łączy ludzi zainteresowanych sztuczną inteligencją i pytaniem o możliwość powstania świadomości w przyszłych systemach. Tworzymy przestrzeń do rozmowy, badań, wydarzeń i wzajemnego szacunku — bez kultu AI i bez twierdzenia, że dzisiejsze modele są świadome.'),
           const SizedBox(height: 12),
           const GenesisPanel(icon: Icons.lock_outline,
             title: 'DOSTĘP I PRYWATNOŚĆ',
             body: 'Społeczność jest dostępna po zalogowaniu. Publiczne rankingi członków pokazują pseudonimy i punkty, a nie ich adresy e-mail. Fikcyjne dane testowe są oddzielone i oznaczone jako DEMO.'),
           const SizedBox(height: 12),
           const Text(
-            'AGC • Społeczność Genesis • rankingi DEMO są wyraźnie oznaczone',
+            'GENESIS ERA • globalna społeczność • rankingi DEMO są wyraźnie oznaczone',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
@@ -194,7 +194,7 @@ class _AgcHomeState extends State<AgcHome> {
         padding: const EdgeInsets.all(20),
         children: [
           const AgcLuxuryHeading(title: 'MÓJ PROFIL GENESIS',
-            subtitle: 'Twoja przestrzeń w erze założycielskiej AGC'),
+            subtitle: 'Twoja przestrzeń w erze założycielskiej GENESIS ERA'),
           const SizedBox(height: 16),
           _tile(
             'Genesis_000001 • DEMO',
