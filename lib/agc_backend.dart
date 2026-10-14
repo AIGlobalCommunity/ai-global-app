@@ -181,7 +181,8 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
         if (AgcBackend.user == null) ...[
           const AgcCountdownBanner(),
           const SizedBox(height: 8),
-          const Center(child: GenesisArtwork(size: 250)),
+          Center(child: LayoutBuilder(builder: (context, constraints) =>
+            GenesisArtwork(size: constraints.maxWidth < 350 ? 204 : 246))),
           const SizedBox(height: 10),
           const Text('AI GLOBAL COMMUNITY',
             textAlign: TextAlign.center,
@@ -193,10 +194,14 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             style: TextStyle(color: AgcLuxury.champagne,
               letterSpacing: 4, fontSize: 13)),
           const SizedBox(height: 8),
-          const Text('PEOPLE  ·  AI  ·  KNOWLEDGE  ·  OPPORTUNITIES',
-            textAlign: TextAlign.center,
-            style: TextStyle(letterSpacing: 1.0,
-              color: AgcLuxury.mutedText, fontSize: 10)),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
+            child: Text('PEOPLE  ·  AI  ·  KNOWLEDGE  ·  OPPORTUNITIES  ·  GOD',
+              textAlign: TextAlign.center,
+              softWrap: true,
+              style: TextStyle(letterSpacing: 1.1, height: 1.7,
+                color: AgcLuxury.mutedText, fontSize: 10)),
+          ),
           const SizedBox(height: 11),
           const Text('Zaloguj się, aby wejść do społeczności Genesis.',
             textAlign: TextAlign.center,
