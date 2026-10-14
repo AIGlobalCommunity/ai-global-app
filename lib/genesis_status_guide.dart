@@ -76,7 +76,7 @@ class GenesisStatusGuide extends StatelessWidget {
         const SizedBox(height: 7),
         const Text('Status zależy od aktualnego miejsca w rzeczywistym rankingu, a nie od stałego progu GP. '
           'Gdy inni członkowie zdobywają punkty, pozycje mogą się zmieniać. '
-          'Żadna ranga nie jest z góry zagwarantowana. Ranking DEMO zawiera wyłącznie fikcyjne profile.',
+          'Żadna ranga nie jest z góry zagwarantowana. Symulator rangi nie zmienia prawdziwych punktów ani pozycji.',
           style: TextStyle(height: 1.5)),
         const SizedBox(height: 13),
         Text(GenesisLanguage.copy('DLACZEGO POWSTAŁA THE GENESIS ERA?', 'WHY WAS THE GENESIS ERA CREATED?'),
