@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 const agcGold = Color(0xFFE3C78C);
@@ -61,9 +62,9 @@ class _GenesisOrbitPainter extends CustomPainter {
       canvas.drawCircle(center, radius * fraction, ring);
     }
     for (var i = 0; i < 8; i++) {
-      final angle = i * 3.141592653589793 / 4;
-      final x = center.dx + radius * .92 * _cos(angle);
-      final y = center.dy + radius * .92 * _sin(angle);
+      final angle = i * math.pi / 4;
+      final x = center.dx + radius * .92 * math.cos(angle);
+      final y = center.dy + radius * .92 * math.sin(angle);
       canvas.drawCircle(Offset(x, y), size.width * .019,
         Paint()..color = agcGold.withValues(alpha: .9));
       canvas.drawCircle(Offset(x, y), size.width * .028,
@@ -81,19 +82,6 @@ class _GenesisOrbitPainter extends CustomPainter {
       canvas.drawLine(point.translate(-9, 0), point.translate(9, 0), star);
       canvas.drawLine(point.translate(0, -9), point.translate(0, 9), star);
     }
-  }
-
-  // Eight fixed compass points avoid trigonometric dependencies at runtime.
-  double _cos(double a) {
-    const values = [1.0, .70710678, 0.0, -.70710678,
-      -1.0, -.70710678, 0.0, .70710678];
-    return values[((a / (3.141592653589793 / 4)).round()) % 8];
-  }
-
-  double _sin(double a) {
-    const values = [0.0, .70710678, 1.0, .70710678,
-      0.0, -.70710678, -1.0, -.70710678];
-    return values[((a / (3.141592653589793 / 4)).round()) % 8];
   }
 
   @override
