@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'genesis_artwork.dart';
 import 'agc_countdown.dart';
 import 'agc_registration.dart';
+import 'agc_social_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -55,6 +56,18 @@ class AgcBackend {
       throw const FormatException('Wpisz e-mail i hasło.');
     }
     await client.auth.signInWithPassword(email: email.trim(), password: password);
+  }
+
+  static Future<void> signInWithSocial(OAuthProvider provider) async {
+    if (!configured) throw StateError('Backend is not configured.');
+    if (!kIsWeb) {
+      throw UnsupportedError(
+        'Logowanie Google/Facebook jest na razie przygotowane dla strony internetowej AGC.');
+    }
+    await client.auth.signInWithOAuth(
+      provider,
+      redirectTo: 'https://aiglobalcommunity.github.io/ai-global-app/',
+    );
   }
 
   static Future<void> signOut() async {
@@ -191,6 +204,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             icon: const Icon(Icons.person_add_alt_1),
             label: const Text('Utwórz konto'),
           ),
+          AgcSocialButtons(onSignIn: AgcBackend.signInWithSocial),
           const SizedBox(height: 8),
           const Text('Nowe konto? Naciśnij „Utwórz konto”, aby otworzyć osobny formularz rejestracji.',
             style: TextStyle(color: Colors.white60, fontSize: 12), textAlign: TextAlign.center),
