@@ -198,31 +198,38 @@ class _AgcCosmicPainter extends CustomPainter {
       width: w * 1.62, height: h * 1.34,
     ), arcPaint..color = _gold.withValues(alpha: .10));
 
-    // The illuminated Earth horizon sits behind the lower part of the UI.
-    final planetTop = h * .79;
-    final planetRect = Rect.fromLTWH(-w * .44, planetTop, w * 1.88, h * .72);
-    canvas.drawOval(planetRect, Paint()..shader = const LinearGradient(
+    // The Earth is drawn in logical coordinates, not a stretched bitmap.
+    // The same curves remain crisp on 4K monitors and Retina iPhones.
+    final planetTop = h * .72;
+    final planetRect = Rect.fromLTWH(-w * .52, planetTop, w * 2.04, h * .95);
+    final globe = Path()..addOval(planetRect);
+    canvas.save();
+    canvas.clipPath(globe);
+    canvas.drawRect(rect, Paint()..shader = const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFF203A56), Color(0xFF0A1B31), Color(0xFF030914)],
+      colors: [Color(0xFF203C5D), Color(0xFF0B1B30), Color(0xFF030711)],
       stops: [0, .38, 1],
-    ).createShader(planetRect));
+    ).createShader(rect));
+
+    // Subtle illuminated city-like constellations on the night side.
+    for (var i = 0; i < 190; i++) {
+      final x = ((i * 103 + 17) % 997) / 997 * w;
+      final y = planetTop + ((i * 157 + 29) % 991) / 991 * h * .55;
+      final glow = i % 8 == 0 ? 1.3 : .5;
+      canvas.drawCircle(Offset(x, y), glow, Paint()
+        ..color = _gold.withValues(alpha: i % 5 == 0 ? .72 : .24));
+    }
+    canvas.restore();
+
     canvas.drawOval(planetRect, Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..shader = LinearGradient(
-        colors: [
-          _gold.withValues(alpha: .05),
-          const Color(0xFFFFDE91).withValues(alpha: .82),
-          _gold.withValues(alpha: .05),
-        ],
-      ).createShader(Rect.fromLTWH(0, planetTop, w, 10)));
-
-    // Soft glow along the horizon, never obscuring form fields.
-    canvas.drawOval(Rect.fromLTWH(-w * .3, planetTop - 14, w * 1.6, 38),
-      Paint()..shader = RadialGradient(colors: [
-        _gold.withValues(alpha: .19), Colors.transparent,
-      ]).createShader(Rect.fromLTWH(-w * .3, planetTop - 14, w * 1.6, 38)));
+      ..strokeWidth = 2
+      ..color = const Color(0xFFF4D28E).withValues(alpha: .74));
+    canvas.drawOval(planetRect.inflate(4), Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..color = _gold.withValues(alpha: .10));
 
     // Dark veil makes foreground copy and input controls readable.
     canvas.drawRect(rect, Paint()..shader = LinearGradient(
