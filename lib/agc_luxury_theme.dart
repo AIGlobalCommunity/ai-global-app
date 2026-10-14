@@ -134,38 +134,110 @@ abstract final class AgcLuxury {
   }
 }
 
-/// Decorative background with a subtle golden halo in the upper area.
+/// Celestial night sky inspired by the AGC luxury login artwork.
+/// Painted locally in Flutter, so the background also works offline on iOS.
 class AgcLuxuryBackdrop extends StatelessWidget {
   const AgcLuxuryBackdrop({super.key, required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFF15253B), Color(0xFF0A1526), Color(0xFF050B15)],
-        stops: [0, .43, 1],
-      ),
+  Widget build(BuildContext context) => SizedBox.expand(
+    child: CustomPaint(
+      painter: const _AgcCosmicPainter(),
+      child: child,
     ),
-    child: Stack(children: [
-      Positioned(
-        top: -170, left: -110, right: -110,
-        child: IgnorePointer(child: Container(
-          height: 330,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(colors: [
-              AgcLuxury.champagne.withValues(alpha: .12),
-              Colors.transparent,
-            ]),
-          ),
-        )),
-      ),
-      child,
-    ]),
   );
+}
+
+class _AgcCosmicPainter extends CustomPainter {
+  const _AgcCosmicPainter();
+
+  static const _gold = Color(0xFFE8C27C);
+  static const _night = Color(0xFF040A14);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    if (w <= 0 || h <= 0) return;
+    final rect = Offset.zero & size;
+    canvas.drawRect(rect, Paint()..shader = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF030814), Color(0xFF0A1728), _night],
+      stops: [0, .58, 1],
+    ).createShader(rect));
+
+    // The star positions are deterministic; no animations or layout shifts.
+    for (var i = 0; i < 145; i++) {
+      final x = ((i * 73 + 19) % 997) / 997 * w;
+      final y = ((i * 173 + 41) % 991) / 991 * h;
+      final r = i % 19 == 0 ? 1.45 : (i % 5 == 0 ? .85 : .43);
+      final opacity = i % 7 == 0 ? .76 : .34;
+      canvas.drawCircle(Offset(x, y), r, Paint()
+        ..color = _gold.withValues(alpha: opacity));
+      if (i % 31 == 0) {
+        final star = Paint()..color = _gold.withValues(alpha: .35)
+          ..strokeWidth = .65;
+        canvas.drawLine(Offset(x - 7, y), Offset(x + 7, y), star);
+        canvas.drawLine(Offset(x, y - 7), Offset(x, y + 7), star);
+      }
+    }
+
+    // Very fine celestial rings frame the screen, like the reference artwork.
+    final arcPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .75
+      ..color = _gold.withValues(alpha: .20);
+    canvas.drawOval(Rect.fromCenter(
+      center: Offset(w * .5, h * .39),
+      width: w * 1.75, height: h * 1.42,
+    ), arcPaint);
+    canvas.drawOval(Rect.fromCenter(
+      center: Offset(w * .5, h * .39),
+      width: w * 1.62, height: h * 1.34,
+    ), arcPaint..color = _gold.withValues(alpha: .10));
+
+    // The illuminated Earth horizon sits behind the lower part of the UI.
+    final planetTop = h * .79;
+    final planetRect = Rect.fromLTWH(-w * .44, planetTop, w * 1.88, h * .72);
+    canvas.drawOval(planetRect, Paint()..shader = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF203A56), Color(0xFF0A1B31), Color(0xFF030914)],
+      stops: [0, .38, 1],
+    ).createShader(planetRect));
+    canvas.drawOval(planetRect, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..shader = LinearGradient(
+        colors: [
+          _gold.withValues(alpha: .05),
+          const Color(0xFFFFDE91).withValues(alpha: .82),
+          _gold.withValues(alpha: .05),
+        ],
+      ).createShader(Rect.fromLTWH(0, planetTop, w, 10)));
+
+    // Soft glow along the horizon, never obscuring form fields.
+    canvas.drawOval(Rect.fromLTWH(-w * .3, planetTop - 14, w * 1.6, 38),
+      Paint()..shader = RadialGradient(colors: [
+        _gold.withValues(alpha: .19), Colors.transparent,
+      ]).createShader(Rect.fromLTWH(-w * .3, planetTop - 14, w * 1.6, 38)));
+
+    // Dark veil makes foreground copy and input controls readable.
+    canvas.drawRect(rect, Paint()..shader = LinearGradient(
+      begin: Alignment.topCenter, end: Alignment.bottomCenter,
+      colors: [
+        Colors.transparent,
+        _night.withValues(alpha: .10),
+        _night.withValues(alpha: .34),
+      ],
+      stops: const [0, .52, 1],
+    ).createShader(rect));
+  }
+
+  @override
+  bool shouldRepaint(covariant _AgcCosmicPainter oldDelegate) => false;
 }
 
 /// Consistent fine gold line and an editorial section heading.
