@@ -6,6 +6,7 @@ on:
       - feat/iphone-safari-web
     paths:
       - 'lib/**'
+      - 'test/**'
       - 'assets/**'
       - 'pubspec.yaml'
       - 'web/**'
@@ -40,8 +41,8 @@ jobs:
       - name: Verify bundled AGC artwork
         run: |
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
-          test -s build/web/assets/assets/agc_genesis_luxury.png
-          echo "AGC cosmic HD background and Genesis logo are present in the release bundle"
+          test -s build/web/assets/assets/agc_genesis_ai_vector.svg
+          echo "AGC cosmic HD background and vector Genesis logo are present in the release bundle"
       - name: Stop Jekyll processing
         run: touch build/web/.nojekyll
       - name: Upload Pages artifact
