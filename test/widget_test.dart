@@ -4,6 +4,7 @@ import 'package:ai_global_community/agc_registration.dart';
 import 'package:ai_global_community/genesis_status_guide.dart';
 import 'package:ai_global_community/genesis_artwork.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -22,10 +23,11 @@ void main() {
 
     testWidgets('Sign-up is a separate page with all fields', (tester) async {
       await tester.pumpWidget(MaterialApp(home: AgcRegistrationPage(
-        onSignUp: (email, password, nick) async {},
+        onSignUp: (email, password, nick, showNickPublicly) async {},
       )));
       expect(find.text('UTWÓRZ KONTO GENESIS'), findsOneWidget);
       expect(find.byKey(const Key('signup_nick')), findsOneWidget);
+      expect(find.byKey(const Key('signup_show_nick_publicly')), findsOneWidget);
       expect(find.byKey(const Key('signup_email')), findsOneWidget);
       expect(find.byKey(const Key('signup_password')), findsOneWidget);
       expect(find.byKey(const Key('signup_confirm_password')), findsOneWidget);
@@ -56,7 +58,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: GenesisArtwork(size: 230)),
     ));
-    expect(find.byType(CustomPaint), findsWidgets);
+    expect(find.byType(SvgPicture), findsOneWidget);
     expect(find.byType(GenesisArtwork), findsOneWidget);
   });
 }
