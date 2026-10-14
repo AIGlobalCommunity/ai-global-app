@@ -23,17 +23,25 @@ class _AgcSocialButtonsState extends State<AgcSocialButtons> {
       await widget.onSignIn(provider);
       // On Flutter web, Supabase redirects away from this page.
     } on AuthException catch (e) {
-      if (mounted) setState(() => error =
-        'Nie udało się zalogować: ${e.message}. '
-        'Jeśli używasz Google/Facebook, administrator AGC musi włączyć ten sposób logowania.');
+      if (mounted) {
+        setState(() => error =
+          'Nie udało się zalogować: ${e.message}. '
+          'Jeśli używasz Google/Facebook, administrator AGC musi włączyć ten sposób logowania.');
+      }
     } on UnsupportedError catch (e) {
-      if (mounted) setState(() => error = e.message);
+      if (mounted) {
+        setState(() => error = e.message);
+      }
     } catch (_) {
-      if (mounted) setState(() => error =
-        'Logowanie przez ten serwis jest jeszcze niedostępne. '
-        'Możesz użyć adresu e-mail i hasła.');
+      if (mounted) {
+        setState(() => error =
+          'Logowanie przez ten serwis jest jeszcze niedostępne. '
+          'Możesz użyć adresu e-mail i hasła.');
+      }
     } finally {
-      if (mounted) setState(() => pending = null);
+      if (mounted) {
+        setState(() => pending = null);
+      }
     }
   }
 
