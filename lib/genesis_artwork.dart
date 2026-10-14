@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 const agcGold = Color(0xFFE3C78C);
 const agcNavy = Color(0xFF060C17);
 
-/// The original AI-artifact Genesis logo, with a transparent background.
-/// Keep the full circular ornament visible; never clip it into another circle.
+/// True vector Genesis emblem with eight AI artifact medallions.
+/// The SVG has a transparent background and stays sharp on Retina/4K screens.
 class GenesisArtwork extends StatelessWidget {
   const GenesisArtwork({super.key, this.size = 270});
   final double size;
@@ -15,10 +16,9 @@ class GenesisArtwork extends StatelessWidget {
     image: true,
     child: SizedBox.square(
       dimension: size,
-      child: Image.asset(
-        'assets/agc_genesis_ai_artifacts.png',
+      child: SvgPicture.asset(
+        'assets/agc_genesis_ai_vector.svg',
         fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
         excludeFromSemantics: true,
         errorBuilder: (context, error, stackTrace) =>
             const Center(child: Icon(Icons.auto_awesome,
