@@ -1,4 +1,5 @@
 import 'package:ai_global_community/agc_countdown.dart';
+import 'package:ai_global_community/genesis_language.dart';
 import 'package:ai_global_community/genesis_invites.dart';
 import 'package:ai_global_community/main.dart';
 import 'package:ai_global_community/agc_registration.dart';
@@ -10,6 +11,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   agcCountdownUnitTests();
+  test('Language picker exposes 50 languages and keeps Polish as default', () {
+    expect(GenesisLanguage.translations.length, 50);
+    expect(GenesisLanguage.translations['pl']?['login'], 'Zaloguj się');
+    expect(GenesisLanguage.translations['en']?['signup'], 'Create account');
+    expect(GenesisLanguage.translations['ja']?['language'], '言語');
+  });
+  testWidgets('Language menu can select English', (tester) async {
+    GenesisLanguage.selected.value = 'pl';
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(
+      body: GenesisLanguagePicker())));
+    await tester.tap(find.byType(GenesisLanguagePicker));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('English'), findsWidgets);
+    GenesisLanguage.selected.value = 'pl';
+  });
   test('Referral links use the registered website and encode the invite code', () {
     final link = Uri.parse(genesisInviteLink('ABC123DEF0'));
     expect(link.scheme, 'https');
