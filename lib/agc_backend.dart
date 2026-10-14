@@ -5,6 +5,7 @@ import 'agc_countdown.dart';
 import 'agc_registration.dart';
 import 'agc_social_buttons.dart';
 import 'genesis_invites.dart';
+import 'genesis_language.dart';
 import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -232,6 +233,8 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               ),
             ),
           ),
+          const Align(alignment: Alignment.centerRight,
+            child: GenesisLanguagePicker()),
           const AgcCountdownBanner(),
           const SizedBox(height: 8),
           Center(child: LayoutBuilder(builder: (context, constraints) =>
@@ -291,7 +294,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                       : Icons.login_rounded),
                     label: Text(loginExpanded
                       ? 'ZAMKNIJ LOGOWANIE'
-                      : 'ZALOGUJ SIĘ'),
+                      : GenesisLanguage.t('login')),
                   ),
                   const SizedBox(height: 6),
                   TextButton.icon(
@@ -302,7 +305,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                       )),
                     ),
                     icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
-                    label: const Text('Utwórz konto'),
+                    label: Text(GenesisLanguage.t('signup')),
                   ),
                 ],
               ),
@@ -372,7 +375,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
                           decoration: const InputDecoration(
-                            labelText: 'E-mail',
+                            labelText: GenesisLanguage.t('email'),
                             prefixIcon: Icon(Icons.mail_outline))),
                         const SizedBox(height: 12),
                         TextField(controller: password,
@@ -385,7 +388,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                           },
                           autofillHints: const [AutofillHints.password],
                           decoration: const InputDecoration(
-                            labelText: 'Hasło',
+                            labelText: GenesisLanguage.t('password'),
                             prefixIcon: Icon(Icons.lock_outline))),
                         const SizedBox(height: 18),
                         FilledButton(
@@ -433,10 +436,10 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               final awarded = await AgcBackend.claimInvite(invite.text);
               if (!awarded) throw StateError('Kod jest nieważny lub został już użyty.');
             }),
-            child: const Text('Zatwierdź kod polecenia'),
+            child: Text(GenesisLanguage.t('confirm')),
           ),
           OutlinedButton(onPressed: busy ? null : () => execute(AgcBackend.signOut),
-            child: const Text('Wyloguj')),
+            child: Text(GenesisLanguage.t('logout'))),
         ],
         if (status.isNotEmpty) Padding(
           padding: const EdgeInsets.only(top: 12),
