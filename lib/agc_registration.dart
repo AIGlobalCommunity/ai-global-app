@@ -199,7 +199,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: GenesisLanguage.t('email'),
                 prefixIcon: Icon(Icons.email_outlined),
                 border: OutlineInputBorder()),
