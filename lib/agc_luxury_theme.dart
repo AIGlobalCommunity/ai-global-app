@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// AGC visual identity: midnight blue, satin surfaces and champagne gold.
 /// All decoration is lightweight Flutter vector UI (no network assets).
@@ -134,117 +135,42 @@ abstract final class AgcLuxury {
   }
 }
 
-/// Celestial night sky inspired by the AGC luxury login artwork.
-/// Painted locally in Flutter, so the background also works offline on iOS.
+/// HD cosmic wallpaper: only the artwork is baked into the asset.
+/// Logo, manifesto and login controls stay native Flutter widgets.
 class AgcLuxuryBackdrop extends StatelessWidget {
   const AgcLuxuryBackdrop({super.key, required this.child});
   final Widget child;
 
   @override
   Widget build(BuildContext context) => SizedBox.expand(
-    child: CustomPaint(
-      painter: const _AgcCosmicPainter(),
-      child: child,
+    child: Stack(
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: AgcLuxury.midnight),
+        SvgPicture.asset(
+          'assets/agc_cosmic_background_hd.svg',
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          excludeFromSemantics: true,
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0x4D020713),
+                Color(0x5E020713),
+                Color(0xA6020713),
+              ],
+              stops: [0, .48, 1],
+            ),
+          ),
+        ),
+        child,
+      ],
     ),
   );
-}
-
-class _AgcCosmicPainter extends CustomPainter {
-  const _AgcCosmicPainter();
-
-  static const _gold = Color(0xFFE8C27C);
-  static const _night = Color(0xFF040A14);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    if (w <= 0 || h <= 0) return;
-    final rect = Offset.zero & size;
-    canvas.drawRect(rect, Paint()..shader = const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFF030814), Color(0xFF0A1728), _night],
-      stops: [0, .58, 1],
-    ).createShader(rect));
-
-    // The star positions are deterministic; no animations or layout shifts.
-    for (var i = 0; i < 145; i++) {
-      final x = ((i * 73 + 19) % 997) / 997 * w;
-      final y = ((i * 173 + 41) % 991) / 991 * h;
-      final r = i % 19 == 0 ? 1.45 : (i % 5 == 0 ? .85 : .43);
-      final opacity = i % 7 == 0 ? .76 : .34;
-      canvas.drawCircle(Offset(x, y), r, Paint()
-        ..color = _gold.withValues(alpha: opacity));
-      if (i % 31 == 0) {
-        final star = Paint()..color = _gold.withValues(alpha: .35)
-          ..strokeWidth = .65;
-        canvas.drawLine(Offset(x - 7, y), Offset(x + 7, y), star);
-        canvas.drawLine(Offset(x, y - 7), Offset(x, y + 7), star);
-      }
-    }
-
-    // Very fine celestial rings frame the screen, like the reference artwork.
-    final arcPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = .75
-      ..color = _gold.withValues(alpha: .20);
-    canvas.drawOval(Rect.fromCenter(
-      center: Offset(w * .5, h * .39),
-      width: w * 1.75, height: h * 1.42,
-    ), arcPaint);
-    canvas.drawOval(Rect.fromCenter(
-      center: Offset(w * .5, h * .39),
-      width: w * 1.62, height: h * 1.34,
-    ), arcPaint..color = _gold.withValues(alpha: .10));
-
-    // The Earth is drawn in logical coordinates, not a stretched bitmap.
-    // The same curves remain crisp on 4K monitors and Retina iPhones.
-    final planetTop = h * .72;
-    final planetRect = Rect.fromLTWH(-w * .52, planetTop, w * 2.04, h * .95);
-    final globe = Path()..addOval(planetRect);
-    canvas.save();
-    canvas.clipPath(globe);
-    canvas.drawRect(rect, Paint()..shader = const LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFF203C5D), Color(0xFF0B1B30), Color(0xFF030711)],
-      stops: [0, .38, 1],
-    ).createShader(rect));
-
-    // Subtle illuminated city-like constellations on the night side.
-    for (var i = 0; i < 190; i++) {
-      final x = ((i * 103 + 17) % 997) / 997 * w;
-      final y = planetTop + ((i * 157 + 29) % 991) / 991 * h * .55;
-      final glow = i % 8 == 0 ? 1.3 : .5;
-      canvas.drawCircle(Offset(x, y), glow, Paint()
-        ..color = _gold.withValues(alpha: i % 5 == 0 ? .72 : .24));
-    }
-    canvas.restore();
-
-    canvas.drawOval(planetRect, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = const Color(0xFFF4D28E).withValues(alpha: .74));
-    canvas.drawOval(planetRect.inflate(4), Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..color = _gold.withValues(alpha: .10));
-
-    // Dark veil makes foreground copy and input controls readable.
-    canvas.drawRect(rect, Paint()..shader = LinearGradient(
-      begin: Alignment.topCenter, end: Alignment.bottomCenter,
-      colors: [
-        Colors.transparent,
-        _night.withValues(alpha: .10),
-        _night.withValues(alpha: .34),
-      ],
-      stops: const [0, .52, 1],
-    ).createShader(rect));
-  }
-
-  @override
-  bool shouldRepaint(covariant _AgcCosmicPainter oldDelegate) => false;
 }
 
 /// Consistent fine gold line and an editorial section heading.
