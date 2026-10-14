@@ -127,7 +127,7 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
           key: const Key('invite_friend_email'),
           controller: friendEmail,
           keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: GenesisLanguage.t('email'),
             hintText: 'znajomy@example.com',
             prefixIcon: Icon(Icons.mail_outline)),
