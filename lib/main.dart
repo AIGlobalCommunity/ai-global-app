@@ -1,5 +1,6 @@
 import 'agc_backend.dart';
 import 'genesis_language.dart';
+import 'genesis_currency.dart';
 import 'genesis_artwork.dart';
 import 'genesis_status_guide.dart';
 import 'agc_countdown.dart';
@@ -11,6 +12,7 @@ import 'package:flutter/material.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GenesisLanguage.initialize();
+  await GenesisCurrency.initialize();
   try {
     await AgcBackend.initialize();
   } catch (error) {
@@ -222,17 +224,33 @@ class _AgcHomeState extends State<AgcHome> {
             events,
             () => setState(() => events++),
           ),
-          _counter(
-            GenesisLanguage.copy('Wpłaty po 10 PLN (TYLKO SYMULACJA)', '10 PLN contributions (SIMULATION ONLY)'),
-            contributions,
-            () => setState(() => contributions++),
+          const GenesisCurrencyPanel(),
+          const SizedBox(height: 12),
+          ValueListenableBuilder<String>(
+            valueListenable: GenesisCurrency.region,
+            builder: (context, _, __) => ValueListenableBuilder<String>(
+              valueListenable: GenesisLanguage.selected,
+              builder: (context, _, __) => _counter(
+                GenesisLanguage.copy('Symulowane wsparcie: 10', 'Simulated support: 10') +
+                    ' ${GenesisCurrency.currency} (' +
+                    GenesisLanguage.copy('TYLKO DEMO', 'DEMO ONLY') + ')',
+                contributions,
+                () => setState(() => contributions++),
+              ),
+            ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Wpłaty nie są pobierane. W symulatorze obowiązuje limit '
-            '200 GP za wsparcie. W prawdziwej aplikacji limit będzie '
-            'miesięczny i naliczany na serwerze.',
-            style: TextStyle(color: Colors.white70),
+          Text(
+            GenesisLanguage.copy(
+              'To wyłącznie symulacja: żadna wpłata nie jest pobierana. '
+              'Wybór waluty nie uruchamia płatności. '
+              'W symulatorze limit wynosi 200 GP za wsparcie; '
+              'rzeczywiste naliczanie wymaga integracji z operatorem płatności.',
+              'This is a simulation only: no money is collected. '
+              'Choosing a currency does not enable payments. '
+              'The simulator limits support to 200 GP; real rewards '
+              'require a payment provider integration.'),
+            style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 16),
           FilledButton.tonal(
