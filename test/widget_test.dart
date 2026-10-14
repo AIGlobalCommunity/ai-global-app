@@ -1,5 +1,6 @@
 import 'package:ai_global_community/agc_countdown.dart';
 import 'package:ai_global_community/main.dart';
+import 'package:ai_global_community/genesis_status_guide.dart';
 import 'package:ai_global_community/genesis_artwork.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,19 @@ void main() {
     await tester.pumpWidget(const AgcApp());
     expect(find.textContaining('Połączenie z Supabase jest niedostępne'), findsOneWidget);
     expect(find.text('GENESIS RANKING'), findsNothing);
+  });
+
+  testWidgets('Genesis tiers and GP rules expand on demand', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: SingleChildScrollView(
+      child: GenesisStatusGuide(),
+    ))));
+    expect(find.textContaining('CZTERY STATUSY CZŁONKOWSKIE'), findsNothing);
+    await tester.tap(find.textContaining('ERA GENESIS — STATUSY I ZASADY'));
+    await tester.pumpAndSettle();
+    expect(find.text('Genesis Eternal'), findsOneWidget);
+    expect(find.text('Gold Genesis'), findsOneWidget);
+    expect(find.text('Silver Genesis'), findsOneWidget);
+    expect(find.text('Global Member'), findsOneWidget);
   });
 
   testWidgets('Genesis vector illustration renders across screen sizes',
