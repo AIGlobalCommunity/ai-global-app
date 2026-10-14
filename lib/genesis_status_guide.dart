@@ -14,7 +14,7 @@ class GenesisStatusGuide extends StatelessWidget {
     (icon: Icons.military_tech_outlined, name: 'Silver Genesis', range: 'Miejsca 1001–10 000',
      meaning: 'Srebrny poziom dla członków znajdujących się od 1001. do 10 000. miejsca.'),
     (icon: Icons.public, name: 'Global Member', range: 'Miejsca powyżej 10 000',
-     meaning: 'Pełnoprawny członek globalnej społeczności GENESIS ERA. Może zdobywać GP i awansować w rankingu.'),
+     meaning: 'Pełnoprawny członek globalnej społeczności THE GENESIS ERA. Może zdobywać GP i awansować w rankingu.'),
   ];
 
   @override
@@ -34,7 +34,7 @@ class GenesisStatusGuide extends StatelessWidget {
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         const Text(
-          'Era Genesis to pierwsze 36 miesięcy GENESIS ERA — od 1 listopada 2026 r. '
+          'Era Genesis to pierwsze 36 miesięcy THE GENESIS ERA — od 1 listopada 2026 r. '
           'do 1 listopada 2029 r. To okres budowania międzynarodowej społeczności założycielskiej '
           'i uczestnictwa w rankingu Genesis Points (GP). Słowo Genesis oznacza początek.',
           style: TextStyle(height: 1.5)),
@@ -78,7 +78,7 @@ class GenesisStatusGuide extends StatelessWidget {
           'Żadna ranga nie jest z góry zagwarantowana. Ranking DEMO zawiera wyłącznie fikcyjne profile.',
           style: TextStyle(height: 1.5)),
         const SizedBox(height: 13),
-        const Text('DLACZEGO POWSTAŁA GENESIS ERA?',
+        const Text('DLACZEGO POWSTAŁA THE GENESIS ERA?',
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 7),
         const Text('Chcemy połączyć ludzi, którzy zadają pytanie, czy sztuczna inteligencja '
