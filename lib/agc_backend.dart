@@ -31,14 +31,24 @@ class AgcBackend {
 
   static Future<void> signUp(String email, String password) async {
     if (!configured) throw StateError('Backend is not configured.');
+    final validatedEmail = email.trim();
+    if (validatedEmail.isEmpty || !validatedEmail.contains('@') || !validatedEmail.split('@').last.contains('.')) {
+      throw const FormatException('Wpisz poprawny adres e-mail przed utworzeniem konta.');
+    }
+    if (password.length < 6) {
+      throw const FormatException('Hasło musi mieć co najmniej 6 znaków.');
+    }
     await client.auth.signUp(
-      email: email.trim(), password: password,
+      email: validatedEmail, password: password,
       emailRedirectTo: kIsWeb ? 'https://aiglobalcommunity.github.io/ai-global-app/' : null,
     );
   }
 
   static Future<void> signIn(String email, String password) async {
     if (!configured) throw StateError('Backend is not configured.');
+    if (email.trim().isEmpty || password.isEmpty) {
+      throw const FormatException('Wpisz e-mail i hasło.');
+    }
     await client.auth.signInWithPassword(email: email.trim(), password: password);
   }
 
@@ -108,8 +118,19 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
     try {
       await action();
       if (mounted) setState(() => status = 'Operacja zakończona. Jeżeli utworzono konto, potwierdź adres e-mail.');
-    } catch (e) {
-      if (mounted) setState(() => status = 'Błąd: $e');
+    } on AuthException catch (e) {
+      final hint = e.code == 'anonymous_provider_disabled'
+          ? 'Podaj adres e-mail i hasło; rejestracja anonimowa w AGC jest wyłączona.'
+          : e.code == 'email_exists' || e.code == 'user_already_exists'
+              ? 'Ten adres może już mieć konto. Spróbuj się zalogować.'
+              : e.code == 'over_email_send_rate_limit' || e.code == 'over_request_rate_limit'
+                  ? 'Zbyt wiele prób. Spróbuj ponownie później.'
+                  : e.message;
+      if (mounted) setState(() => status = 'Błąd rejestracji/logowania: $hint');
+    } on FormatException catch (e) {
+      if (mounted) setState(() => status = e.message);
+    } catch (_) {
+      if (mounted) setState(() => status = 'Nie udało się połączyć z kontem. Sprawdź internet i spróbuj ponownie.');
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -147,8 +168,10 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
         const SizedBox(height: 18),
         if (AgcBackend.user == null) ...[
           TextField(controller: email, keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next, autofillHints: const [AutofillHints.email],
             decoration: const InputDecoration(labelText: 'E-mail')),
           TextField(controller: password, obscureText: true,
+            autofillHints: const [AutofillHints.newPassword],
             decoration: const InputDecoration(labelText: 'Hasło (min. 6 znaków)')),
           const SizedBox(height: 16),
           FilledButton(onPressed: busy ? null : () => execute(() => AgcBackend.signIn(email.text, password.text)),
