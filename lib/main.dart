@@ -1,5 +1,6 @@
 import 'agc_backend.dart';
 import 'genesis_artwork.dart';
+import 'genesis_status_guide.dart';
 import 'agc_countdown.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -146,6 +147,8 @@ class _AgcHomeState extends State<AgcHome> {
             style: TextStyle(letterSpacing: 1.3),
           ),
           const SizedBox(height: 24),
+          const GenesisStatusGuide(),
+          const SizedBox(height: 14),
           const GenesisPanel(icon: Icons.auto_awesome_outlined,
             title: 'THE REVELATION',
             body: 'Oficjalny start: 1 listopada 2026 r. o 00:00 czasu polskiego. Pełny manifest AGC zostanie ujawniony 1 sierpnia 2027 r., po dziewięciu miesiącach. Do tego momentu poznajemy ideę i zasady społeczności.'),
