@@ -108,7 +108,7 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
       final sub = date == null
           ? 'Data startu nie została ogłoszona'
           : title == 'START'
-              ? '01.11.2026, 00:00 PL'
+              ? '01.11.2026, 00:00 UTC'
               : title == 'MANIFEST'
                   ? '01.08.2027'
                   : '01.11.2029';
@@ -148,7 +148,7 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Padding(padding: EdgeInsets.only(top: 9), child: Text(
-            'START AGC: 01.11.2026 • 00:00 CZAS POLSKI',
+            'START AGC: 01.11.2026 • 00:00 UTC',
             textAlign: TextAlign.center,
             style: TextStyle(color: _gold, fontWeight: FontWeight.bold, fontSize: 10))),
           Row(children: [
