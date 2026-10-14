@@ -1,6 +1,5 @@
 import 'agc_backend.dart';
 import 'genesis_language.dart';
-import 'genesis_currency.dart';
 import 'genesis_rank_simulator.dart';
 import 'genesis_artwork.dart';
 import 'genesis_status_guide.dart';
@@ -13,7 +12,6 @@ import 'package:flutter/material.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GenesisLanguage.initialize();
-  await GenesisCurrency.initialize();
   try {
     await AgcBackend.initialize();
   } catch (error) {
@@ -179,7 +177,7 @@ class _AgcHomeState extends State<AgcHome> {
           const SizedBox(height: 12),
           GenesisPanel(icon: Icons.hub_outlined,
             title: GenesisLanguage.copy('JAK ZDOBYWAĆ GP', 'HOW TO EARN GP'),
-            body: GenesisLanguage.copy('Rejestracja: 100 GP. Potwierdzone polecenie: 100 GP dla zapraszającego. Dodatkowe punkty mogą wynikać ze zweryfikowanych wydarzeń, konsultacji i dobrowolnego wsparcia (limit za wsparcie: 200 GP miesięcznie). Punkty i rangi są symboliczne: nie stanowią inwestycji ani obietnicy wynagrodzenia.', 'Registration: 100 GP. Verified referral: 100 GP for the inviter. Additional points may come from verified events, consultations and voluntary support (support limit: 200 GP per month). Points and tiers are symbolic, not an investment or promise of payment.')),
+            body: GenesisLanguage.copy('Rejestracja: 100 GP. Potwierdzone polecenie: 100 GP dla zapraszającego. Symulator pokazuje też hipotetyczne wsparcie, ale nie pobiera wpłat ani nie przyznaje punktów. Punkty i rangi są symboliczne: nie stanowią inwestycji ani obietnicy wynagrodzenia.', 'Registration: 100 GP. Verified referral: 100 GP for the inviter. The simulator also shows hypothetical support, but collects no payments and awards no points. Points and tiers are symbolic, not an investment or promise of payment.')),
           const SizedBox(height: 12),
           GenesisPanel(icon: Icons.groups_3_outlined,
             title: GenesisLanguage.copy('GLOBALNA SPOŁECZNOŚĆ', 'GLOBAL COMMUNITY'),
