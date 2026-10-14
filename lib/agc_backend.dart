@@ -10,6 +10,22 @@ import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+enum AgcRankingSort {
+  pointsHigh('genesis_points', false, 'Najwięcej GP', 'Most GP'),
+  pointsLow('genesis_points', true, 'Najmniej GP', 'Fewest GP'),
+  newest('created_at', false, 'Najnowsze rejestracje', 'Newest members'),
+  oldest('created_at', true, 'Najstarsze rejestracje', 'Oldest members'),
+  numberLow('member_number', true, 'Numer: rosnąco', 'Member number: ascending'),
+  numberHigh('member_number', false, 'Numer: malejąco', 'Member number: descending'),
+  nickname('handle', true, 'Pseudonim A–Z', 'Nickname A–Z');
+
+  const AgcRankingSort(this.column, this.ascending, this.polish, this.english);
+  final String column;
+  final bool ascending;
+  final String polish;
+  final String english;
+}
+
 /// Supabase is optional in development. Without credentials the app remains a demo.
 class AgcBackend {
   // Project URL and publishable key are intentionally public client credentials.
@@ -110,10 +126,14 @@ class AgcBackend {
     return result == true;
   }
 
-  static Future<List<Map<String, dynamic>>> leaderboard({bool demo = true}) async {
+  static Future<List<Map<String, dynamic>>> leaderboard({
+    AgcRankingSort sort = AgcRankingSort.pointsHigh,
+  }) async {
     if (!configured) return const [];
-    final table = demo ? 'agc_demo_leaderboard' : 'agc_leaderboard';
-    final rows = await client.from(table).select().order('place').limit(100);
+    final rows = await client.from('agc_leaderboard')
+        .select('id,handle,genesis_points,place,created_at,member_number')
+        .order(sort.column, ascending: sort.ascending)
+        .limit(100);
     return List<Map<String, dynamic>>.from(rows);
   }
 
@@ -130,7 +150,7 @@ class AgcBackend {
     final current = user;
     if (current == null) return null;
     final data = await client.from('agc_profiles')
-        .select('handle,referral_code,country_code,show_nick_publicly')
+        .select('handle,referral_code,country_code,show_nick_publicly,member_number,created_at')
         .eq('id', current.id).maybeSingle();
     return data;
   }
@@ -413,7 +433,11 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             future: AgcBackend.myProfile(),
             builder: (context, snapshot) => Text(
               snapshot.hasData
-                ? 'Pseudonim: ${snapshot.data?['handle']}\nWidoczność: ${snapshot.data?['show_nick_publicly'] == true ? 'publiczny' : 'anonimowy'}\nTwój kod polecenia: ${snapshot.data?['referral_code']}'
+                ? 'Pseudonim: ${snapshot.data?['handle']}\n'
+                  'Numer członka: #${snapshot.data?['member_number']}\n'
+                  'Data rejestracji: ${agcRegistrationDate(snapshot.data?['created_at'])}\n'
+                  'Widoczność: ${snapshot.data?['show_nick_publicly'] == true ? 'publiczny' : 'anonimowy'}\n'
+                  'Twój kod polecenia: ${snapshot.data?['referral_code']}'
                 : 'Wczytywanie profilu...',
             ),
           ),
@@ -467,46 +491,110 @@ class AgcDatabaseRanking extends StatefulWidget {
   State<AgcDatabaseRanking> createState() => _AgcDatabaseRankingState();
 }
 
+String agcRegistrationDate(dynamic value) {
+  final date = DateTime.tryParse(value?.toString() ?? '');
+  if (date == null) return '—';
+  final local = date.toLocal();
+  return '${local.day.toString().padLeft(2, '0')}.'
+      '${local.month.toString().padLeft(2, '0')}.${local.year}';
+}
+
 class _AgcDatabaseRankingState extends State<AgcDatabaseRanking> {
-  bool demo = true;
+  AgcRankingSort sort = AgcRankingSort.pointsHigh;
+  late Future<List<Map<String, dynamic>>> results;
+
+  @override
+  void initState() {
+    super.initState();
+    results = AgcBackend.leaderboard(sort: sort);
+  }
+
+  void changeSort(AgcRankingSort? value) {
+    if (value == null) return;
+    setState(() {
+      sort = value;
+      results = AgcBackend.leaderboard(sort: sort);
+    });
+  }
+
+  void refresh() => setState(() {
+    results = AgcBackend.leaderboard(sort: sort);
+  });
+
   @override
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      AgcLuxuryHeading(title: GenesisLanguage.copy('GENESIS RANKING', 'GENESIS RANKING'),
-        subtitle: GenesisLanguage.copy('Twoje miejsce w społeczności założycieli', 'Your place in the founding community')),
+      AgcLuxuryHeading(
+        title: 'GENESIS RANKING',
+        subtitle: GenesisLanguage.copy(
+          'Prawdziwi członkowie • punkty, data dołączenia i numer członkowski',
+          'Real members • points, registration date and member number')),
       const SizedBox(height: 12),
-      SegmentedButton<bool>(
-        segments: [
-          ButtonSegment(value: true, label: Text('DEMO')),
-          ButtonSegment(value: false, label: Text(GenesisLanguage.copy('Prawdziwy', 'Real'))),
+      DropdownButtonFormField<AgcRankingSort>(
+        initialValue: sort,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: GenesisLanguage.copy('Sortuj ranking', 'Sort ranking')),
+        items: [
+          for (final option in AgcRankingSort.values)
+            DropdownMenuItem(value: option,
+              child: Text(GenesisLanguage.copy(option.polish, option.english))),
         ],
-        selected: {demo},
-        onSelectionChanged: (value) => setState(() => demo = value.first),
+        onChanged: changeSort,
       ),
-      const SizedBox(height: 12),
-      Text(demo
-        ? 'SYMULACJA • fikcyjne profile, brak rzeczywistych użytkowników lub wpłat'
-        : 'RZECZYWISTE konta zweryfikowane w bazie; dane mogą być jeszcze puste.',
-        style: const TextStyle(color: Colors.amber)),
+      const SizedBox(height: 8),
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: refresh,
+          icon: const Icon(Icons.refresh),
+          label: Text(GenesisLanguage.copy('Odśwież', 'Refresh')),
+        ),
+      ),
+      Text(GenesisLanguage.copy(
+        'Miejsce i ranga zawsze wynikają z liczby GP. Sortowanie zmienia '
+        'jedynie kolejność wyświetlania.',
+        'Position and tier always depend on GP. Sorting changes '
+        'only the display order.'),
+        style: const TextStyle(color: Colors.white70, fontSize: 12)),
       const SizedBox(height: 12),
       FutureBuilder<List<Map<String, dynamic>>>(
-        future: AgcBackend.leaderboard(demo: demo),
+        future: results,
         builder: (context, snapshot) {
-          if (snapshot.hasError) return Text('Błąd połączenia: ${snapshot.error}');
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) {
+            return Text(GenesisLanguage.copy(
+              'Nie udało się pobrać rankingu: ',
+              'Could not load ranking: ') + '${snapshot.error}');
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
           final rows = snapshot.data!;
-          if (rows.isEmpty) return const Text('Brak danych. Uruchom migrację i seed lub zarejestruj członków.');
+          if (rows.isEmpty) {
+            return Text(GenesisLanguage.copy(
+              'Nie ma jeszcze członków w prawdziwym rankingu.',
+              'No members in the real ranking yet.'));
+          }
           return Column(children: [
             for (final row in rows)
               Card(child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 5),
                 leading: CircleAvatar(
                   backgroundColor: AgcLuxury.champagne.withValues(alpha: .12),
                   foregroundColor: AgcLuxury.champagne,
-                  child: Text('${row['place']}')),
-                title: Text('${row['handle']}'),
-                subtitle: Text(demo ? 'DEMO • ${agcTier((row['place'] as num).toInt())}' : agcTier((row['place'] as num).toInt())),
-                trailing: Text('${row['genesis_points']} GP'),
+                  child: Text('${row['place']}'),
+                ),
+                title: Text('${row['handle']}',
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: Text(
+                  '#${row['member_number']} · '
+                  '${agcRegistrationDate(row['created_at'])}\n'
+                  '${agcTier((row['place'] as num).toInt())}'),
+                isThreeLine: true,
+                trailing: Text('${row['genesis_points']} GP',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               )),
           ]);
         },
