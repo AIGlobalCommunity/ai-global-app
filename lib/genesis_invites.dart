@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'agc_luxury_theme.dart';
+import 'genesis_language.dart';
 import 'agc_poster_stub.dart' if (dart.library.html) 'agc_poster_web.dart' as poster;
 
 const genesisSiteUrl = 'https://aiglobalcommunity.github.io/ai-global-app/';
@@ -102,7 +103,7 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
     child: Padding(
       padding: const EdgeInsets.all(18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Text('ZAPROŚ ZNAJOMYCH', style: TextStyle(
+        Text(GenesisLanguage.t('invite').toUpperCase(), style: const TextStyle(
           color: AgcLuxury.champagne, fontSize: 19, fontWeight: FontWeight.bold,
           letterSpacing: 1.2)),
         const SizedBox(height: 7),
@@ -119,7 +120,7 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
         OutlinedButton.icon(
           onPressed: _copy,
           icon: const Icon(Icons.copy),
-          label: const Text('Kopiuj mój link'),
+          label: Text(GenesisLanguage.t('copy')),
         ),
         const SizedBox(height: 14),
         TextField(
@@ -127,7 +128,7 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
           controller: friendEmail,
           keyboardType: TextInputType.emailAddress,
           decoration: const InputDecoration(
-            labelText: 'E-mail znajomego',
+            labelText: GenesisLanguage.t('email'),
             hintText: 'znajomy@example.com',
             prefixIcon: Icon(Icons.mail_outline)),
         ),
@@ -148,7 +149,7 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
           label: Text(generating ? 'Tworzenie grafiki...' : 'Generuj grafikę PNG do social mediów'),
         ),
         const SizedBox(height: 10),
-        const Text('UDOSTĘPNIJ', style: TextStyle(
+        Text(GenesisLanguage.t('share').toUpperCase(), style: const TextStyle(
           color: AgcLuxury.champagne, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
         Wrap(spacing: 7, runSpacing: 7, children: [
