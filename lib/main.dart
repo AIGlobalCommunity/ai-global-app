@@ -33,7 +33,7 @@ class AgcApp extends StatelessWidget {
         title: 'THE GENESIS ERA',
         debugShowCheckedModeBanner: false,
         theme: AgcLuxury.theme(),
-        home: AgcAccessGate(key: ValueKey(language)),
+        home: const AgcAccessGate(),
       ));
 }
 
