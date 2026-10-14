@@ -65,8 +65,6 @@ class GenesisStatusGuide extends StatelessWidget {
         const Text('• Utworzenie konta: 100 GP, naliczane przez system po założeniu konta.\n'
           '• Polecenie: 100 GP dla zapraszającego po prawidłowym potwierdzeniu polecenia nowego członka. '
           'Jedno polecenie nie może być naliczane wielokrotnie.\n'
-          '• Wydarzenia i wkład w społeczność: dodatkowe GP są planowane, ale zasady '
-          'przyznawania wymagają wdrożenia i weryfikacji na serwerze.\n'
           '• Dobrowolne wsparcie: ewentualne punkty za wsparcie są jedynie projektem '
           'przyszłej funkcji, nieaktywnym w obecnej wersji. Zakładany limit to 200 GP miesięcznie.',
           style: TextStyle(height: 1.6)),
