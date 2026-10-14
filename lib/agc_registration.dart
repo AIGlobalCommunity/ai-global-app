@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'agc_social_buttons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const _gold = Color(0xFFD8B66A);
@@ -30,8 +31,10 @@ String? validateAgcPassword(String? value) {
 
 /// Dedicated signup route: never reuses login fields.
 class AgcRegistrationPage extends StatefulWidget {
-  const AgcRegistrationPage({super.key, required this.onSignUp});
+  const AgcRegistrationPage({super.key, required this.onSignUp, this.onSocialSignIn});
   final Future<void> Function(String email, String password, String nick) onSignUp;
+  // OAuth creates an account and auto-generates the initial Genesis nickname.
+  final Future<void> Function(OAuthProvider provider)? onSocialSignIn;
 
   @override
   State<AgcRegistrationPage> createState() => _AgcRegistrationPageState();
@@ -229,6 +232,8 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 : const Icon(Icons.person_add),
               label: Text(submitting ? 'Tworzenie konta...' : 'Utwórz konto'),
             ),
+            if (widget.onSocialSignIn != null)
+              AgcSocialButtons(onSignIn: widget.onSocialSignIn!),
             const SizedBox(height: 14),
             const Text('Po rejestracji potwierdź adres e-mail. '
               'Nie udostępniaj nikomu swojego hasła.',
