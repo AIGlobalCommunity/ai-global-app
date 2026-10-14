@@ -161,7 +161,8 @@ class _GenesisRankSimulatorState extends State<GenesisRankSimulator> {
       final simulatedGain = extraReferrals * 100 + extraEvents * 30 +
           (extraSupport * 20).clamp(0, 200);
       final simulatedTotal = real.total + simulatedGain;
-      final projected = real.projectedRank(simulatedTotal);
+      final projected = real.rankingScores.isEmpty && real.actualRank == null
+          ? null : real.projectedRank(simulatedTotal);
       return ListView(padding: const EdgeInsets.all(20), children: [
         AgcLuxuryHeading(
           title: GenesisLanguage.copy('SYMULATOR TWOJEJ RANGI', 'YOUR RANK SIMULATOR'),
@@ -214,8 +215,8 @@ class _GenesisRankSimulatorState extends State<GenesisRankSimulator> {
         ValueListenableBuilder<String>(
           valueListenable: GenesisCurrency.region,
           builder: (context, _, __) => counter(
-            GenesisLanguage.copy('Przykładowe wsparcie', 'Example support') +
-                ' 10 ${GenesisCurrency.currency} (+20 GP)',
+            '${GenesisLanguage.copy('Przykładowe wsparcie', 'Example support')} '
+                '10 ${GenesisCurrency.currency} (+20 GP)',
             real.pointsFor('contribution'), extraSupport,
             () => setState(() => extraSupport--),
             () => setState(() => extraSupport++)),
@@ -224,7 +225,7 @@ class _GenesisRankSimulatorState extends State<GenesisRankSimulator> {
         metric(GenesisLanguage.copy('Hipotetyczna suma', 'Hypothetical total'),
           '$simulatedTotal GP (+$simulatedGain GP)'),
         metric(GenesisLanguage.copy('Szacowane miejsce', 'Estimated position'),
-          '$projected'),
+          projected?.toString() ?? '—'),
         metric(GenesisLanguage.copy('Szacowana ranga', 'Estimated tier'),
           tier(projected)),
         const SizedBox(height: 9),
