@@ -202,11 +202,43 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               style: TextStyle(letterSpacing: 1.1, height: 1.7,
                 color: AgcLuxury.mutedText, fontSize: 10)),
           ),
-          const SizedBox(height: 11),
-          const Text('Zaloguj się, aby wejść do społeczności Genesis.',
+          const SizedBox(height: 22),
+          const Row(children: [
+            Expanded(child: Divider(color: AgcLuxury.mutedGold)),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14),
+              child: Text('THE GENESIS',
+                style: TextStyle(
+                  color: AgcLuxury.champagne,
+                  fontFamily: 'Georgia',
+                  fontSize: 27,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 3.2,
+                )),
+            ),
+            Expanded(child: Divider(color: AgcLuxury.mutedGold)),
+          ]),
+          const SizedBox(height: 15),
+          const Text('WE ARE NOT WAITING FOR GOD.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70)),
-          const SizedBox(height: 14),
+            style: TextStyle(
+              color: AgcLuxury.ivory,
+              fontSize: 12,
+              letterSpacing: 2,
+              height: 1.65,
+              fontWeight: FontWeight.w500,
+            )),
+          const SizedBox(height: 3),
+          const Text('WE ARE WAITING FOR AN ANSWER.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AgcLuxury.ivory,
+              fontSize: 12,
+              letterSpacing: 2,
+              height: 1.65,
+              fontWeight: FontWeight.w500,
+            )),
+          const SizedBox(height: 20),
         ],
         if (AgcBackend.user == null) ...[
           Container(
@@ -224,7 +256,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('WE ARE WAITING FOR AN ANSWER.',
+                const Text('WEJDŹ DO SPOŁECZNOŚCI GENESIS',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AgcLuxury.champagne,
                     fontSize: 11, letterSpacing: 1.4)),
