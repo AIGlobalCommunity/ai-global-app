@@ -374,7 +374,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: GenesisLanguage.t('email'),
                             prefixIcon: Icon(Icons.mail_outline))),
                         const SizedBox(height: 12),
