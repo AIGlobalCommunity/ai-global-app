@@ -1,4 +1,5 @@
 import 'agc_backend.dart';
+import 'genesis_language.dart';
 import 'genesis_artwork.dart';
 import 'genesis_status_guide.dart';
 import 'agc_countdown.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await GenesisLanguage.initialize();
   try {
     await AgcBackend.initialize();
   } catch (error) {
@@ -25,12 +27,14 @@ class AgcApp extends StatelessWidget {
   const AgcApp({super.key});
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
+  Widget build(BuildContext context) => ValueListenableBuilder<String>(
+    valueListenable: GenesisLanguage.selected,
+    builder: (context, language, _) => MaterialApp(
         title: 'THE GENESIS ERA',
         debugShowCheckedModeBanner: false,
         theme: AgcLuxury.theme(),
-        home: const AgcAccessGate(),
-      );
+        home: AgcAccessGate(key: ValueKey(language)),
+      ));
 }
 
 /// Authenticated membership gate. Only the sign-in form is accessible without a session.
@@ -97,6 +101,7 @@ class _AgcHomeState extends State<AgcHome> {
         appBar: AppBar(
           title: const Text('✦  THE GENESIS ERA  ✦'),
           centerTitle: true,
+          actions: const [GenesisLanguagePicker()],
           backgroundColor: background,
           foregroundColor: gold,
         ),
@@ -112,11 +117,11 @@ class _AgcHomeState extends State<AgcHome> {
         bottomNavigationBar: NavigationBar(
           selectedIndex: selected,
           onDestinationSelected: (value) => setState(() => selected = value),
-          destinations: const [
+          destinations: [
             NavigationDestination(icon: Icon(Icons.public), label: 'Genesis'),
-            NavigationDestination(icon: Icon(Icons.leaderboard), label: 'Ranking'),
-            NavigationDestination(icon: Icon(Icons.person_outline), label: 'Konto'),
-            NavigationDestination(icon: Icon(Icons.tune), label: 'Symulator'),
+            NavigationDestination(icon: Icon(Icons.leaderboard), label: GenesisLanguage.t('ranking')),
+            NavigationDestination(icon: Icon(Icons.person_outline), label: GenesisLanguage.t('account')),
+            NavigationDestination(icon: Icon(Icons.tune), label: GenesisLanguage.t('simulator')),
           ],
         ),
       );
