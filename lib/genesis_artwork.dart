@@ -1,3 +1,4 @@
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 
 const agcGold = Color(0xFFE3C78C);
@@ -12,8 +13,8 @@ class GenesisArtwork extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     label: 'Nowe logo AI Global Community: złote oko Genesis, dziewięć orbit i gwiazda',
     image: true,
-    child: Image.asset(
-      'assets/agc_genesis_luxury.png',
+    child: SvgPicture.asset(
+      'assets/agc_genesis_luxury.svg',
       width: size,
       height: size,
       fit: BoxFit.contain,
