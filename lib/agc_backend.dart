@@ -41,7 +41,7 @@ class AgcBackend {
 
   static User? get user => configured ? client.auth.currentUser : null;
 
-  static Future<void> signUp(String email, String password, String nick) async {
+  static Future<void> signUp(String email, String password, String nick, bool showNickPublicly) async {
     if (!configured) throw StateError('Backend is not configured.');
     final validatedEmail = email.trim();
     if (validatedEmail.isEmpty || !validatedEmail.contains('@') || !validatedEmail.split('@').last.contains('.')) {
@@ -55,7 +55,7 @@ class AgcBackend {
     }
     await client.auth.signUp(
       email: validatedEmail, password: password,
-      data: {'handle': nick.trim()},
+      data: {'handle': nick.trim(), 'show_nick_publicly': showNickPublicly},
       emailRedirectTo: kIsWeb ? 'https://aiglobalcommunity.github.io/ai-global-app/' : null,
     );
   }
@@ -101,7 +101,7 @@ class AgcBackend {
     final current = user;
     if (current == null) return null;
     final data = await client.from('agc_profiles')
-        .select('handle,referral_code,country_code')
+        .select('handle,referral_code,country_code,show_nick_publicly')
         .eq('id', current.id).maybeSingle();
     return data;
   }
@@ -326,7 +326,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             future: AgcBackend.myProfile(),
             builder: (context, snapshot) => Text(
               snapshot.hasData
-                ? 'Pseudonim: ${snapshot.data?['handle']}\nTwój kod polecenia: ${snapshot.data?['referral_code']}'
+                ? 'Pseudonim: ${snapshot.data?['handle']}\nWidoczność: ${snapshot.data?['show_nick_publicly'] == true ? 'publiczny' : 'anonimowy'}\nTwój kod polecenia: ${snapshot.data?['referral_code']}'
                 : 'Wczytywanie profilu...',
             ),
           ),
