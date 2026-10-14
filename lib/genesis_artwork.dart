@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-const agcGold = Color(0xFFD9B96F);
-const agcNavy = Color(0xFF071321);
+const agcGold = Color(0xFFE3C78C);
+const agcNavy = Color(0xFF060C17);
 
 /// Original vector artwork: an eye surrounded by nine orbiting circles.
 /// Scales cleanly on Safari, Chrome, Android and iOS without external images.
@@ -35,6 +35,10 @@ class _GenesisPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
       ..color = agcGold.withValues(alpha: .28);
+    canvas.drawCircle(center, radius * 1.08, Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .5
+      ..color = agcGold.withValues(alpha: .17));
     canvas.drawCircle(center, radius * .85, rings);
     canvas.drawCircle(center, radius * .65, rings);
     canvas.drawCircle(center, radius * .44, rings);
@@ -49,6 +53,20 @@ class _GenesisPainter extends CustomPainter {
         Paint()..style = PaintingStyle.stroke
           ..strokeWidth = 1
           ..color = agcGold.withValues(alpha: .25));
+    }
+
+    // Fine radial ornaments suggest a handcrafted celestial dial.
+    for (var i = 0; i < 72; i++) {
+      final angle = (i * 2 * math.pi / 72) - math.pi / 2;
+      final inner = radius * (i % 6 == 0 ? .94 : .98);
+      final outer = radius * 1.02;
+      canvas.drawLine(
+        Offset(center.dx + inner * math.cos(angle),
+          center.dy + inner * math.sin(angle)),
+        Offset(center.dx + outer * math.cos(angle),
+          center.dy + outer * math.sin(angle)),
+        Paint()..strokeWidth = i % 6 == 0 ? 1.2 : .55
+          ..color = agcGold.withValues(alpha: i % 6 == 0 ? .48 : .18));
     }
 
     final eye = Path()
@@ -82,18 +100,22 @@ class GenesisPanel extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
       gradient: const LinearGradient(colors: [
-        Color(0xFF1D3044), Color(0xFF0E1C2D),
+        Color(0xFF203249), Color(0xFF101D30), Color(0xFF0B1424),
       ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: agcGold.withValues(alpha: .24)),
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: agcGold.withValues(alpha: .33), width: .8),
+      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .18),
+        blurRadius: 20, offset: const Offset(0, 9))],
     ),
     child: Padding(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(shape: BoxShape.circle,
-            color: agcGold.withValues(alpha: .1)),
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: agcGold.withValues(alpha: .35)),
+            color: agcGold.withValues(alpha: .07)),
           child: Icon(icon, color: agcGold),
         ),
         const SizedBox(width: 17),
@@ -102,7 +124,8 @@ class GenesisPanel extends StatelessWidget {
             Text(title, style: const TextStyle(color: agcGold,
               letterSpacing: 1.5, fontWeight: FontWeight.w700, fontSize: 13)),
             const SizedBox(height: 8),
-            Text(body, style: const TextStyle(height: 1.5)),
+            Text(body, style: const TextStyle(height: 1.6,
+              color: Color(0xFFE3E5EA))),
           ])),
       ]),
     ),
