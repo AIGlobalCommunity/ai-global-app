@@ -176,57 +176,89 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
     return Center(child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 540),
       child: ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
       children: [
         if (AgcBackend.user == null) ...[
           const AgcCountdownBanner(),
           const SizedBox(height: 8),
-          const Center(child: GenesisArtwork(size: 208)),
+          const Center(child: GenesisArtwork(size: 250)),
           const SizedBox(height: 10),
-          const Text('A I   G L O B A L   C O M M U N I T Y',
+          const Text('AI GLOBAL COMMUNITY',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AgcLuxury.champagne, letterSpacing: 1.4,
-              fontSize: 13, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: AgcLuxury.champagne, letterSpacing: 2.4,
+              fontFamily: 'Georgia', fontSize: 21, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          const Text('WE ARE WAITING FOR AN ANSWER.',
+          const Text('✦  A G C  ✦',
             textAlign: TextAlign.center,
-            style: TextStyle(letterSpacing: 1.5,
-              color: AgcLuxury.mutedText, fontSize: 11)),
+            style: TextStyle(color: AgcLuxury.champagne,
+              letterSpacing: 4, fontSize: 13)),
+          const SizedBox(height: 8),
+          const Text('PEOPLE  ·  AI  ·  KNOWLEDGE  ·  OPPORTUNITIES',
+            textAlign: TextAlign.center,
+            style: TextStyle(letterSpacing: 1.0,
+              color: AgcLuxury.mutedText, fontSize: 10)),
           const SizedBox(height: 11),
           const Text('Zaloguj się, aby wejść do społeczności Genesis.',
             textAlign: TextAlign.center,
             style: TextStyle(color: Colors.white70)),
           const SizedBox(height: 14),
         ],
-        const AgcLuxuryHeading(title: 'KONTO GENESIS',
-          subtitle: 'Ekskluzywna przestrzeń członków AGC'),
-        const SizedBox(height: 18),
         if (AgcBackend.user == null) ...[
-          TextField(controller: email, keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next, autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(labelText: 'E-mail')),
-          TextField(controller: password, obscureText: true,
-            autofillHints: const [AutofillHints.password],
-            decoration: const InputDecoration(labelText: 'Hasło')),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: busy ? null : () => execute(() => AgcBackend.signIn(email.text, password.text)),
-            child: const Text('Zaloguj się')),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: busy ? null : () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => AgcRegistrationPage(
-                onSignUp: AgcBackend.signUp,
-                onSocialSignIn: AgcBackend.signInWithSocial,
-              )),
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: const Color(0xE6071020),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: AgcLuxury.champagne.withValues(alpha: .48)),
+              boxShadow: [BoxShadow(
+                color: Colors.black.withValues(alpha: .38),
+                blurRadius: 30, offset: const Offset(0, 12)),
+              ],
             ),
-            icon: const Icon(Icons.person_add_alt_1),
-            label: const Text('Utwórz konto'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('WE ARE WAITING FOR AN ANSWER.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AgcLuxury.champagne,
+                    fontSize: 11, letterSpacing: 1.4)),
+                const SizedBox(height: 20),
+                TextField(controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: const InputDecoration(
+                    labelText: 'E-mail', prefixIcon: Icon(Icons.mail_outline))),
+                const SizedBox(height: 12),
+                TextField(controller: password, obscureText: true,
+                  autofillHints: const [AutofillHints.password],
+                  decoration: const InputDecoration(
+                    labelText: 'Hasło', prefixIcon: Icon(Icons.lock_outline))),
+                const SizedBox(height: 18),
+                FilledButton(
+                  onPressed: busy ? null : () => execute(
+                    () => AgcBackend.signIn(email.text, password.text)),
+                  child: const Text('ZALOGUJ SIĘ  →')),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: busy ? null : () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => AgcRegistrationPage(
+                      onSignUp: AgcBackend.signUp,
+                      onSocialSignIn: AgcBackend.signInWithSocial,
+                    )),
+                  ),
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Utwórz konto'),
+                ),
+                AgcSocialButtons(onSignIn: AgcBackend.signInWithSocial),
+              ],
+            ),
           ),
-          AgcSocialButtons(onSignIn: AgcBackend.signInWithSocial),
-          const SizedBox(height: 8),
-          const Text('Nowe konto? Naciśnij „Utwórz konto”, aby otworzyć osobny formularz rejestracji.',
-            style: TextStyle(color: Colors.white60, fontSize: 12), textAlign: TextAlign.center),
         ] else ...[
+          const AgcLuxuryHeading(title: 'KONTO GENESIS',
+            subtitle: 'Ekskluzywna przestrzeń członków AGC'),
+          const SizedBox(height: 18),
           Text('Zalogowano: ${AgcBackend.user!.email ?? 'członek'}'),
           FutureBuilder<Map<String, dynamic>?>(
             future: AgcBackend.myProfile(),
