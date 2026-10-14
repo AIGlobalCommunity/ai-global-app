@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'genesis_artwork.dart';
 import 'agc_countdown.dart';
+import 'agc_registration.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -29,17 +30,21 @@ class AgcBackend {
 
   static User? get user => configured ? client.auth.currentUser : null;
 
-  static Future<void> signUp(String email, String password) async {
+  static Future<void> signUp(String email, String password, String nick) async {
     if (!configured) throw StateError('Backend is not configured.');
     final validatedEmail = email.trim();
     if (validatedEmail.isEmpty || !validatedEmail.contains('@') || !validatedEmail.split('@').last.contains('.')) {
       throw const FormatException('Wpisz poprawny adres e-mail przed utworzeniem konta.');
     }
-    if (password.length < 6) {
-      throw const FormatException('Hasło musi mieć co najmniej 6 znaków.');
+    if (validateAgcNick(nick) != null) {
+      throw FormatException(validateAgcNick(nick)!);
+    }
+    if (password.length < 8) {
+      throw const FormatException('Hasło musi mieć co najmniej 8 znaków.');
     }
     await client.auth.signUp(
       email: validatedEmail, password: password,
+      data: {'handle': nick.trim()},
       emailRedirectTo: kIsWeb ? 'https://aiglobalcommunity.github.io/ai-global-app/' : null,
     );
   }
@@ -171,16 +176,23 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             textInputAction: TextInputAction.next, autofillHints: const [AutofillHints.email],
             decoration: const InputDecoration(labelText: 'E-mail')),
           TextField(controller: password, obscureText: true,
-            autofillHints: const [AutofillHints.newPassword],
-            decoration: const InputDecoration(labelText: 'Hasło (min. 6 znaków)')),
+            autofillHints: const [AutofillHints.password],
+            decoration: const InputDecoration(labelText: 'Hasło')),
           const SizedBox(height: 16),
           FilledButton(onPressed: busy ? null : () => execute(() => AgcBackend.signIn(email.text, password.text)),
             child: const Text('Zaloguj się')),
           const SizedBox(height: 10),
-          OutlinedButton(onPressed: busy ? null : () => execute(() => AgcBackend.signUp(email.text, password.text)),
-            child: const Text('Utwórz konto')),
+          OutlinedButton.icon(
+            onPressed: busy ? null : () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => AgcRegistrationPage(
+                onSignUp: AgcBackend.signUp,
+              )),
+            ),
+            icon: const Icon(Icons.person_add_alt_1),
+            label: const Text('Utwórz konto'),
+          ),
           const SizedBox(height: 8),
-          const Text('Po utworzeniu konta potwierdź adres e-mail. Nie udostępniaj nikomu hasła.',
+          const Text('Nowe konto? Naciśnij „Utwórz konto”, aby otworzyć osobny formularz rejestracji.',
             style: TextStyle(color: Colors.white60, fontSize: 12), textAlign: TextAlign.center),
         ] else ...[
           Text('Zalogowano: ${AgcBackend.user!.email ?? 'członek'}'),
