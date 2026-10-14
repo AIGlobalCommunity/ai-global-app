@@ -316,7 +316,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               onPressed: busy ? null : () => setState(
                 () => resendExpanded = !resendExpanded),
               icon: const Icon(Icons.mark_email_unread_outlined),
-              label: Text(GenesisLanguage.copy('Nie dotarł e-mail? Wyślij link ponownie', 'Didn't receive the email? Resend confirmation')),
+              label: Text(GenesisLanguage.copy('Nie dotarł e-mail? Wyślij link ponownie', "Didn't receive the email? Resend confirmation")),
             ),
           ),
           if (resendExpanded) Padding(
