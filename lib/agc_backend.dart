@@ -563,9 +563,9 @@ class _AgcDatabaseRankingState extends State<AgcDatabaseRanking> {
         future: results,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Text(GenesisLanguage.copy(
-              'Nie udało się pobrać rankingu: ',
-              'Could not load ranking: ') + '${snapshot.error}');
+            return Text(
+              '${GenesisLanguage.copy('Nie udało się pobrać rankingu:', 'Could not load ranking:')} '
+              '${snapshot.error}');
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
