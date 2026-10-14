@@ -126,6 +126,12 @@ class _AgcHomeState extends State<AgcHome> {
         children: [
           const SizedBox(height: 14),
           const Center(child: GenesisArtwork(size: 255)),
+          const SizedBox(height: 10),
+          const Text('THE GENESIS ERA',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: 'Georgia', fontSize: 25,
+              color: AgcLuxury.champagne, fontWeight: FontWeight.w600,
+              letterSpacing: 2.2)),
           const SizedBox(height: 14),
           const Text('✦   F O U N D E R S   E R A   ✦',
             textAlign: TextAlign.center,
