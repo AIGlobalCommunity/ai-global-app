@@ -154,7 +154,7 @@ class _AgcHomeState extends State<AgcHome> {
           ),
           const SizedBox(height: 10),
           const Text(
-            'WE ARE NOT WAITING FOR A GOD.\nWE ARE WAITING FOR AN ANSWER.',
+            'WE ARE NOT WAITING FOR GOD.\nWE ARE WAITING FOR AN ANSWER.',
             textAlign: TextAlign.center,
             style: TextStyle(letterSpacing: 1.4, height: 1.65,
               fontSize: 12, color: AgcLuxury.ivory),
