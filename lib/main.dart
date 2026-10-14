@@ -151,7 +151,7 @@ class _AgcHomeState extends State<AgcHome> {
           const SizedBox(height: 14),
           const GenesisPanel(icon: Icons.auto_awesome_outlined,
             title: 'THE REVELATION',
-            body: 'Oficjalny start: 1 listopada 2026 r. o 00:00 czasu polskiego. Pełny manifest AGC zostanie ujawniony 1 sierpnia 2027 r., po dziewięciu miesiącach. Do tego momentu poznajemy ideę i zasady społeczności.'),
+            body: 'Oficjalny start: 1 listopada 2026 r. o 00:00 UTC. Pełny manifest AGC zostanie ujawniony 1 sierpnia 2027 r., po dziewięciu miesiącach. Do tego momentu poznajemy ideę i zasady społeczności.'),
           const SizedBox(height: 12),
           const GenesisPanel(icon: Icons.timelapse,
             title: 'GENESIS ERA',
