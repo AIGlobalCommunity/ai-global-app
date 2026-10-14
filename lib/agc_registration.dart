@@ -156,6 +156,13 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
             const SizedBox(height: 6),
             const Text('Wypełnij dane konta. Widoczność nicku wybierasz samodzielnie.',
               textAlign: TextAlign.center),
+            if (Uri.base.queryParameters['ref'] != null) ...[
+              const Text('✦ Rejestrujesz się z linku polecającego. '
+                'Po potwierdzeniu e-maila polecenie zostanie zapisane automatycznie.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: _gold)),
+              const SizedBox(height: 12),
+            ],
             const SizedBox(height: 24),
             TextFormField(
               key: const Key('signup_nick'),
