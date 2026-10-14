@@ -6,7 +6,9 @@ on:
       - feat/iphone-safari-web
     paths:
       - 'lib/**'
+      - 'assets/**'
       - 'pubspec.yaml'
+      - 'web/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -35,6 +37,11 @@ jobs:
           flutter test
       - name: Build preview at /ai-global-app/
         run: flutter build web --release --base-href /ai-global-app/
+      - name: Verify bundled AGC artwork
+        run: |
+          test -s build/web/assets/assets/agc_cosmic_background_hd.svg
+          test -s build/web/assets/assets/agc_genesis_luxury.png
+          echo "AGC cosmic HD background and Genesis logo are present in the release bundle"
       - name: Stop Jekyll processing
         run: touch build/web/.nojekyll
       - name: Upload Pages artifact
