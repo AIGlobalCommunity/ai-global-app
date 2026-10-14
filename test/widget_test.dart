@@ -32,7 +32,7 @@ void main() {
   test('Real simulator baseline sums only recorded GP', () {
     const snapshot = GenesisActualSnapshot(
       handle: 'Member',
-      pointsByReason: {'signup': 100, 'verified_referral': 200, 'event': 30},
+      pointsByReason: {'signup': 100, 'verified_referral': 200, 'contribution': 30},
       actualRank: 2,
       rankingScores: [450, 120, 100],
     );
@@ -57,16 +57,16 @@ void main() {
     expect(GenesisCurrency.currencyForCountry('JP'), 'USD');
     expect(GenesisCurrency.currencyForCountry(null), 'USD');
   });
-  test('Manual region selection overrides automatic currency', () async {
-    GenesisCurrency.region.value = 'PL';
-    expect(GenesisCurrency.currency, 'PLN');
-    GenesisCurrency.region.value = 'GB';
-    expect(GenesisCurrency.currency, 'GBP');
-    GenesisCurrency.region.value = 'EU';
-    expect(GenesisCurrency.currency, 'EUR');
-    GenesisCurrency.region.value = 'WORLD';
-    expect(GenesisCurrency.currency, 'USD');
-    GenesisCurrency.region.value = 'auto';
+  test('Language fallback selects a currency when device region is absent', () {
+    expect(GenesisCurrency.currencyForLanguage('pl'), 'PLN');
+    expect(GenesisCurrency.currencyForLanguage('de'), 'EUR');
+    expect(GenesisCurrency.currencyForLanguage('en'), 'USD');
+    expect(GenesisCurrency.currencyForLanguage('zh'), 'USD');
+  });
+  testWidgets('Automatic currency panel offers no manual selector', (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: GenesisCurrencyPanel())));
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
   });
 
   test('Language picker exposes 10 languages and keeps Polish as default', () {
