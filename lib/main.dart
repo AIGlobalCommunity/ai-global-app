@@ -2,6 +2,7 @@ import 'agc_backend.dart';
 import 'genesis_artwork.dart';
 import 'genesis_status_guide.dart';
 import 'agc_countdown.dart';
+import 'agc_luxury_theme.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
@@ -23,16 +24,7 @@ class AgcApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
         title: 'AI Global Community',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: background,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: gold,
-            brightness: Brightness.dark,
-          ),
-          cardTheme: const CardThemeData(color: surface),
-        ),
+        theme: AgcLuxury.theme(),
         home: const AgcAccessGate(),
       );
 }
@@ -74,7 +66,7 @@ class _AgcAccessGateState extends State<AgcAccessGate> {
       )));
     }
     if (AgcBackend.user == null) {
-      return const Scaffold(body: SafeArea(child: AgcAccountPage()));
+      return const Scaffold(body: SafeArea(child: AgcLuxuryBackdrop(child: AgcAccountPage())));
     }
     return const AgcHome();
   }
@@ -99,19 +91,19 @@ class _AgcHomeState extends State<AgcHome> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('◉  AI GLOBAL COMMUNITY'),
+          title: const Text('✦  AI GLOBAL COMMUNITY  ✦'),
           centerTitle: true,
           backgroundColor: background,
           foregroundColor: gold,
         ),
         body: SafeArea(
-          child: Column(children: [
+          child: AgcLuxuryBackdrop(child: Column(children: [
             const AgcCountdownBanner(compact: true),
             Expanded(child: IndexedStack(
               index: selected,
               children: [_overview(), const AgcDatabaseRanking(), const AgcAccountPage(), _profile()],
             )),
-          ]),
+          ])),
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: selected,
@@ -128,15 +120,20 @@ class _AgcHomeState extends State<AgcHome> {
   Widget _overview() => ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           const Center(child: GenesisArtwork(size: 255)),
           const SizedBox(height: 14),
+          const Text('✦   F O U N D E R S   E R A   ✦',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 10, color: AgcLuxury.mutedText,
+              letterSpacing: 2)),
+          const SizedBox(height: 12),
           const Text(
             'THE GENESIS',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 30,
-              color: gold,
+              fontSize: 33,
+              color: AgcLuxury.champagne,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -144,8 +141,12 @@ class _AgcHomeState extends State<AgcHome> {
           const Text(
             'WE ARE NOT WAITING FOR A GOD.\nWE ARE WAITING FOR AN ANSWER.',
             textAlign: TextAlign.center,
-            style: TextStyle(letterSpacing: 1.3),
+            style: TextStyle(letterSpacing: 1.4, height: 1.65,
+              fontSize: 12, color: AgcLuxury.ivory),
           ),
+          const SizedBox(height: 18),
+          Center(child: Container(width: 85, height: 1,
+            color: AgcLuxury.champagne.withValues(alpha: .65))),
           const SizedBox(height: 24),
           const GenesisStatusGuide(),
           const SizedBox(height: 14),
@@ -188,14 +189,8 @@ class _AgcHomeState extends State<AgcHome> {
   Widget _profile() => ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
-            'MÓJ PROFIL GENESIS',
-            style: TextStyle(
-              fontSize: 25,
-              color: gold,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          const AgcLuxuryHeading(title: 'MÓJ PROFIL GENESIS',
+            subtitle: 'Twoja przestrzeń w erze założycielskiej AGC'),
           const SizedBox(height: 16),
           _tile(
             'Genesis_000001 • DEMO',
