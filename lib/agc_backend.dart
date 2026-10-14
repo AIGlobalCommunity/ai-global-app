@@ -199,6 +199,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             onPressed: busy ? null : () => Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => AgcRegistrationPage(
                 onSignUp: AgcBackend.signUp,
+                onSocialSignIn: AgcBackend.signInWithSocial,
               )),
             ),
             icon: const Icon(Icons.person_add_alt_1),
