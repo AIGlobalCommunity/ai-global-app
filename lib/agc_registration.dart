@@ -81,12 +81,18 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
       } else {
         message = e.message;
       }
-      if (mounted) setState(() => error = message);
+      if (mounted) {
+        setState(() => error = message);
+      }
     } catch (_) {
-      if (mounted) setState(() => error =
-        'Nie udało się utworzyć konta. Sprawdź połączenie i spróbuj ponownie.');
+      if (mounted) {
+        setState(() => error =
+          'Nie udało się utworzyć konta. Sprawdź połączenie i spróbuj ponownie.');
+      }
     } finally {
-      if (mounted) setState(() => submitting = false);
+      if (mounted) {
+        setState(() => submitting = false);
+      }
     }
   }
 
