@@ -21,68 +21,146 @@ class _GenesisPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = w * .43;
-    final glow = Paint()
-      ..shader = RadialGradient(colors: [
-        agcGold.withValues(alpha: .23),
-        agcGold.withValues(alpha: .07),
+    final c = Offset(w / 2, size.height / 2);
+    final radius = w * .405;
+
+    Offset at(double r, double theta) =>
+      Offset(c.dx + r * math.cos(theta), c.dy + r * math.sin(theta));
+
+    void ring(double r, double alpha, [double width = 1]) {
+      canvas.drawCircle(c, r, Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = width
+        ..color = agcGold.withValues(alpha: alpha));
+    }
+
+    final halo = Paint()..shader = RadialGradient(
+      colors: [
+        agcGold.withValues(alpha: .19),
+        const Color(0xFF81683C).withValues(alpha: .085),
         agcNavy.withValues(alpha: 0),
-      ]).createShader(Rect.fromCircle(center: center, radius: w * .5));
-    canvas.drawCircle(center, w * .5, glow);
+      ], stops: const [0, .43, 1],
+    ).createShader(Rect.fromCircle(center: c, radius: w * .49));
+    canvas.drawCircle(c, w * .49, halo);
 
-    final rings = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = agcGold.withValues(alpha: .28);
-    canvas.drawCircle(center, radius * 1.08, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = .5
-      ..color = agcGold.withValues(alpha: .17));
-    canvas.drawCircle(center, radius * .85, rings);
-    canvas.drawCircle(center, radius * .65, rings);
-    canvas.drawCircle(center, radius * .44, rings);
+    ring(radius * 1.13, .27, .8);
+    ring(radius * 1.045, .38, 1.2);
+    ring(radius * .96, .23);
+    ring(radius * .72, .26);
+    ring(radius * .46, .22);
 
-    for (var i = 0; i < 9; i++) {
-      final t = (i * 2 * math.pi / 9) - math.pi / 2;
-      final point = Offset(center.dx + radius * math.cos(t),
-        center.dy + radius * math.sin(t));
-      canvas.drawCircle(point, w * .027,
-        Paint()..color = agcGold.withValues(alpha: .85));
-      canvas.drawCircle(point, w * .055,
-        Paint()..style = PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..color = agcGold.withValues(alpha: .25));
-    }
-
-    // Fine radial ornaments suggest a handcrafted celestial dial.
-    for (var i = 0; i < 72; i++) {
-      final angle = (i * 2 * math.pi / 72) - math.pi / 2;
-      final inner = radius * (i % 6 == 0 ? .94 : .98);
-      final outer = radius * 1.02;
+    // Fine watchmaking-inspired engravings.
+    for (var i = 0; i < 120; i++) {
+      final theta = 2 * math.pi * i / 120 - math.pi / 2;
+      final major = i % 10 == 0;
       canvas.drawLine(
-        Offset(center.dx + inner * math.cos(angle),
-          center.dy + inner * math.sin(angle)),
-        Offset(center.dx + outer * math.cos(angle),
-          center.dy + outer * math.sin(angle)),
-        Paint()..strokeWidth = i % 6 == 0 ? 1.2 : .55
-          ..color = agcGold.withValues(alpha: i % 6 == 0 ? .48 : .18));
+        at(radius * (major ? 1.055 : 1.083), theta),
+        at(radius * 1.115, theta),
+        Paint()..strokeWidth = major ? 1.05 : .45
+          ..color = agcGold.withValues(alpha: major ? .7 : .24));
     }
 
-    final eye = Path()
-      ..moveTo(center.dx - w * .23, center.dy)
-      ..quadraticBezierTo(center.dx, center.dy - w * .19,
-        center.dx + w * .23, center.dy)
-      ..quadraticBezierTo(center.dx, center.dy + w * .19,
-        center.dx - w * .23, center.dy)
+    // Symmetric celestial cross, visually subordinate to the eye.
+    for (var k = 0; k < 4; k++) {
+      final theta = math.pi * k / 2;
+      canvas.drawLine(at(radius * .8, theta), at(radius * 1.21, theta),
+        Paint()..strokeWidth = .65
+          ..color = agcGold.withValues(alpha: .43));
+      final tip = at(radius * 1.215, theta);
+      final diamond = Path()
+        ..moveTo(tip.dx + math.cos(theta) * w * .031,
+          tip.dy + math.sin(theta) * w * .031)
+        ..lineTo(tip.dx - math.sin(theta) * w * .011,
+          tip.dy + math.cos(theta) * w * .011)
+        ..lineTo(tip.dx - math.cos(theta) * w * .031,
+          tip.dy - math.sin(theta) * w * .031)
+        ..lineTo(tip.dx + math.sin(theta) * w * .011,
+          tip.dy - math.cos(theta) * w * .011)
+        ..close();
+      canvas.drawPath(diamond, Paint()
+        ..color = agcGold.withValues(alpha: .76));
+    }
+
+    // Nine founder-orbit medallions, each with a polished gold core.
+    for (var i = 0; i < 9; i++) {
+      final theta = 2 * math.pi * i / 9 - math.pi / 2;
+      final p = at(radius * .89, theta);
+      final medallion = w * .047;
+      canvas.drawCircle(p, medallion * 1.46, Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = .8
+        ..color = agcGold.withValues(alpha: .43));
+      canvas.drawCircle(p, medallion * 1.15, Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1
+        ..color = agcGold.withValues(alpha: .72));
+      canvas.drawCircle(p, medallion,
+        Paint()..shader = RadialGradient(
+          center: const Alignment(-.42, -.52),
+          colors: [
+            const Color(0xFFFFE8AE),
+            agcGold,
+            const Color(0xFF87602D),
+          ],
+        ).createShader(Rect.fromCircle(center: p, radius: medallion)));
+      canvas.drawCircle(p.translate(medallion * -.25, medallion * -.24),
+        medallion * .20, Paint()
+          ..color = Colors.white.withValues(alpha: .64));
+    }
+
+    // Eye silhouette: layered metalwork rather than a flat icon.
+    Path eye(double scale) => Path()
+      ..moveTo(c.dx - w * .28 * scale, c.dy)
+      ..cubicTo(c.dx - w * .115 * scale, c.dy - w * .172 * scale,
+        c.dx + w * .115 * scale, c.dy - w * .172 * scale,
+        c.dx + w * .28 * scale, c.dy)
+      ..cubicTo(c.dx + w * .115 * scale, c.dy + w * .172 * scale,
+        c.dx - w * .115 * scale, c.dy + w * .172 * scale,
+        c.dx - w * .28 * scale, c.dy)
       ..close();
-    canvas.drawPath(eye, Paint()..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5..color = agcGold);
-    canvas.drawCircle(center, w * .085,
-      Paint()..color = agcGold.withValues(alpha: .95));
-    canvas.drawCircle(center, w * .037, Paint()..color = agcNavy);
-    canvas.drawCircle(center.translate(-w * .025, -w * .025),
-      w * .014, Paint()..color = Colors.white);
+
+    canvas.drawPath(eye(1.035), Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * .032
+      ..color = const Color(0xFF765226).withValues(alpha: .84));
+    canvas.drawPath(eye(1), Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * .014
+      ..color = agcGold);
+    canvas.drawPath(eye(.98), Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1
+      ..color = const Color(0xFFFFF0CA).withValues(alpha: .94));
+
+    canvas.drawCircle(c, w * .10,
+      Paint()..color = const Color(0xFF4C3518));
+    canvas.drawCircle(c, w * .093, Paint()
+      ..shader = RadialGradient(colors: [
+        const Color(0xFFFFF1C7),
+        agcGold,
+        const Color(0xFF845521),
+        const Color(0xFF0B1120),
+      ], stops: const [0, .28, .7, 1])
+        .createShader(Rect.fromCircle(center: c, radius: w * .093)));
+    ring(w * .112, .74, 1);
+    ring(w * .068, .75, 1);
+
+    // Eight-pointed star is the luminous pupil of the emblem.
+    final star = Path();
+    for (var i = 0; i < 16; i++) {
+      final theta = i * math.pi / 8 - math.pi / 2;
+      final r = i.isEven ? w * .076 : w * .013;
+      final point = at(r, theta);
+      if (i == 0) {
+        star.moveTo(point.dx, point.dy);
+      } else {
+        star.lineTo(point.dx, point.dy);
+      }
+    }
+    star.close();
+    canvas.drawPath(star, Paint()
+      ..color = const Color(0xFFFFF3D1));
+    canvas.drawCircle(c, w * .014, Paint()..color = Colors.white);
   }
 
   @override
