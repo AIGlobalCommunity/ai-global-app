@@ -387,7 +387,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                             }
                           },
                           autofillHints: const [AutofillHints.password],
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: GenesisLanguage.t('password'),
                             prefixIcon: Icon(Icons.lock_outline))),
                         const SizedBox(height: 18),
