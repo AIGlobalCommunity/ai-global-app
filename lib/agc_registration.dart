@@ -33,7 +33,7 @@ String? validateAgcPassword(String? value) {
 /// Dedicated signup route: never reuses login fields.
 class AgcRegistrationPage extends StatefulWidget {
   const AgcRegistrationPage({super.key, required this.onSignUp, this.onSocialSignIn});
-  final Future<void> Function(String email, String password, String nick) onSignUp;
+  final Future<void> Function(String email, String password, String nick, bool showNickPublicly) onSignUp;
   // OAuth creates an account and auto-generates the initial Genesis nickname.
   final Future<void> Function(OAuthProvider provider)? onSocialSignIn;
 
@@ -47,6 +47,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
   final email = TextEditingController();
   final password = TextEditingController();
   final confirmation = TextEditingController();
+  bool showNickPublicly = false;
   bool showPassword = false;
   bool showConfirmation = false;
   bool submitting = false;
@@ -67,7 +68,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
     if (submitting || !formKey.currentState!.validate()) return;
     setState(() { submitting = true; error = null; });
     try {
-      await widget.onSignUp(email.text.trim(), password.text, nick.text.trim());
+      await widget.onSignUp(email.text.trim(), password.text, nick.text.trim(), showNickPublicly);
       if (mounted) setState(() { submitted = true; });
     } on AuthException catch (e) {
       final code = e.code;
@@ -161,13 +162,26 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               controller: nick, textInputAction: TextInputAction.next,
               maxLength: 20, autovalidateMode: AutovalidateMode.onUserInteraction,
               decoration: const InputDecoration(
-                labelText: 'Nick (nazwa widoczna w rankingu)',
+                labelText: 'Twój nick',
                 hintText: 'np. GenesisExplorer',
                 prefixIcon: Icon(Icons.badge_outlined),
                 border: OutlineInputBorder(),
                 helperText: '3–20 znaków: litery, cyfry i _',
               ),
               validator: validateAgcNick,
+            ),
+            CheckboxListTile(
+              key: const Key('signup_show_nick_publicly'),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              activeColor: _gold,
+              value: showNickPublicly,
+              onChanged: submitting ? null : (value) =>
+                setState(() => showNickPublicly = value ?? false),
+              title: const Text('Pokazuj mój nick publicznie'),
+              subtitle: Text(showNickPublicly
+                ? 'Twój nick będzie widoczny w rankingu AGC.'
+                : 'Twój nick pozostanie prywatny. W rankingu pojawi się anonimowy identyfikator.'),
             ),
             const SizedBox(height: 10),
             TextFormField(
