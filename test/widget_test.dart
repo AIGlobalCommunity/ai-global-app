@@ -1,6 +1,7 @@
 import 'package:ai_global_community/agc_countdown.dart';
 import 'package:ai_global_community/genesis_language.dart';
 import 'package:ai_global_community/genesis_currency.dart';
+import 'package:ai_global_community/genesis_rank_simulator.dart';
 import 'package:ai_global_community/genesis_invites.dart';
 import 'package:ai_global_community/main.dart';
 import 'package:ai_global_community/agc_registration.dart';
@@ -12,6 +13,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   agcCountdownUnitTests();
+  test('Real simulator baseline sums only recorded GP', () {
+    const snapshot = GenesisActualSnapshot(
+      handle: 'Member',
+      pointsByReason: {'signup': 100, 'verified_referral': 200, 'event': 30},
+      actualRank: 2,
+      rankingScores: [450, 120, 100],
+    );
+    expect(snapshot.total, 330);
+    expect(snapshot.pointsFor('verified_referral'), 200);
+    expect(snapshot.pointsFor('contribution'), 0);
+    expect(snapshot.actualRank, 2);
+    expect(snapshot.projectedRank(330), 2);
+    expect(snapshot.projectedRank(480), 1);
+  });
+
   test('Currency routing follows country, not selected app language', () {
     expect(GenesisCurrency.currencyForCountry('PL'), 'PLN');
     expect(GenesisCurrency.currencyForCountry('GB'), 'GBP');
