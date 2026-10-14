@@ -17,17 +17,26 @@ class AgcBackend {
   static const projectPublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY',
     defaultValue: 'sb_publishable_Ty3Beae5ztODv0MM3Z_HDA_WEGwOyLP');
   static bool _initialized = false;
+  static String? initializationError;
   static bool get configured => _initialized;
 
   static SupabaseClient get client => Supabase.instance.client;
 
   static Future<void> initialize() async {
     if (projectUrl.isEmpty || projectPublishableKey.isEmpty) return;
-    await Supabase.initialize(
-      url: projectUrl,
-      publishableKey: projectPublishableKey,
-    );
-    _initialized = true;
+    try {
+      await Supabase.initialize(
+        url: projectUrl,
+        publishableKey: projectPublishableKey,
+      );
+      _initialized = true;
+      initializationError = null;
+    } catch (error) {
+      // A transient network/storage failure must not crash the whole web app.
+      _initialized = false;
+      initializationError = error.toString();
+      debugPrint('AGC auth initialization unavailable: $error');
+    }
   }
 
   static User? get user => configured ? client.auth.currentUser : null;
