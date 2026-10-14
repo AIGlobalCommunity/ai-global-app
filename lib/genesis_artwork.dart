@@ -1,11 +1,9 @@
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 
 const agcGold = Color(0xFFE3C78C);
 const agcNavy = Color(0xFF060C17);
 
-/// Original vector artwork: an eye surrounded by nine orbiting circles.
-/// Scales cleanly on Safari, Chrome, Android and iOS without external images.
+/// Premium AGC PNG artwork bundled as a Flutter asset.
 class GenesisArtwork extends StatelessWidget {
   const GenesisArtwork({super.key, this.size = 270});
   final double size;
@@ -14,8 +12,8 @@ class GenesisArtwork extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     label: 'Nowe logo AI Global Community: złote oko Genesis, dziewięć orbit i gwiazda',
     image: true,
-    child: SvgPicture.asset(
-      'assets/agc_genesis_luxury.svg',
+    child: Image.asset(
+      'assets/agc_genesis_luxury.png',
       width: size,
       height: size,
       fit: BoxFit.contain,
