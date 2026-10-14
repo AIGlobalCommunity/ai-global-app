@@ -11,11 +11,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   agcCountdownUnitTests();
-  test('Language picker exposes 50 languages and keeps Polish as default', () {
-    expect(GenesisLanguage.translations.length, 50);
+  test('Language picker exposes 10 languages and keeps Polish as default', () {
+    expect(GenesisLanguage.translations.length, 10);
     expect(GenesisLanguage.translations['pl']?['login'], 'Zaloguj się');
     expect(GenesisLanguage.translations['en']?['signup'], 'Create account');
-    expect(GenesisLanguage.translations['ja']?['language'], '言語');
+    expect(GenesisLanguage.translations['zh']?['language'], '语言');
   });
   testWidgets('Language menu can select English', (tester) async {
     GenesisLanguage.selected.value = 'pl';
