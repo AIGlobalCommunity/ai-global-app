@@ -1,6 +1,7 @@
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 import 'genesis_currency.dart';
+import 'genesis_rank_simulator.dart';
 import 'genesis_artwork.dart';
 import 'genesis_status_guide.dart';
 import 'agc_countdown.dart';
@@ -91,13 +92,6 @@ class AgcHome extends StatefulWidget {
 
 class _AgcHomeState extends State<AgcHome> {
   int selected = 0;
-  int referrals = 0;
-  int events = 0;
-  int contributions = 0; // Number of simulated 10 PLN contributions.
-
-  int get points =>
-      100 + referrals * 100 + events * 30 + (contributions * 20).clamp(0, 200);
-
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
@@ -203,86 +197,5 @@ class _AgcHomeState extends State<AgcHome> {
         ],
       );
 
-  Widget _profile() => ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          AgcLuxuryHeading(title: GenesisLanguage.copy('MÓJ PROFIL GENESIS', 'MY GENESIS PROFILE'),
-            subtitle: GenesisLanguage.copy('Twoja przestrzeń w erze założycielskiej THE GENESIS ERA', 'Your space in the founding era of THE GENESIS ERA')),
-          const SizedBox(height: 16),
-          _tile(
-            'Genesis_000001 • DEMO',
-            'Punkty: $points GP\nRejestracja: 100 GP',
-          ),
-          const SizedBox(height: 12),
-          _counter(
-            GenesisLanguage.copy('Polecenia (symulacja)', 'Referrals (simulation)'),
-            referrals,
-            () => setState(() => referrals++),
-          ),
-          _counter(
-            GenesisLanguage.copy('Wydarzenia (symulacja)', 'Events (simulation)'),
-            events,
-            () => setState(() => events++),
-          ),
-          const GenesisCurrencyPanel(),
-          const SizedBox(height: 12),
-          ValueListenableBuilder<String>(
-            valueListenable: GenesisCurrency.region,
-            builder: (context, _, __) => ValueListenableBuilder<String>(
-              valueListenable: GenesisLanguage.selected,
-              builder: (context, _, __) => _counter(
-                GenesisLanguage.copy('Symulowane wsparcie: 10', 'Simulated support: 10') +
-                    ' ${GenesisCurrency.currency} (' +
-                    GenesisLanguage.copy('TYLKO DEMO', 'DEMO ONLY') + ')',
-                contributions,
-                () => setState(() => contributions++),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            GenesisLanguage.copy(
-              'To wyłącznie symulacja: żadna wpłata nie jest pobierana. '
-              'Wybór waluty nie uruchamia płatności. '
-              'W symulatorze limit wynosi 200 GP za wsparcie; '
-              'rzeczywiste naliczanie wymaga integracji z operatorem płatności.',
-              'This is a simulation only: no money is collected. '
-              'Choosing a currency does not enable payments. '
-              'The simulator limits support to 200 GP; real rewards '
-              'require a payment provider integration.'),
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.tonal(
-            onPressed: () => setState(() {
-              referrals = 0;
-              events = 0;
-              contributions = 0;
-            }),
-            child: Text(GenesisLanguage.copy('Resetuj symulację', 'Reset simulation')),
-          ),
-        ],
-      );
-
-  Widget _tile(String title, String description) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(18),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(color: gold, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Text(description),
-      ]),
-    ),
-  );
-
-  Widget _counter(String title, int value, VoidCallback onPressed) => Card(
-        child: ListTile(
-          title: Text(title),
-          subtitle: Text('$value'),
-          trailing: IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: gold),
-            onPressed: onPressed,
-          ),
-        ),
-      );
+  Widget _profile() => const GenesisRankSimulator();
 }
