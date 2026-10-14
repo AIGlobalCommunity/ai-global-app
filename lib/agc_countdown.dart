@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'agc_backend.dart';
 
-const _gold = Color(0xFFD8B66A);
-const _panel = Color(0xFF14283D);
+const _gold = Color(0xFFE3C78C);
+const _panel = Color(0xFF132239);
 
 /// A source-of-truth launch date: never invent the start of the Genesis era.
 DateTime? officialLaunchFromRow(Map<String, dynamic>? row) {
@@ -115,7 +115,7 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
 
       return Expanded(child: Padding(
         padding: EdgeInsets.symmetric(horizontal: widget.compact ? 5 : 10,
-          vertical: widget.compact ? 9 : 13),
+          vertical: widget.compact ? 10 : 15),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(icon, size: 14, color: _gold),
@@ -142,15 +142,20 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
         vertical: widget.compact ? 5 : 9),
       child: Container(
         decoration: BoxDecoration(
-          color: _panel,
-          border: Border.all(color: _gold.withValues(alpha: .35)),
-          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF26364A), _panel, Color(0xFF0A1426)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+          border: Border.all(color: _gold.withValues(alpha: .38), width: .8),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .22),
+            blurRadius: 19, offset: const Offset(0, 8))],
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Padding(padding: EdgeInsets.only(top: 9), child: Text(
             'START AGC: 01.11.2026 • 00:00 UTC',
             textAlign: TextAlign.center,
-            style: TextStyle(color: _gold, fontWeight: FontWeight.bold, fontSize: 10))),
+            style: TextStyle(color: _gold, fontWeight: FontWeight.bold,
+              letterSpacing: 1, fontSize: 10))),
           Row(children: [
           countdown('START', launchDate, Icons.rocket_launch_outlined),
           Container(height: widget.compact ? 75 : 84, width: 1,
