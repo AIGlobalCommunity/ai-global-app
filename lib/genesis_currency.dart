@@ -100,7 +100,7 @@ class GenesisCurrencyPanel extends StatelessWidget {
               'rest of Europe — EUR, Americas and other countries — USD.')),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: selected,
+              initialValue: selected,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: GenesisLanguage.copy('Twój region', 'Your region')),
