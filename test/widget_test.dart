@@ -1,4 +1,5 @@
 import 'package:ai_global_community/agc_countdown.dart';
+import 'package:ai_global_community/genesis_invites.dart';
 import 'package:ai_global_community/main.dart';
 import 'package:ai_global_community/agc_registration.dart';
 import 'package:ai_global_community/genesis_status_guide.dart';
@@ -9,6 +10,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   agcCountdownUnitTests();
+  test('Referral links use the registered website and encode the invite code', () {
+    final link = Uri.parse(genesisInviteLink('ABC123DEF0'));
+    expect(link.scheme, 'https');
+    expect(link.host, 'aiglobalcommunity.github.io');
+    expect(link.queryParameters['ref'], 'ABC123DEF0');
+  });
+  testWidgets('Invite panel displays a personal link and sharing controls', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(
+      body: SingleChildScrollView(child: GenesisInvitePanel(
+        code: 'ABC123DEF0', confirmedCount: 2)),
+    )));
+    expect(find.byKey(const Key('genesis_invite_link')), findsOneWidget);
+    expect(find.textContaining('Potwierdzone polecenia: 2'), findsOneWidget);
+    expect(find.text('Zaproś e-mailem'), findsOneWidget);
+    expect(find.text('Facebook'), findsOneWidget);
+  });
   group('Formularz rejestracji', () {
     test('Email, nick and password require valid values', () {
       expect(validateAgcEmail(''), isNotNull);
