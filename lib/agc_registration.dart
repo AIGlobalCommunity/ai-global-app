@@ -106,14 +106,14 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
   Widget build(BuildContext context) {
     if (submitted) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Prawie gotowe!')),
+        appBar: AppBar(title: Text(GenesisLanguage.copy('Prawie gotowe!', 'Almost there!'))),
         body: Center(child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: Padding(padding: const EdgeInsets.all(24), child: Column(
             mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.mark_email_read_outlined, color: _gold, size: 78),
               const SizedBox(height: 18),
-              const Text('Sprawdź swoją skrzynkę e-mail',
+              Text(GenesisLanguage.copy('Sprawdź swoją skrzynkę e-mail', 'Check your email inbox'),
                 textAlign: TextAlign.center, style: TextStyle(
                   fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
@@ -121,14 +121,14 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 'Kliknij link z wiadomości, a następnie zaloguj się do THE GENESIS ERA.',
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              const Text('Jeżeli wiadomości nie ma, sprawdź folder SPAM.',
+              Text(GenesisLanguage.copy('Jeżeli wiadomości nie ma, sprawdź folder SPAM.', 'If you cannot find the message, check your spam folder.'),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white70)),
               const SizedBox(height: 20),
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.login),
-                label: const Text('Przejdź do logowania'),
+                label: Text(GenesisLanguage.copy('Przejdź do logowania', 'Go to login')),
               ),
             ],
           )),
@@ -137,7 +137,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rejestracja THE GENESIS ERA'),
+        title: Text(GenesisLanguage.copy('Rejestracja THE GENESIS ERA', 'THE GENESIS ERA registration')),
         foregroundColor: _gold,
         actions: const [GenesisLanguagePicker()],
       ),
@@ -152,11 +152,11 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               style: TextStyle(fontSize: 10,
                 color: AgcLuxury.mutedText, letterSpacing: 1))),
             const SizedBox(height: 15),
-            const Text('UTWÓRZ KONTO GENESIS', textAlign: TextAlign.center,
+            Text(GenesisLanguage.copy('UTWÓRZ KONTO GENESIS', 'CREATE A GENESIS ACCOUNT'), textAlign: TextAlign.center,
               style: TextStyle(color: _gold, fontSize: 22,
                 fontWeight: FontWeight.bold, letterSpacing: 1.4)),
             const SizedBox(height: 6),
-            const Text('Wypełnij dane konta. Widoczność nicku wybierasz samodzielnie.',
+            Text(GenesisLanguage.copy('Wypełnij dane konta. Widoczność nicku wybierasz samodzielnie.', 'Enter your account details. You control the visibility of your nickname.'),
               textAlign: TextAlign.center),
             if (Uri.base.queryParameters['ref'] != null) ...[
               const Text('✦ Rejestrujesz się z linku polecającego. '
@@ -170,12 +170,12 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               key: const Key('signup_nick'),
               controller: nick, textInputAction: TextInputAction.next,
               maxLength: 20, autovalidateMode: AutovalidateMode.onUserInteraction,
-              decoration: const InputDecoration(
-                labelText: 'Twój nick',
+              decoration: InputDecoration(
+                labelText: GenesisLanguage.copy('Twój nick', 'Your nickname'),
                 hintText: 'np. GenesisExplorer',
                 prefixIcon: Icon(Icons.badge_outlined),
                 border: OutlineInputBorder(),
-                helperText: '3–20 znaków: litery, cyfry i _',
+                helperText: GenesisLanguage.copy('3–20 znaków: litery, cyfry i _', '3–20 characters: letters, digits and _'),
               ),
               validator: validateAgcNick,
             ),
@@ -187,7 +187,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               value: showNickPublicly,
               onChanged: submitting ? null : (value) =>
                 setState(() => showNickPublicly = value ?? false),
-              title: const Text('Pokazuj mój nick publicznie'),
+              title: Text(GenesisLanguage.copy('Pokazuj mój nick publicznie', 'Show my nickname publicly')),
               subtitle: Text(showNickPublicly
                 ? 'Twój nick będzie widoczny w rankingu THE GENESIS ERA.'
                 : 'Twój nick pozostanie prywatny. W rankingu pojawi się anonimowy identyfikator.'),
@@ -212,7 +212,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               obscureText: !showPassword,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               decoration: InputDecoration(
-                labelText: 'Wymyśl hasło (minimum 8 znaków)',
+                labelText: GenesisLanguage.copy('Wymyśl hasło (minimum 8 znaków)', 'Create a password (at least 8 characters)'),
                 prefixIcon: const Icon(Icons.lock_outline),
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
@@ -230,7 +230,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               obscureText: !showConfirmation,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               decoration: InputDecoration(
-                labelText: 'Powtórz hasło',
+                labelText: GenesisLanguage.copy('Powtórz hasło', 'Repeat password'),
                 prefixIcon: const Icon(Icons.verified_user_outlined),
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
@@ -268,7 +268,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               textAlign: TextAlign.center, style: TextStyle(color: Colors.white70)),
             TextButton(
               onPressed: submitting ? null : () => Navigator.of(context).pop(),
-              child: const Text('Mam już konto — wróć do logowania'),
+              child: Text(GenesisLanguage.copy('Mam już konto — wróć do logowania', 'Already have an account? Return to login')),
             ),
           ],
         )),
