@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'agc_social_buttons.dart';
+import 'genesis_language.dart';
 import 'agc_luxury_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -138,6 +139,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
       appBar: AppBar(
         title: const Text('Rejestracja THE GENESIS ERA'),
         foregroundColor: _gold,
+        actions: const [GenesisLanguagePicker()],
       ),
       body: Center(child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
@@ -198,7 +200,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               autofillHints: const [AutofillHints.email],
               autovalidateMode: AutovalidateMode.onUserInteraction,
               decoration: const InputDecoration(
-                labelText: 'Twój adres e-mail',
+                labelText: GenesisLanguage.t('email'),
                 prefixIcon: Icon(Icons.email_outlined),
                 border: OutlineInputBorder()),
               validator: validateAgcEmail,
@@ -256,7 +258,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 ? const SizedBox(height: 18, width: 18,
                   child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.person_add),
-              label: Text(submitting ? 'Tworzenie konta...' : 'Utwórz konto'),
+              label: Text(submitting ? 'Tworzenie konta...' : GenesisLanguage.t('signup')),
             ),
             if (widget.onSocialSignIn != null)
               AgcSocialButtons(onSignIn: widget.onSocialSignIn!),
