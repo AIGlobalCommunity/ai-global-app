@@ -3,24 +3,101 @@ import 'package:flutter/material.dart';
 const agcGold = Color(0xFFE3C78C);
 const agcNavy = Color(0xFF060C17);
 
-/// Original golden AGC cosmic emblem rendered from a bundled PNG asset.
+/// Resolution-independent celestial frame around the bundled AGC emblem.
+/// The small PNG is deliberately displayed at a modest size to avoid blur;
+/// the gold orbits and stars are painted crisply at any device pixel ratio.
 class GenesisArtwork extends StatelessWidget {
   const GenesisArtwork({super.key, this.size = 270});
   final double size;
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Nowe logo AI Global Community: złote oko Genesis, dziewięć orbit i gwiazda',
+    label: 'AI Global Community — złoty symbol Genesis i kosmiczne orbity',
     image: true,
-    child: Image.asset(
-      'assets/agc_genesis_luxury.png',
+    child: SizedBox(
       width: size,
       height: size,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.high,
-      excludeFromSemantics: true,
+      child: CustomPaint(
+        painter: const _GenesisOrbitPainter(),
+        child: Center(
+          child: Container(
+            width: size * .64,
+            height: size * .64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(
+                color: agcGold.withValues(alpha: .12),
+                blurRadius: 32,
+                spreadRadius: 5,
+              )],
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/agc_genesis_luxury.png',
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+                excludeFromSemantics: true,
+              ),
+            ),
+          ),
+        ),
+      ),
     ),
   );
+}
+
+class _GenesisOrbitPainter extends CustomPainter {
+  const _GenesisOrbitPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.shortestSide * .47;
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = .9
+      ..color = agcGold.withValues(alpha: .55);
+    for (final fraction in [.72, .84, 1.0]) {
+      canvas.drawCircle(center, radius * fraction, ring);
+    }
+    for (var i = 0; i < 8; i++) {
+      final angle = i * 3.141592653589793 / 4;
+      final x = center.dx + radius * .92 * _cos(angle);
+      final y = center.dy + radius * .92 * _sin(angle);
+      canvas.drawCircle(Offset(x, y), size.width * .019,
+        Paint()..color = agcGold.withValues(alpha: .9));
+      canvas.drawCircle(Offset(x, y), size.width * .028,
+        Paint()..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = agcGold.withValues(alpha: .45));
+    }
+    final star = Paint()
+      ..color = agcGold.withValues(alpha: .7)
+      ..strokeWidth = 1;
+    for (final point in [
+      Offset(center.dx, center.dy - radius * 1.04),
+      Offset(center.dx, center.dy + radius * 1.04),
+    ]) {
+      canvas.drawLine(point.translate(-9, 0), point.translate(9, 0), star);
+      canvas.drawLine(point.translate(0, -9), point.translate(0, 9), star);
+    }
+  }
+
+  // Eight fixed compass points avoid trigonometric dependencies at runtime.
+  double _cos(double a) {
+    const values = [1.0, .70710678, 0.0, -.70710678,
+      -1.0, -.70710678, 0.0, .70710678];
+    return values[((a / (3.141592653589793 / 4)).round()) % 8];
+  }
+
+  double _sin(double a) {
+    const values = [0.0, .70710678, 1.0, .70710678,
+      0.0, -.70710678, -1.0, -.70710678];
+    return values[((a / (3.141592653589793 / 4)).round()) % 8];
+  }
+
+  @override
+  bool shouldRepaint(covariant _GenesisOrbitPainter oldDelegate) => false;
 }
 
 class GenesisPanel extends StatelessWidget {
