@@ -316,7 +316,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               onPressed: busy ? null : () => setState(
                 () => resendExpanded = !resendExpanded),
               icon: const Icon(Icons.mark_email_unread_outlined),
-              label: const Text('Nie dotarł e-mail? Wyślij link ponownie'),
+              label: Text(GenesisLanguage.copy('Nie dotarł e-mail? Wyślij link ponownie', 'Didn't receive the email? Resend confirmation')),
             ),
           ),
           if (resendExpanded) Padding(
@@ -328,8 +328,8 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                   key: const Key('resend_confirmation_email'),
                   controller: email,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Adres e-mail do aktywacji',
+                  decoration: InputDecoration(
+                    labelText: GenesisLanguage.copy('Adres e-mail do aktywacji', 'Confirmation email address'),
                     prefixIcon: Icon(Icons.mail_outline),
                   ),
                 ),
@@ -338,7 +338,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                   key: const Key('resend_confirmation_submit'),
                   onPressed: busy ? null : () => execute(
                     () => AgcBackend.resendConfirmation(email.text)),
-                  child: const Text('Wyślij nowy link aktywacyjny'),
+                  child: Text(GenesisLanguage.copy('Wyślij nowy link aktywacyjny', 'Send a new confirmation link')),
                 ),
               ],
             ),
@@ -365,7 +365,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text('WEJDŹ DO SPOŁECZNOŚCI GENESIS',
+                        Text(GenesisLanguage.copy('WEJDŹ DO SPOŁECZNOŚCI GENESIS', 'ENTER THE GENESIS COMMUNITY'),
                           textAlign: TextAlign.center,
                           style: TextStyle(color: AgcLuxury.champagne,
                             fontSize: 11, letterSpacing: 1.4)),
@@ -395,7 +395,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                           onPressed: busy ? null : () => execute(
                             () => AgcBackend.signIn(
                               email.text, password.text)),
-                          child: const Text('WEJDŹ DO GENESIS  →')),
+                          child: Text(GenesisLanguage.copy('WEJDŹ DO GENESIS  →', 'ENTER GENESIS  →'))),
                         AgcSocialButtons(
                           onSignIn: AgcBackend.signInWithSocial),
                       ],
@@ -405,8 +405,8 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               : const SizedBox.shrink(),
           ),
         ] else ...[
-          const AgcLuxuryHeading(title: 'KONTO GENESIS',
-            subtitle: 'Ekskluzywna przestrzeń członków THE GENESIS ERA'),
+          AgcLuxuryHeading(title: GenesisLanguage.copy('KONTO GENESIS', 'GENESIS ACCOUNT'),
+            subtitle: GenesisLanguage.copy('Ekskluzywna przestrzeń członków THE GENESIS ERA', 'Exclusive THE GENESIS ERA member space')),
           const SizedBox(height: 18),
           Text('Zalogowano: ${AgcBackend.user!.email ?? 'członek'}'),
           FutureBuilder<Map<String, dynamic>?>(
@@ -430,7 +430,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           ),
           const SizedBox(height: 16),
           TextField(controller: invite, textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(labelText: 'Kod polecającego')),
+            decoration: InputDecoration(labelText: GenesisLanguage.copy('Kod polecającego', 'Referral code'))),
           FilledButton(
             onPressed: busy ? null : () => execute(() async {
               final awarded = await AgcBackend.claimInvite(invite.text);
@@ -473,13 +473,13 @@ class _AgcDatabaseRankingState extends State<AgcDatabaseRanking> {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(16),
     children: [
-      const AgcLuxuryHeading(title: 'GENESIS RANKING',
-        subtitle: 'Twoje miejsce w społeczności założycieli'),
+      AgcLuxuryHeading(title: GenesisLanguage.copy('GENESIS RANKING', 'GENESIS RANKING'),
+        subtitle: GenesisLanguage.copy('Twoje miejsce w społeczności założycieli', 'Your place in the founding community')),
       const SizedBox(height: 12),
       SegmentedButton<bool>(
-        segments: const [
+        segments: [
           ButtonSegment(value: true, label: Text('DEMO')),
-          ButtonSegment(value: false, label: Text('Prawdziwy')),
+          ButtonSegment(value: false, label: Text(GenesisLanguage.copy('Prawdziwy', 'Real'))),
         ],
         selected: {demo},
         onSelectionChanged: (value) => setState(() => demo = value.first),
