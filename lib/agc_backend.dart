@@ -120,6 +120,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
   final invite = TextEditingController();
   String status = '';
   bool busy = false;
+  bool loginExpanded = false;
   StreamSubscription<AuthState>? authListener;
 
   @override
@@ -183,26 +184,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           const SizedBox(height: 8),
           Center(child: LayoutBuilder(builder: (context, constraints) =>
             GenesisArtwork(size: constraints.maxWidth < 350 ? 204 : 246))),
-          const SizedBox(height: 10),
-          const Text('AI GLOBAL COMMUNITY',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AgcLuxury.champagne, letterSpacing: 2.4,
-              fontFamily: 'Georgia', fontSize: 21, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          const Text('✦  A G C  ✦',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AgcLuxury.champagne,
-              letterSpacing: 4, fontSize: 13)),
-          const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Text('PEOPLE  ·  AI  ·  KNOWLEDGE  ·  OPPORTUNITIES  ·  GOD',
-              textAlign: TextAlign.center,
-              softWrap: true,
-              style: TextStyle(letterSpacing: 1.1, height: 1.7,
-                color: AgcLuxury.mutedText, fontSize: 10)),
-          ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 12),
           const Row(children: [
             Expanded(child: Divider(color: AgcLuxury.mutedGold)),
             Padding(
@@ -241,56 +223,99 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           const SizedBox(height: 20),
         ],
         if (AgcBackend.user == null) ...[
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xE6071020),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: AgcLuxury.champagne.withValues(alpha: .48)),
-              boxShadow: [BoxShadow(
-                color: Colors.black.withValues(alpha: .38),
-                blurRadius: 30, offset: const Offset(0, 12)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('WEJDŹ DO SPOŁECZNOŚCI GENESIS',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AgcLuxury.champagne,
-                    fontSize: 11, letterSpacing: 1.4)),
-                const SizedBox(height: 20),
-                TextField(controller: email,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(
-                    labelText: 'E-mail', prefixIcon: Icon(Icons.mail_outline))),
-                const SizedBox(height: 12),
-                TextField(controller: password, obscureText: true,
-                  autofillHints: const [AutofillHints.password],
-                  decoration: const InputDecoration(
-                    labelText: 'Hasło', prefixIcon: Icon(Icons.lock_outline))),
-                const SizedBox(height: 18),
-                FilledButton(
-                  onPressed: busy ? null : () => execute(
-                    () => AgcBackend.signIn(email.text, password.text)),
-                  child: const Text('ZALOGUJ SIĘ  →')),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: busy ? null : () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => AgcRegistrationPage(
-                      onSignUp: AgcBackend.signUp,
-                      onSocialSignIn: AgcBackend.signInWithSocial,
-                    )),
+          // A visible compact entry point keeps the emblem and manifesto
+          // prominent on mobile. The full login opens on demand.
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FilledButton.icon(
+                    onPressed: busy ? null : () => setState(
+                      () => loginExpanded = !loginExpanded),
+                    icon: Icon(loginExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.login_rounded),
+                    label: Text(loginExpanded
+                      ? 'ZAMKNIJ LOGOWANIE'
+                      : 'ZALOGUJ SIĘ'),
                   ),
-                  icon: const Icon(Icons.person_add_alt_1),
-                  label: const Text('Utwórz konto'),
-                ),
-                AgcSocialButtons(onSignIn: AgcBackend.signInWithSocial),
-              ],
+                  const SizedBox(height: 6),
+                  TextButton.icon(
+                    onPressed: busy ? null : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(builder: (_) => AgcRegistrationPage(
+                        onSignUp: AgcBackend.signUp,
+                        onSocialSignIn: AgcBackend.signInWithSocial,
+                      )),
+                    ),
+                    icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                    label: const Text('Utwórz konto'),
+                  ),
+                ],
+              ),
             ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: loginExpanded
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xE6071020),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: AgcLuxury.champagne.withValues(alpha: .48)),
+                      boxShadow: [BoxShadow(
+                        color: Colors.black.withValues(alpha: .38),
+                        blurRadius: 30, offset: const Offset(0, 12)),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('WEJDŹ DO SPOŁECZNOŚCI GENESIS',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AgcLuxury.champagne,
+                            fontSize: 11, letterSpacing: 1.4)),
+                        const SizedBox(height: 18),
+                        TextField(controller: email,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
+                          decoration: const InputDecoration(
+                            labelText: 'E-mail',
+                            prefixIcon: Icon(Icons.mail_outline))),
+                        const SizedBox(height: 12),
+                        TextField(controller: password,
+                          obscureText: true,
+                          onSubmitted: (_) {
+                            if (!busy) {
+                              execute(() => AgcBackend.signIn(
+                                email.text, password.text));
+                            }
+                          },
+                          autofillHints: const [AutofillHints.password],
+                          decoration: const InputDecoration(
+                            labelText: 'Hasło',
+                            prefixIcon: Icon(Icons.lock_outline))),
+                        const SizedBox(height: 18),
+                        FilledButton(
+                          onPressed: busy ? null : () => execute(
+                            () => AgcBackend.signIn(
+                              email.text, password.text)),
+                          child: const Text('WEJDŹ DO GENESIS  →')),
+                        AgcSocialButtons(
+                          onSignIn: AgcBackend.signInWithSocial),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
           ),
         ] else ...[
           const AgcLuxuryHeading(title: 'KONTO GENESIS',
