@@ -1,5 +1,6 @@
 import 'package:ai_global_community/agc_countdown.dart';
 import 'package:ai_global_community/main.dart';
+import 'package:ai_global_community/agc_registration.dart';
 import 'package:ai_global_community/genesis_status_guide.dart';
 import 'package:ai_global_community/genesis_artwork.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,29 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   agcCountdownUnitTests();
+  group('Formularz rejestracji', () {
+    test('Email, nick and password require valid values', () {
+      expect(validateAgcEmail(''), isNotNull);
+      expect(validateAgcEmail('brak-malpy'), isNotNull);
+      expect(validateAgcEmail('user@example.com'), isNull);
+      expect(validateAgcNick(''), isNotNull);
+      expect(validateAgcNick('nick ze spacją'), isNotNull);
+      expect(validateAgcNick('Genesis_123'), isNull);
+      expect(validateAgcPassword('12345'), isNotNull);
+      expect(validateAgcPassword('longpassword123'), isNull);
+    });
+
+    testWidgets('Sign-up is a separate page with all fields', (tester) async {
+      await tester.pumpWidget(MaterialApp(home: AgcRegistrationPage(
+        onSignUp: (email, password, nick) async {},
+      )));
+      expect(find.text('UTWÓRZ KONTO GENESIS'), findsOneWidget);
+      expect(find.byKey(const Key('signup_nick')), findsOneWidget);
+      expect(find.byKey(const Key('signup_email')), findsOneWidget);
+      expect(find.byKey(const Key('signup_password')), findsOneWidget);
+      expect(find.byKey(const Key('signup_confirm_password')), findsOneWidget);
+    });
+  });
   testWidgets('Without initialized authentication, community is not accessible',
       (tester) async {
     await tester.pumpWidget(const AgcApp());
