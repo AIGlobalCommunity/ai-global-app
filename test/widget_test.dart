@@ -30,6 +30,13 @@ void main() {
       expect(find.byKey(const Key('signup_show_nick_publicly')), findsOneWidget);
       expect(find.byKey(const Key('signup_email')), findsOneWidget);
       expect(find.byKey(const Key('signup_password')), findsOneWidget);
+      // ListView builds only visible children. Scroll to the final field
+      // rather than assuming every form element is mounted at once.
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('signup_confirm_password')),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.byKey(const Key('signup_confirm_password')), findsOneWidget);
     });
   });
