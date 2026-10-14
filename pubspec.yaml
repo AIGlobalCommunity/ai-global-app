@@ -8,7 +8,6 @@ dependencies:
   flutter:
     sdk: flutter
   supabase_flutter: ^2.9.1
-  flutter_svg: ^2.0.17
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -16,4 +15,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/agc_genesis_luxury.svg
+    - assets/agc_genesis_luxury.png
