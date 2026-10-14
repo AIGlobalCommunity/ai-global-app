@@ -1,5 +1,6 @@
 import 'package:ai_global_community/agc_countdown.dart';
 import 'package:ai_global_community/genesis_language.dart';
+import 'package:ai_global_community/genesis_currency.dart';
 import 'package:ai_global_community/genesis_invites.dart';
 import 'package:ai_global_community/main.dart';
 import 'package:ai_global_community/agc_registration.dart';
@@ -11,6 +12,31 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   agcCountdownUnitTests();
+  test('Currency routing follows country, not selected app language', () {
+    expect(GenesisCurrency.currencyForCountry('PL'), 'PLN');
+    expect(GenesisCurrency.currencyForCountry('GB'), 'GBP');
+    expect(GenesisCurrency.currencyForCountry('UK'), 'GBP');
+    expect(GenesisCurrency.currencyForCountry('DE'), 'EUR');
+    expect(GenesisCurrency.currencyForCountry('FR'), 'EUR');
+    expect(GenesisCurrency.currencyForCountry('CH'), 'EUR');
+    expect(GenesisCurrency.currencyForCountry('US'), 'USD');
+    expect(GenesisCurrency.currencyForCountry('CA'), 'USD');
+    expect(GenesisCurrency.currencyForCountry('BR'), 'USD');
+    expect(GenesisCurrency.currencyForCountry('JP'), 'USD');
+    expect(GenesisCurrency.currencyForCountry(null), 'USD');
+  });
+  test('Manual region selection overrides automatic currency', () async {
+    GenesisCurrency.region.value = 'PL';
+    expect(GenesisCurrency.currency, 'PLN');
+    GenesisCurrency.region.value = 'GB';
+    expect(GenesisCurrency.currency, 'GBP');
+    GenesisCurrency.region.value = 'EU';
+    expect(GenesisCurrency.currency, 'EUR');
+    GenesisCurrency.region.value = 'WORLD';
+    expect(GenesisCurrency.currency, 'USD');
+    GenesisCurrency.region.value = 'auto';
+  });
+
   test('Language picker exposes 10 languages and keeps Polish as default', () {
     expect(GenesisLanguage.translations.length, 10);
     expect(GenesisLanguage.translations['pl']?['login'], 'Zaloguj się');
