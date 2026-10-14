@@ -4,6 +4,7 @@ import 'genesis_artwork.dart';
 import 'agc_countdown.dart';
 import 'agc_registration.dart';
 import 'agc_social_buttons.dart';
+import 'genesis_invites.dart';
 import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -55,7 +56,12 @@ class AgcBackend {
     }
     await client.auth.signUp(
       email: validatedEmail, password: password,
-      data: {'handle': nick.trim(), 'show_nick_publicly': showNickPublicly},
+      data: {
+        'handle': nick.trim(),
+        'show_nick_publicly': showNickPublicly,
+        if (Uri.base.queryParameters['ref'] != null)
+          'referral_code': Uri.base.queryParameters['ref']!.trim().toUpperCase(),
+      },
       emailRedirectTo: kIsWeb ? 'https://aiglobalcommunity.github.io/ai-global-app/' : null,
     );
   }
@@ -108,6 +114,15 @@ class AgcBackend {
     final table = demo ? 'agc_demo_leaderboard' : 'agc_leaderboard';
     final rows = await client.from(table).select().order('place').limit(100);
     return List<Map<String, dynamic>>.from(rows);
+  }
+
+  static Future<int> myConfirmedReferrals() async {
+    final current = user;
+    if (current == null) return 0;
+    final rows = await client.from('agc_referrals')
+        .select('invited_id').eq('inviter_id', current.id)
+        .not('rewarded_at', 'is', null);
+    return rows.length;
   }
 
   static Future<Map<String, dynamic>?> myProfile() async {
@@ -399,6 +414,18 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                 : 'Wczytywanie profilu...',
             ),
           ),
+          FutureBuilder<Map<String, dynamic>?>(
+            future: AgcBackend.myProfile(),
+            builder: (context, profile) {
+              final code = profile.data?['referral_code'] as String?;
+              if (code == null || code.isEmpty) return const SizedBox.shrink();
+              return FutureBuilder<int>(
+                future: AgcBackend.myConfirmedReferrals(),
+                builder: (context, count) => GenesisInvitePanel(
+                  code: code, confirmedCount: count.data ?? 0));
+            },
+          ),
+          const SizedBox(height: 16),
           TextField(controller: invite, textCapitalization: TextCapitalization.characters,
             decoration: const InputDecoration(labelText: 'Kod polecającego')),
           FilledButton(
