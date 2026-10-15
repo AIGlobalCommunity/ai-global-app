@@ -105,9 +105,10 @@ AND (storage.foldername(name))[1]=(SELECT auth.uid())::text
 AND storage.extension(name) IN('jpg','jpeg','png','webp','gif'));
 DROP POLICY IF EXISTS agc_private_forum_read ON storage.objects;
 CREATE POLICY agc_private_forum_read ON storage.objects FOR SELECT TO authenticated
-USING(bucket_id='agc-private-forum-images' AND EXISTS(
+USING(bucket_id='agc-private-forum-images' AND (
+ (storage.foldername(name))[1]=(SELECT auth.uid())::text OR EXISTS(
  SELECT 1 FROM public.agc_group_posts p
- WHERE p.image_path=name AND agc_internal.post_access(p.group_id)));
+ WHERE p.image_path=name AND agc_internal.post_access(p.group_id))));
 DROP POLICY IF EXISTS agc_private_forum_delete ON storage.objects;
 CREATE POLICY agc_private_forum_delete ON storage.objects FOR DELETE TO authenticated
 USING(bucket_id='agc-private-forum-images'
