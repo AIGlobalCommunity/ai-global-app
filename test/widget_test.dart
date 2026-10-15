@@ -83,6 +83,9 @@ void main() {
     await tester.tap(find.byType(GenesisLanguagePicker));
     await tester.pumpAndSettle();
     expect(find.textContaining('English'), findsWidgets);
+    await tester.tap(find.textContaining('English').last);
+    await tester.pumpAndSettle();
+    expect(GenesisLanguage.selected.value, 'en');
     GenesisLanguage.selected.value = 'pl';
   });
   testWidgets('Mission copy updates immediately when switching languages',
