@@ -432,17 +432,19 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           AgcLuxuryHeading(title: GenesisLanguage.copy('KONTO GENESIS', 'GENESIS ACCOUNT'),
             subtitle: GenesisLanguage.copy('Ekskluzywna przestrzeń członków THE GENESIS ERA', 'Exclusive THE GENESIS ERA member space')),
           const SizedBox(height: 18),
-          Text('Zalogowano: ${AgcBackend.user!.email ?? 'członek'}'),
+          Text('${GenesisLanguage.copy('Zalogowano', 'Signed in')}: '
+            '${AgcBackend.user!.email ?? GenesisLanguage.copy('członek', 'member')}'),
           FutureBuilder<Map<String, dynamic>?>(
             future: AgcBackend.myProfile(),
             builder: (context, snapshot) => Text(
               snapshot.hasData
-                ? 'Pseudonim: ${snapshot.data?['handle']}\n'
-                  'Numer członka: #${snapshot.data?['member_number']}\n'
-                  'Data rejestracji: ${agcRegistrationDate(snapshot.data?['created_at'])}\n'
-                  'Widoczność: ${snapshot.data?['show_nick_publicly'] == true ? 'publiczny' : 'anonimowy'}\n'
-                  'Twój kod polecenia: ${snapshot.data?['referral_code']}'
-                : 'Wczytywanie profilu...',
+                ? '${GenesisLanguage.copy('Pseudonim', 'Nickname')}: ${snapshot.data?['handle']}\n'
+                  '${GenesisLanguage.copy('Numer członka', 'Member number')}: #${snapshot.data?['member_number']}\n'
+                  '${GenesisLanguage.copy('Data rejestracji', 'Joined')}: ${agcRegistrationDate(snapshot.data?['created_at'])}\n'
+                  '${GenesisLanguage.copy('Widoczność', 'Visibility')}: '
+                  '${snapshot.data?['show_nick_publicly'] == true ? GenesisLanguage.copy('publiczny', 'public') : GenesisLanguage.copy('anonimowy', 'anonymous')}\n'
+                  '${GenesisLanguage.copy('Twój kod polecenia', 'Your referral code')}: ${snapshot.data?['referral_code']}'
+                : GenesisLanguage.copy('Wczytywanie profilu...', 'Loading profile...'),
             ),
           ),
           FutureBuilder<Map<String, dynamic>?>(
