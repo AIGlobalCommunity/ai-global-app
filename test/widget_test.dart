@@ -8,6 +8,7 @@ import 'package:ai_global_community/main.dart';
 import 'package:ai_global_community/agc_registration.dart';
 import 'package:ai_global_community/genesis_status_guide.dart';
 import 'package:ai_global_community/genesis_artwork.dart';
+import 'package:ai_global_community/genesis_mission.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -38,7 +39,7 @@ void main() {
     );
     expect(snapshot.total, 330);
     expect(snapshot.pointsFor('verified_referral'), 200);
-    expect(snapshot.pointsFor('contribution'), 0);
+    expect(snapshot.pointsFor('contribution'), 30);
     expect(snapshot.actualRank, 2);
     expect(snapshot.projectedRank(330), 2);
     expect(snapshot.projectedRank(480), 1);
@@ -69,11 +70,11 @@ void main() {
     expect(find.byType(DropdownButtonFormField<String>), findsNothing);
   });
 
-  test('Language picker exposes 10 languages and keeps Polish as default', () {
-    expect(GenesisLanguage.translations.length, 10);
+  test('Language picker exposes only Polish and English', () {
+    expect(GenesisLanguage.translations.length, 2);
     expect(GenesisLanguage.translations['pl']?['login'], 'Zaloguj się');
     expect(GenesisLanguage.translations['en']?['signup'], 'Create account');
-    expect(GenesisLanguage.translations['zh']?['language'], '语言');
+    expect(GenesisLanguage.translations.keys.toSet(), {'pl', 'en'});
   });
   testWidgets('Language menu can select English', (tester) async {
     GenesisLanguage.selected.value = 'pl';
@@ -84,6 +85,41 @@ void main() {
     expect(find.textContaining('English'), findsWidgets);
     GenesisLanguage.selected.value = 'pl';
   });
+  testWidgets('Mission copy updates immediately when switching languages',
+      (tester) async {
+    GenesisLanguage.selected.value = 'pl';
+    await tester.pumpWidget(MaterialApp(home: Scaffold(
+      body: ValueListenableBuilder<String>(
+        valueListenable: GenesisLanguage.selected,
+        builder: (context, language, _) => const SingleChildScrollView(
+          child: GenesisMission(compact: true)),
+      ),
+    )));
+    expect(find.text('DLACZEGO POWSTAJE THE GENESIS ERA?'), findsOneWidget);
+    GenesisLanguage.selected.value = 'en';
+    await tester.pump();
+    expect(find.text('WHY DOES THE GENESIS ERA EXIST?'), findsOneWidget);
+    GenesisLanguage.selected.value = 'pl';
+  });
+
+  testWidgets('Genesis cards do not overflow on narrow phones', (tester) async {
+    tester.view.physicalSize = const Size(320, 760);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(
+      body: SingleChildScrollView(child: Padding(
+        padding: EdgeInsets.all(10),
+        child: GenesisPanel(
+          icon: Icons.forum,
+          title: 'A VERY LONG GENESIS COMMUNITY HEADING FOR SMALL PHONES',
+          body: 'An unusually long paragraph should wrap without horizontal overflow.',
+        ),
+      )),
+    )));
+    expect(tester.takeException(), isNull);
+  });
+
   test('Referral links use the registered website and encode the invite code', () {
     final link = Uri.parse(genesisInviteLink('ABC123DEF0'));
     expect(link.scheme, 'https');
