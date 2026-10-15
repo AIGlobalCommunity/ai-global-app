@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_discussions.dart';
