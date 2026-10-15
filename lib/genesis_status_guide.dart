@@ -19,7 +19,9 @@ class GenesisStatusGuide extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => ValueListenableBuilder<String>(
+    valueListenable: GenesisLanguage.selected,
+    builder: (context, language, _) => Card(
     clipBehavior: Clip.antiAlias,
     child: ExpansionTile(
       key: const Key('genesis_status_guide'),
@@ -120,5 +122,5 @@ class GenesisStatusGuide extends StatelessWidget {
           style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.45)),
       ],
     ),
-  );
+  ));
 }
