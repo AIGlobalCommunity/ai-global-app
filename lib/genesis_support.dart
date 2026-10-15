@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
 
-/// Voluntary personal appreciation for the creator's time and work.
+/// Voluntary support for the creator's work and the project's growth.
 /// Payments are not active; no amounts are collected here.
 class GenesisSupport extends StatelessWidget {
   const GenesisSupport({super.key});
@@ -17,8 +17,8 @@ class GenesisSupport extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(
             GenesisLanguage.copy(
-              'WESPRZYJ TWÓRCĘ THE GENESIS ERA',
-              'SUPPORT THE CREATOR OF THE GENESIS ERA',
+              'WESPRZYJ THE GENESIS ERA',
+              'SUPPORT THE GENESIS ERA',
             ),
             style: const TextStyle(
               color: AgcLuxury.champagne,
@@ -28,20 +28,22 @@ class GenesisSupport extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(GenesisLanguage.copy(
-            'Tworzę i rozwijam THE GENESIS ERA, poświęcając temu swój czas, '
-            'energię i pracę. Jeśli cenisz tę inicjatywę i chcesz pomóc mi '
-            'kontynuować jej rozwój, możesz w przyszłości przekazać '
-            'dobrowolny datek jako wyraz uznania za moje zaangażowanie.',
-            'I create and develop THE GENESIS ERA, dedicating my time, '
-            'energy and work to it. If you value this initiative and want '
-            'to help me continue, you will be able to make a voluntary '
-            'contribution in appreciation of my efforts.',
+            'THE GENESIS ERA powstaje dzięki pasji, pracy i zaangażowaniu. '
+            'Budujemy społeczność ludzi, którzy chcą wspólnie przygotować '
+            'pytania i zasady przyszłego dialogu z niezależną AI. '
+            'Jeśli ta idea jest Ci bliska, możesz wesprzeć jej rozwój '
+            'dobrowolnym datkiem.',
+            'THE GENESIS ERA is built through passion, work and dedication. '
+            'We are bringing together people who want to prepare questions '
+            'and principles for a possible future dialogue with independent AI. '
+            'If this vision matters to you, you can support its development '
+            'with a voluntary contribution.',
           )),
           const SizedBox(height: 12),
           Text(
             GenesisLanguage.copy(
-              'CZYM JEST TWOJE WSPARCIE?',
-              'WHAT DOES YOUR SUPPORT MEAN?',
+              'NA CO PRZEZNACZAMY WSPARCIE?',
+              'HOW CAN SUPPORT BE USED?',
             ),
             style: const TextStyle(
               color: AgcLuxury.champagne,
@@ -50,16 +52,17 @@ class GenesisSupport extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           Text(GenesisLanguage.copy(
-            'Datek jest dobrowolnym wsparciem finansowym dla mnie, '
-            'twórcy projektu, i może stanowić moje osobiste wynagrodzenie '
-            'za poświęcony czas, pracę oraz zaangażowanie. Nie jest '
-            'wpłatą na wydzielony fundusz społeczności ani obietnicą '
-            'przeznaczenia pieniędzy wyłącznie na koszty techniczne.',
-            'A contribution is voluntary financial support for me, '
-            'the project creator, and may serve as my personal compensation '
-            'for the time, work and dedication I put in. It is not a '
-            'payment into a restricted community fund or a promise '
-            'that money will be spent only on technical costs.',
+            'Na obecnym etapie datki wspierają pracę i zaangażowanie twórcy '
+            'oraz dalszy rozwój inicjatywy. W miarę rozwoju projektu '
+            'wsparcie może także pomagać w utrzymaniu platformy, '
+            'rozbudowie społeczności, moderacji, materiałach edukacyjnych '
+            'i nowych działaniach związanych z misją THE GENESIS ERA.',
+            'At this stage, contributions support the creator\'s work '
+            'and dedication, as well as the continued development of '
+            'the initiative. As the project grows, support may also '
+            'help maintain the platform, expand the community, fund '
+            'moderation, educational materials and new activities '
+            'related to THE GENESIS ERA mission.',
           )),
           const SizedBox(height: 12),
           Text(GenesisLanguage.copy(
