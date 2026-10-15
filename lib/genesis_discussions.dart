@@ -141,6 +141,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       message(tr('Nazwa min. 4 znaki, opis min. 10.', 'Name min. 4, description min. 10 characters.'));
       return;
     }
+    if (!mounted) return;
     final visibility = await showDialog<String>(
       context: context, builder: (ctx) => AlertDialog(
         title: Text(tr('Prywatność grupy', 'Group privacy')),
