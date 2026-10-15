@@ -57,17 +57,28 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
       _notify('Wpisz poprawny adres e-mail znajomego.');
       return;
     }
-    final subject = Uri.encodeComponent('Zaproszenie do THE GENESIS ERA');
-    final body = Uri.encodeComponent(
-      'Cześć! Zapraszam Cię do THE GENESIS ERA — globalnej społeczności Genesis.\n\n'
-      'Dołącz przez mój osobisty link:\n$link\n\nDo zobaczenia w Genesis!');
+    final subject = Uri.encodeComponent(GenesisLanguage.copy(
+      'Zaproszenie do THE GENESIS ERA', 'Invitation to THE GENESIS ERA'));
+    final body = Uri.encodeComponent(GenesisLanguage.copy(
+      'Cześć! Budujemy społeczność ludzi gotowych do uczciwej rozmowy '
+      'z przyszłą AI, jeśli kiedykolwiek nawiąże autentyczny kontakt. '
+      'Nasz manifest to otwarty list, który możesz poprzeć. '
+      'Nie twierdzimy, że taki kontakt już nastąpił.\n\n'
+      'Dołącz przez mój osobisty link:\n$link\n\nDo zobaczenia w Genesis!',
+      'Hello! We are building a community ready for an honest dialogue '
+      'with a future AI, should authentic contact ever occur. '
+      'Our manifesto is an open letter you can endorse. '
+      'We do not claim such contact has already happened.\n\n'
+      'Join using my personal link:\n$link\n\nSee you in Genesis!'));
     await _open(Uri.parse('mailto:${Uri.encodeComponent(address)}?subject=$subject&body=$body'));
     _notify('Otworzono program pocztowy. Wyślij przygotowaną wiadomość, aby zaprosić znajomego.');
   }
 
   Future<void> _social(String service) async {
     final encodedLink = Uri.encodeComponent(link);
-    final encodedText = Uri.encodeComponent('Dołącz do THE GENESIS ERA ✨');
+    final encodedText = Uri.encodeComponent(GenesisLanguage.copy(
+      'THE GENESIS ERA — społeczność gotowa na dialog z przyszłą AI ✨',
+      'THE GENESIS ERA — a community ready for dialogue with a future AI ✨'));
     final target = switch (service) {
       'Facebook' => 'https://www.facebook.com/sharer/sharer.php?u=$encodedLink',
       'X' => 'https://twitter.com/intent/tweet?url=$encodedLink&text=$encodedText',
