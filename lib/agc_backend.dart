@@ -460,6 +460,8 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             },
           ),
           const SizedBox(height: 16),
+          const GenesisSocialProfile(),
+          const SizedBox(height: 16),
           TextField(controller: invite, textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(labelText: GenesisLanguage.copy('Kod polecającego', 'Referral code'))),
           FilledButton(
