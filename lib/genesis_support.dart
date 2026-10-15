@@ -30,15 +30,15 @@ class _GenesisSupportState extends State<GenesisSupport> {
     try {
       final row = await AgcBackend.client.from('agc_support_preferences')
           .select('priority').eq('member_id', AgcBackend.user!.id).maybeSingle();
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         selected = row?['priority'] as String?;
         loading = false;
-      });
+      }); }
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         loading = false;
         notice = GenesisLanguage.copy('Nie można pobrać wyboru.', 'Could not load your choice.');
-      });
+      }); }
     }
   }
 
@@ -50,16 +50,16 @@ class _GenesisSupportState extends State<GenesisSupport> {
         'member_id': AgcBackend.user!.id, 'priority': value,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         selected = value;
         notice = GenesisLanguage.copy('Zapisano Twój priorytet.', 'Your priority was saved.');
-      });
+      }); }
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         notice = GenesisLanguage.copy('Nie udało się zapisać wyboru.', 'Could not save your choice.');
-      });
+      }); }
     } finally {
-      if (mounted) setState(() => saving = false);
+      if (mounted) { setState(() => saving = false); }
     }
   }
 
