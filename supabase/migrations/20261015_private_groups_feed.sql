@@ -44,7 +44,8 @@ CREATE POLICY agc_posts_read ON public.agc_group_posts FOR SELECT TO authenticat
 USING(agc_internal.post_access(group_id));
 DROP POLICY IF EXISTS agc_posts_create ON public.agc_group_posts;
 CREATE POLICY agc_posts_create ON public.agc_group_posts FOR INSERT TO authenticated
-WITH CHECK(author_id=(SELECT auth.uid()) AND agc_internal.post_access(group_id));
+WITH CHECK(author_id=(SELECT auth.uid()) AND
+(agc_internal.group_owner(group_id) OR agc_internal.group_member(group_id)));
 DROP POLICY IF EXISTS agc_members_read ON public.agc_group_members;
 CREATE POLICY agc_members_read ON public.agc_group_members FOR SELECT TO authenticated
 USING(member_id=(SELECT auth.uid()) OR agc_internal.group_owner(group_id));
