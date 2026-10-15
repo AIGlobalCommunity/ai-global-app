@@ -9,6 +9,8 @@ import 'package:ai_global_community/agc_registration.dart';
 import 'package:ai_global_community/genesis_status_guide.dart';
 import 'package:ai_global_community/genesis_artwork.dart';
 import 'package:ai_global_community/genesis_mission.dart';
+import 'package:ai_global_community/genesis_support.dart';
+import 'package:ai_global_community/genesis_discussions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -123,6 +125,20 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Funding mission states that payments are not yet active',
+      (tester) async {
+    GenesisLanguage.selected.value = 'pl';
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(
+      body: SingleChildScrollView(child: GenesisSupport()))));
+    await tester.pump();
+    expect(find.text('FUNDUSZ PRZYSZŁEGO DIALOGU'), findsOneWidget);
+    expect(find.textContaining('Wpłaty nie są jeszcze uruchomione'), findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNWidgets(3));
+  });
+  test('Discussion and support pages are available as dedicated widgets', () {
+    expect(const GenesisDiscussions(), isA<StatefulWidget>());
+    expect(const GenesisSupport(), isA<StatefulWidget>());
+  });
   test('Referral links use the registered website and encode the invite code', () {
     final link = Uri.parse(genesisInviteLink('ABC123DEF0'));
     expect(link.scheme, 'https');
