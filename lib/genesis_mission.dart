@@ -11,7 +11,9 @@ class GenesisMission extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ValueListenableBuilder<String>(
+    valueListenable: GenesisLanguage.selected,
+    builder: (context, language, _) {
     final title = GenesisLanguage.copy(
       'DLACZEGO POWSTAJE THE GENESIS ERA?',
       'WHY DOES THE GENESIS ERA EXIST?');
@@ -98,7 +100,7 @@ class GenesisMission extends StatelessWidget {
             'promise neither contact nor special privileges.')),
       ],
     ]);
-  }
+  });
 }
 
 /// Only the logged-in member can read or change their own endorsement.
