@@ -12,7 +12,9 @@ String tr(String pl, String en) => GenesisLanguage.copy(pl, en);
 Uri? genesisExternalUrl(String? raw) {
   final uri = Uri.tryParse(raw?.trim() ?? '');
   if (uri == null || uri.scheme != 'https' || !uri.hasAuthority ||
-      uri.host.isEmpty || uri.userInfo.isNotEmpty) return null;
+      uri.host.isEmpty || uri.userInfo.isNotEmpty) {
+    return null;
+  }
   return uri;
 }
 
