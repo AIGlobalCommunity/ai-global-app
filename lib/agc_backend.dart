@@ -7,6 +7,7 @@ import 'agc_registration.dart';
 import 'agc_social_buttons.dart';
 import 'genesis_invites.dart';
 import 'genesis_language.dart';
+import 'genesis_social_profile.dart';
 import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
