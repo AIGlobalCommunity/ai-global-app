@@ -149,7 +149,7 @@ void main() {
   });
   test('Discussion and support pages are available as dedicated widgets', () {
     expect(const GenesisDiscussions(), isA<StatefulWidget>());
-    expect(const GenesisSupport(), isA<StatefulWidget>());
+    expect(const GenesisSupport(), isA<StatelessWidget>());
   });
   test('Referral links use the registered website and encode the invite code', () {
     final link = Uri.parse(genesisInviteLink('ABC123DEF0'));
