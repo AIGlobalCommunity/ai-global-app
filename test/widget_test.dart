@@ -11,6 +11,8 @@ import 'package:ai_global_community/genesis_artwork.dart';
 import 'package:ai_global_community/genesis_mission.dart';
 import 'package:ai_global_community/genesis_support.dart';
 import 'package:ai_global_community/genesis_discussions.dart';
+import 'package:ai_global_community/genesis_feed.dart';
+import 'package:ai_global_community/genesis_social.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -146,6 +148,17 @@ void main() {
     expect(genesisYoutubeId(Uri.parse(
       'https://youtu.be/dQw4w9WgXcQ')), 'dQw4w9WgXcQ');
     expect(genesisYoutubeId(Uri.parse('https://example.org/watch')), isNull);
+  });
+  test('Public share links use server-rendered previews', () {
+    const id = '123e4567-e89b-12d3-a456-426614174000';
+    final link = Uri.parse(genesisPublicPostUrl(id));
+    expect(link.scheme, 'https');
+    expect(link.host, 'gjnddmurmegbklvedhnp.supabase.co');
+    expect(link.path, '/functions/v1/genesis-share');
+    expect(link.queryParameters['id'], id);
+  });
+  test('Home feed is a dedicated social widget', () {
+    expect(const GenesisCommunityFeed(), isA<StatefulWidget>());
   });
   test('Discussion and support pages are available as dedicated widgets', () {
     expect(const GenesisDiscussions(), isA<StatefulWidget>());
