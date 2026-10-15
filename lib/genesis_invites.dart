@@ -107,11 +107,14 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
           color: AgcLuxury.champagne, fontSize: 19, fontWeight: FontWeight.bold,
           letterSpacing: 1.2)),
         const SizedBox(height: 7),
-        const Text('Za każdą nową osobę, która dołączy z Twojego linku '
-          'i potwierdzi e-mail, otrzymasz 100 prawdziwych GP. '
-          'Punkty są naliczane w bazie danych, tylko raz za osobę.'),
+        Text(GenesisLanguage.copy(
+          'Za każdą nową osobę, która dołączy z Twojego linku '
+          'i potwierdzi e-mail, otrzymasz 100 GP. '
+          'Punkty są naliczane tylko raz za osobę.',
+          'For each new member who joins through your link and '
+          'confirms their email, you receive 100 GP, once per person.')),
         const SizedBox(height: 12),
-        Text('Potwierdzone polecenia: ${widget.confirmedCount}',
+        Text('${GenesisLanguage.copy('Potwierdzone polecenia', 'Verified referrals')}: ${widget.confirmedCount}',
           style: const TextStyle(color: AgcLuxury.champagne, fontWeight: FontWeight.w600)),
         const SizedBox(height: 10),
         SelectableText(link, key: const Key('genesis_invite_link'),
@@ -136,17 +139,22 @@ class _GenesisInvitePanelState extends State<GenesisInvitePanel> {
         FilledButton.icon(
           onPressed: _email,
           icon: const Icon(Icons.forward_to_inbox),
-          label: const Text('Zaproś e-mailem'),
+          label: Text(GenesisLanguage.copy('Zaproś e-mailem', 'Invite by email')),
         ),
         const SizedBox(height: 8),
-        const Text('Wiadomość otworzy się w Twojej poczcie — '
+        Text(GenesisLanguage.copy(
+          'Wiadomość otworzy się w Twojej poczcie — '
           'aplikacja nie wysyła jej bez Twojego potwierdzenia.',
-          style: TextStyle(fontSize: 12, color: Colors.white70)),
+          'Your email app opens with a draft; nothing is sent '
+          'without your confirmation.'),
+          style: const TextStyle(fontSize: 12, color: Colors.white70)),
         const SizedBox(height: 18),
         FilledButton.tonalIcon(
           onPressed: generating ? null : _poster,
           icon: const Icon(Icons.image_outlined),
-          label: Text(generating ? 'Tworzenie grafiki...' : 'Generuj grafikę PNG do social mediów'),
+          label: Text(generating
+            ? GenesisLanguage.copy('Tworzenie grafiki...', 'Creating image...')
+            : GenesisLanguage.copy('Generuj grafikę PNG do social mediów', 'Create a PNG social poster')),
         ),
         const SizedBox(height: 10),
         Text(GenesisLanguage.t('share').toUpperCase(), style: const TextStyle(
