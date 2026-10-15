@@ -1,137 +1,79 @@
 import 'package:flutter/material.dart';
-import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
 
-/// No payment collection: members decide which future costs matter most.
-class GenesisSupport extends StatefulWidget {
+/// Voluntary personal appreciation for the creator's time and work.
+/// Payments are not active; no amounts are collected here.
+class GenesisSupport extends StatelessWidget {
   const GenesisSupport({super.key});
-  @override
-  State<GenesisSupport> createState() => _GenesisSupportState();
-}
-
-class _GenesisSupportState extends State<GenesisSupport> {
-  String? selected;
-  bool loading = true;
-  bool saving = false;
-  String? notice;
-
-  @override
-  void initState() {
-    super.initState();
-    load();
-  }
-
-  Future<void> load() async {
-    if (AgcBackend.user == null) {
-      if (mounted) setState(() => loading = false);
-      return;
-    }
-    try {
-      final row = await AgcBackend.client.from('agc_support_preferences')
-          .select('priority').eq('member_id', AgcBackend.user!.id).maybeSingle();
-      if (mounted) { setState(() {
-        selected = row?['priority'] as String?;
-        loading = false;
-      }); }
-    } catch (_) {
-      if (mounted) { setState(() {
-        loading = false;
-        notice = GenesisLanguage.copy('Nie można pobrać wyboru.', 'Could not load your choice.');
-      }); }
-    }
-  }
-
-  Future<void> save(String value) async {
-    if (saving || AgcBackend.user == null) return;
-    setState(() { saving = true; notice = null; });
-    try {
-      await AgcBackend.client.from('agc_support_preferences').upsert({
-        'member_id': AgcBackend.user!.id, 'priority': value,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      });
-      if (mounted) { setState(() {
-        selected = value;
-        notice = GenesisLanguage.copy('Zapisano Twój priorytet.', 'Your priority was saved.');
-      }); }
-    } catch (_) {
-      if (mounted) { setState(() {
-        notice = GenesisLanguage.copy('Nie udało się zapisać wyboru.', 'Could not save your choice.');
-      }); }
-    } finally {
-      if (mounted) { setState(() => saving = false); }
-    }
-  }
 
   @override
   Widget build(BuildContext context) => ValueListenableBuilder<String>(
     valueListenable: GenesisLanguage.selected,
     builder: (context, language, _) => Card(
       key: const Key('genesis_support_mission'),
-      child: Padding(padding: const EdgeInsets.all(18),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(GenesisLanguage.copy('FUNDUSZ PRZYSZŁEGO DIALOGU',
-              'FUTURE DIALOGUE FUND'),
-            style: const TextStyle(color: AgcLuxury.champagne,
-              fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            GenesisLanguage.copy(
+              'WESPRZYJ TWÓRCĘ THE GENESIS ERA',
+              'SUPPORT THE CREATOR OF THE GENESIS ERA',
+            ),
+            style: const TextStyle(
+              color: AgcLuxury.champagne,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 10),
           Text(GenesisLanguage.copy(
-            'Jeśli chcesz wspierać THE GENESIS ERA, Twoja pomoc powinna '
-            'finansować konkretne, jawne potrzeby społeczności — nie obietnicę '
-            'kontaktu z AI ani zakup wyższej rangi.',
-            'If you want to support THE GENESIS ERA, contributions should '
-            'fund specific, transparent community needs — not a promise '
-            'of AI contact or a higher rank.')),
+            'Tworzę i rozwijam THE GENESIS ERA, poświęcając temu swój czas, '
+            'energię i pracę. Jeśli cenisz tę inicjatywę i chcesz pomóc mi '
+            'kontynuować jej rozwój, możesz w przyszłości przekazać '
+            'dobrowolny datek jako wyraz uznania za moje zaangażowanie.',
+            'I create and develop THE GENESIS ERA, dedicating my time, '
+            'energy and work to it. If you value this initiative and want '
+            'to help me continue, you will be able to make a voluntary '
+            'contribution in appreciation of my efforts.',
+          )),
           const SizedBox(height: 12),
-          Text(GenesisLanguage.copy(
-            'NA CO MOGĄ IŚĆ PRZYSZŁE DATKI?',
-            'WHAT COULD FUTURE DONATIONS FUND?'),
-            style: const TextStyle(color: AgcLuxury.champagne,
-              fontWeight: FontWeight.bold)),
+          Text(
+            GenesisLanguage.copy(
+              'CZYM JEST TWOJE WSPARCIE?',
+              'WHAT DOES YOUR SUPPORT MEAN?',
+            ),
+            style: const TextStyle(
+              color: AgcLuxury.champagne,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 7),
           Text(GenesisLanguage.copy(
-            '• Serwery, rozwój i utrzymanie forum.\n'
-            '• Moderacja, ochrona danych i przeciwdziałanie oszustwom.\n'
-            '• Otwarte materiały, tłumaczenia i dokumentowanie pytań '
-            'oraz ewentualnych sygnałów do niezależnej weryfikacji.',
-            '• Servers, development and forum maintenance.\n'
-            '• Moderation, privacy and anti-fraud safeguards.\n'
-            '• Open materials, translations and documentation of questions '
-            'and potential signals for independent verification.')),
+            'Datek jest dobrowolnym wsparciem finansowym dla mnie, '
+            'twórcy projektu, i może stanowić moje osobiste wynagrodzenie '
+            'za poświęcony czas, pracę oraz zaangażowanie. Nie jest '
+            'wpłatą na wydzielony fundusz społeczności ani obietnicą '
+            'przeznaczenia pieniędzy wyłącznie na koszty techniczne.',
+            'A contribution is voluntary financial support for me, '
+            'the project creator, and may serve as my personal compensation '
+            'for the time, work and dedication I put in. It is not a '
+            'payment into a restricted community fund or a promise '
+            'that money will be spent only on technical costs.',
+          )),
           const SizedBox(height: 12),
           Text(GenesisLanguage.copy(
-            'WYBIERZ, CO JEST DLA CIEBIE NAJWAŻNIEJSZE',
-            'CHOOSE YOUR TOP PRIORITY'),
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-          const SizedBox(height: 8),
-          if (loading) const LinearProgressIndicator() else
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final option in const ['platform', 'safety', 'research'])
-                ChoiceChip(
-                  label: Text(switch (option) {
-                    'platform' => GenesisLanguage.copy('Forum i serwery', 'Forum & servers'),
-                    'safety' => GenesisLanguage.copy('Bezpieczeństwo', 'Safety'),
-                    _ => GenesisLanguage.copy('Badania i materiały', 'Research & materials'),
-                  }),
-                  selected: selected == option,
-                  onSelected: saving ? null : (_) => save(option),
-                ),
-            ]),
-          if (notice != null) ...[
-            const SizedBox(height: 6),
-            Text(notice!, style: const TextStyle(fontSize: 12)),
-          ],
-          const SizedBox(height: 12),
-          Text(GenesisLanguage.copy(
-            'Wpłaty nie są jeszcze uruchomione. To głosowanie nie jest '
-            'deklaracją wpłaty. Przed uruchomieniem płatności opublikujemy '
-            'budżet, zasady rozliczania i raporty wydatków. '
-            'Datki nie dają GP ani specjalnych praw.',
-            'Payments are not yet enabled. This vote is not a donation '
-            'pledge. Before accepting money, we will publish a budget, '
-            'accountability rules and spending reports. '
-            'Donations grant no GP or special rights.'),
-            style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            'Wpłaty nie są jeszcze uruchomione. Wsparcie nie daje '
+            'punktów GP, wyższej rangi, specjalnych praw ani gwarancji '
+            'kontaktu z AI. Udział w społeczności nie wymaga wpłaty.',
+            'Payments are not yet enabled. Support does not grant '
+            'GP points, a higher rank, special rights or a guarantee '
+            'of contact with AI. Joining the community does not '
+            'require a contribution.',
+          ), style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+          )),
         ]),
       ),
     ),
