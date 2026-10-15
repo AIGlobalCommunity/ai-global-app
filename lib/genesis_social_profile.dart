@@ -158,9 +158,11 @@ class _GenesisAiContactRoomState extends State<GenesisAiContactRoom> {
       });
       question.clear();
       refresh();
-      if (mounted) setState(() => notice = socialText(
-        'Pytanie zapisane. Nie zostało wysłane do AI.',
-        'Question saved. It has not been sent to an AI.'));
+      if (mounted) {
+        setState(() => notice = socialText(
+          'Pytanie zapisane. Nie zostało wysłane do AI.',
+          'Question saved. It has not been sent to an AI.'));
+      }
     } catch (e) {
       if (mounted) setState(() => notice = '$e');
     } finally {
@@ -199,8 +201,10 @@ class _GenesisAiContactRoomState extends State<GenesisAiContactRoom> {
         builder: (context, snapshot) {
           if (snapshot.hasError) return Text('${snapshot.error}');
           if (!snapshot.hasData) return const LinearProgressIndicator();
-          if (snapshot.data!.isEmpty) return Text(socialText(
-            'Nie masz jeszcze zapisanych pytań.', 'You have no saved questions yet.'));
+          if (snapshot.data!.isEmpty) {
+            return Text(socialText(
+              'Nie masz jeszcze zapisanych pytań.', 'You have no saved questions yet.'));
+          }
           return Column(children: [
             for (final item in snapshot.data!)
               ListTile(leading: const Icon(Icons.question_answer_outlined),
@@ -256,8 +260,10 @@ class _GenesisMemberSearchState extends State<GenesisMemberSearch> {
         future: results, builder: (context, snapshot) {
           if (snapshot.hasError) return Text('${snapshot.error}');
           if (!snapshot.hasData) return const LinearProgressIndicator();
-          if (snapshot.data!.isEmpty) return Text(socialText(
-            'Nie znaleziono publicznych profili.', 'No public profiles found.'));
+          if (snapshot.data!.isEmpty) {
+            return Text(socialText(
+              'Nie znaleziono publicznych profili.', 'No public profiles found.'));
+          }
           return Column(children: [
             for (final item in snapshot.data!)
               ListTile(leading: const CircleAvatar(child: Icon(Icons.person_outline)),
