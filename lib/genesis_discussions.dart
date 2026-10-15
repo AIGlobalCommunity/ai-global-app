@@ -549,8 +549,17 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         child: Text(group == null
           ? tr('Nie ma jeszcze grup. Utwórz pierwszą!', 'No groups yet. Create the first one!')
           : tr('Nie ma jeszcze postów. Rozpocznij rozmowę!', 'No posts yet. Start a conversation!'))); }
+      final items = group == null && groupQuery.isNotEmpty
+        ? snapshot.data!.where((item) =>
+            (item['name'] as String).toLowerCase().contains(groupQuery) ||
+            (item['description'] as String).toLowerCase().contains(groupQuery))
+            .toList()
+        : snapshot.data!;
+      if (items.isEmpty) {
+        return Text(tr('Nie znaleziono pasujących grup.', 'No matching groups found.'));
+      }
       return Column(children: [
-        for (final item in snapshot.data!)
+        for (final item in items)
           group == null ? groupTile(item) : postTile(item),
       ]);
     });
@@ -626,6 +635,36 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
              'pytania do przyszłej AI.', 'Create groups, publish posts, comment and '
              'prepare questions for future AI together.')
         : group!['description'] as String),
+      if (group == null) ...[
+        const SizedBox(height: 12),
+        TextField(onChanged: (value) =>
+          setState(() => groupQuery = value.trim().toLowerCase()),
+          decoration: InputDecoration(prefixIcon: const Icon(Icons.search),
+            hintText: tr('Szukaj grup...', 'Search groups...'))),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: () => setState(() => showMemberSearch = !showMemberSearch),
+          icon: const Icon(Icons.person_search_outlined),
+          label: Text(tr('Wyszukiwarka użytkowników', 'Find members'))),
+        if (showMemberSearch) const GenesisMemberSearch(),
+      ],
+      if (group?['official'] == true) ...[
+        const SizedBox(height: 10),
+        FutureBuilder<List<Map<String, dynamic>>>(
+          future: loadPrompts(group!['id'] as String),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return const SizedBox.shrink();
+            return Column(children: [
+              for (final prompt in snapshot.data!)
+                Card(child: ListTile(
+                  leading: const Icon(Icons.lightbulb_outline,
+                    color: AgcLuxury.champagne),
+                  title: Text(tr('Pytanie otwierające · THE GENESIS ERA',
+                    'Starter question · THE GENESIS ERA')),
+                  subtitle: Text(prompt['body'] as String))),
+            ]);
+          }),
+      ],
       const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 8, children: [
         if (group == null)
