@@ -2,6 +2,7 @@ import 'agc_backend.dart';
 import 'genesis_language.dart';
 import 'genesis_rank_simulator.dart';
 import 'genesis_discussions.dart';
+import 'genesis_feed.dart';
 import 'genesis_support.dart';
 import 'genesis_artwork.dart';
 import 'genesis_mission.dart';
@@ -193,6 +194,8 @@ class _AgcHomeState extends State<AgcHome> {
           Center(child: Container(width: 85, height: 1,
             color: AgcLuxury.champagne.withValues(alpha: .65))),
           const SizedBox(height: 24),
+          const GenesisCommunityFeed(),
+          const SizedBox(height: 18),
           const GenesisMission(),
           const SizedBox(height: 14),
           const GenesisSupport(),
