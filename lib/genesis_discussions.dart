@@ -53,8 +53,8 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   });
 
   void message(String msg) {
-    if (mounted) ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    if (mounted) { ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg))); }
   }
 
   Future<String?> compose(String title, String hint, int limit) async {
@@ -155,16 +155,16 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
 
   Widget content() => FutureBuilder<List<Map<String, dynamic>>>(
     future: data, builder: (context, snapshot) {
-      if (snapshot.hasError) return Column(children: [
+      if (snapshot.hasError) { return Column(children: [
         Text('${snapshot.error}'),
         TextButton(onPressed: refresh, child: Text(tr('Ponów', 'Retry'))),
-      ]);
-      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-      if (snapshot.data!.isEmpty) return Padding(
+      ]); }
+      if (!snapshot.hasData) { return const Center(child: CircularProgressIndicator()); }
+      if (snapshot.data!.isEmpty) { return Padding(
         padding: const EdgeInsets.all(16),
         child: Text(group == null
           ? tr('Nie ma jeszcze grup. Utwórz pierwszą!', 'No groups yet. Create the first one!')
-          : tr('Nie ma jeszcze postów. Rozpocznij rozmowę!', 'No posts yet. Start a conversation!')));
+          : tr('Nie ma jeszcze postów. Rozpocznij rozmowę!', 'No posts yet. Start a conversation!'))); }
       return Column(children: [
         for (final item in snapshot.data!)
           group == null ? groupTile(item) : postTile(item),
@@ -288,9 +288,9 @@ class _GenesisCommentsState extends State<GenesisComments> {
       input.clear();
       refresh();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('$e')));
-    } finally { if (mounted) setState(() => busy = false); }
+      if (mounted) { ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$e'))); }
+    } finally { if (mounted) { setState(() => busy = false); } }
   }
 
   Future<void> remove(String id) async {
@@ -298,8 +298,8 @@ class _GenesisCommentsState extends State<GenesisComments> {
       await AgcBackend.client.from('agc_post_comments').delete().eq('id', id);
       refresh();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) { ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$e'))); }
     }
   }
 
@@ -316,10 +316,10 @@ class _GenesisCommentsState extends State<GenesisComments> {
             style: const TextStyle(color: AgcLuxury.champagne, fontWeight: FontWeight.bold))),
         Expanded(child: FutureBuilder<List<Map<String, dynamic>>>(
           future: rows, builder: (context, snapshot) {
-            if (snapshot.hasError) return Center(child: Text('${snapshot.error}'));
+            if (snapshot.hasError) { return Center(child: Text('${snapshot.error}')); }
             if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-            if (snapshot.data!.isEmpty) return Center(child: Text(
-              tr('Bądź pierwszą osobą, która odpowie.', 'Be the first to reply.')));
+            if (snapshot.data!.isEmpty) { return Center(child: Text(
+              tr('Bądź pierwszą osobą, która odpowie.', 'Be the first to reply.'))); }
             return ListView.builder(itemCount: snapshot.data!.length,
               itemBuilder: (context, i) {
                 final row = snapshot.data![i];
