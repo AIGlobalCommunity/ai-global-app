@@ -6,6 +6,7 @@ import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
 import 'genesis_social.dart';
+import 'genesis_social_profile.dart';
 
 String tr(String pl, String en) => GenesisLanguage.copy(pl, en);
 
@@ -53,6 +54,8 @@ class GenesisDiscussions extends StatefulWidget {
 
 class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   Map<String, dynamic>? group;
+  String groupQuery = '';
+  bool showMemberSearch = false;
   late Future<List<Map<String, dynamic>>> data;
 
   @override
@@ -74,8 +77,14 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
 
   Future<List<Map<String, dynamic>>> loadGroups() async {
     final rows = await AgcBackend.client.from('agc_groups')
-        .select('id,name,description,owner_id,owner_label,visibility,created_at')
+        .select('id,name,description,owner_id,owner_label,visibility,official,created_at')
         .order('created_at', ascending: false).limit(100);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
+  Future<List<Map<String, dynamic>>> loadPrompts(String id) async {
+    final rows = await AgcBackend.client.from('agc_group_prompts')
+      .select('body').eq('group_id', id).limit(5);
     return List<Map<String, dynamic>>.from(rows);
   }
 
