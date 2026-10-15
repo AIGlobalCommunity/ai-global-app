@@ -55,6 +55,7 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
   @override
   void initState() {
     super.initState();
+    GenesisLanguage.selected.addListener(_onLanguageChanged);
     _loadSchedule();
     timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted && launchDate != null) setState(() {});
@@ -86,8 +87,11 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
     }
   }
 
+  void _onLanguageChanged() { if (mounted) setState(() {}); }
+
   @override
   void dispose() {
+    GenesisLanguage.selected.removeListener(_onLanguageChanged);
     timer?.cancel();
     super.dispose();
   }
