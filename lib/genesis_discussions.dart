@@ -171,10 +171,12 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                         final picked = await ImagePicker().pickImage(
                           source: ImageSource.gallery, maxWidth: 1600,
                           imageQuality: 82);
+                        if (!ctx.mounted) return;
                         if (picked != null) {
                           setDialogState(() { photo = picked; validation = null; });
                         }
-                      } catch (e) {
+                      } catch (_) {
+                        if (!ctx.mounted) return;
                         setDialogState(() => validation =
                           tr('Nie udało się wybrać zdjęcia.', 'Could not select image.'));
                       }
@@ -375,6 +377,12 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     if (yes != true) return;
     try {
       await AgcBackend.client.from('agc_group_posts').delete().eq('id', post['id']);
+      final imagePath = post['image_path'] as String?;
+      if (imagePath != null) {
+        try {
+          await AgcBackend.client.storage.from('agc-forum-images').remove([imagePath]);
+        } catch (_) { /* Best-effort media cleanup. */ }
+      }
       refresh();
     } catch (e) { message('$e'); }
   }
