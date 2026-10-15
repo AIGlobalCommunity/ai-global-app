@@ -194,7 +194,7 @@ class _AgcHomeState extends State<AgcHome> {
           Center(child: Container(width: 85, height: 1,
             color: AgcLuxury.champagne.withValues(alpha: .65))),
           const SizedBox(height: 24),
-          const GenesisCommunityFeed(),
+          GenesisCommunityFeed(onOpenDiscussions: () => setState(() => selected = 1)),
           const SizedBox(height: 18),
           const GenesisMission(),
           const SizedBox(height: 14),
