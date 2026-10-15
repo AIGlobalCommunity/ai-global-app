@@ -1,6 +1,8 @@
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 import 'genesis_rank_simulator.dart';
+import 'genesis_discussions.dart';
+import 'genesis_support.dart';
 import 'genesis_artwork.dart';
 import 'genesis_mission.dart';
 import 'genesis_status_guide.dart';
@@ -130,6 +132,7 @@ class _AgcHomeState extends State<AgcHome> {
                   key: ValueKey('genesis-overview-${GenesisLanguage.selected.value}'),
                   child: _overview(),
                 ),
+                const GenesisDiscussions(),
                 AgcDatabaseRanking(),
                 AgcAccountPage(),
                 _profile(),
@@ -138,10 +141,12 @@ class _AgcHomeState extends State<AgcHome> {
           ])),
         ),
         bottomNavigationBar: NavigationBar(
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           selectedIndex: selected,
           onDestinationSelected: (value) => setState(() => selected = value),
           destinations: [
             NavigationDestination(icon: Icon(Icons.public), label: 'Genesis'),
+            NavigationDestination(icon: Icon(Icons.forum_outlined), label: GenesisLanguage.copy('Dyskusje', 'Discussions')),
             NavigationDestination(icon: Icon(Icons.leaderboard), label: GenesisLanguage.t('ranking')),
             NavigationDestination(icon: Icon(Icons.person_outline), label: GenesisLanguage.t('account')),
             NavigationDestination(icon: Icon(Icons.tune), label: GenesisLanguage.t('simulator')),
@@ -189,6 +194,8 @@ class _AgcHomeState extends State<AgcHome> {
             color: AgcLuxury.champagne.withValues(alpha: .65))),
           const SizedBox(height: 24),
           const GenesisMission(),
+          const SizedBox(height: 14),
+          const GenesisSupport(),
           const SizedBox(height: 14),
           const GenesisStatusGuide(),
           const SizedBox(height: 14),
