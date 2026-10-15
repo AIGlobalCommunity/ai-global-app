@@ -7,7 +7,8 @@ import 'genesis_language.dart';
 import 'genesis_social.dart';
 
 class GenesisCommunityFeed extends StatefulWidget {
-  const GenesisCommunityFeed({super.key});
+  const GenesisCommunityFeed({super.key, this.onOpenDiscussions});
+  final VoidCallback? onOpenDiscussions;
   @override
   State<GenesisCommunityFeed> createState() => _GenesisCommunityFeedState();
 }
@@ -146,6 +147,10 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
         Expanded(child:Text(GenesisLanguage.copy('AKTUALNOŚCI SPOŁECZNOŚCI',
           'COMMUNITY FEED'),style:const TextStyle(
           color:AgcLuxury.champagne,fontWeight:FontWeight.bold,fontSize:17))),
+        if (widget.onOpenDiscussions != null)
+          IconButton(onPressed:widget.onOpenDiscussions,
+            icon:const Icon(Icons.edit_square),
+            tooltip:GenesisLanguage.copy('Napisz post','Write post')),
         IconButton(onPressed:refresh,icon:const Icon(Icons.refresh),
           tooltip:GenesisLanguage.copy('Odśwież','Refresh')),
       ]),
