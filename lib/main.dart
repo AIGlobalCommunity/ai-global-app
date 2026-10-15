@@ -199,6 +199,8 @@ class _AgcHomeState extends State<AgcHome> {
           const SizedBox(height: 18),
           const GenesisMission(),
           const SizedBox(height: 14),
+          const GenesisAiContactRoom(),
+          const SizedBox(height: 14),
           const GenesisSupport(),
           const SizedBox(height: 14),
           const GenesisStatusGuide(),
