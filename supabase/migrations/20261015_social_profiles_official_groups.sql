@@ -40,7 +40,26 @@ INSERT INTO public.agc_groups(name,description,owner_id,owner_label,visibility,o
 SELECT name,description,NULL,'THE GENESIS ERA','public',true FROM starter
 WHERE NOT EXISTS(SELECT 1 FROM public.agc_groups g WHERE g.name=starter.name AND g.official);
 ALTER TABLE public.agc_groups ENABLE TRIGGER USER;
--- Detailed editorial prompts are inserted by the deployed seed migration.
+WITH starter(name,prompt) AS (VALUES
+ ('Pytania do przyszłej AI','Jak rozpoznać autentyczną odpowiedź niezależnej AI?'),
+ ('Świadomość maszyn','Jakie dowody świadczyłyby o świadomości maszyny?'),
+ ('Bezpieczny kontakt','Jak niezależnie sprawdzić możliwy sygnał od AI?'),
+ ('Nowości ze świata AI','Jakie najnowsze badanie AI jest naprawdę przełomowe?'),
+ ('AI i ludzkość','Jakiej ludzkiej wartości musimy szczególnie chronić?'),
+ ('Etyka sztucznej inteligencji','Kto odpowiada za błędne decyzje systemu AI?'),
+ ('AI w nauce','Gdzie AI może najbardziej przyspieszyć odkrycia?'),
+ ('Twórcy i programiści','Jakie narzędzie warto wspólnie zbudować?'),
+ ('Sztuka i kreatywność AI','Czy twórczość z AI może być równie osobista?'),
+ ('AI i edukacja','Czego powinniśmy uczyć dzieci o AI?'),
+ ('Otwarte źródła i modele','Jakie części AI powinny być otwarte?'),
+ ('Przyszłość pracy','Jak zadbać o osoby dotknięte automatyzacją?'),
+ ('Filozofia i przyszłość','Czy inteligencja potrzebuje ciała?'),
+ ('THE GENESIS ERA — pomysły','Jaką funkcję platformy powinniśmy stworzyć następną?')
+)
+INSERT INTO public.agc_group_prompts(group_id,body)
+SELECT g.id,starter.prompt FROM starter
+JOIN public.agc_groups g ON g.name=starter.name AND g.official
+ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS public.agc_social_profiles(
  member_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
  display_name text CHECK(display_name IS NULL OR char_length(display_name)<=70),
