@@ -125,16 +125,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Support explains current and future uses and inactive payments',
+  testWidgets('Support describes platform development and inactive payments',
       (tester) async {
     GenesisLanguage.selected.value = 'pl';
     await tester.pumpWidget(const MaterialApp(home: Scaffold(
       body: SingleChildScrollView(child: GenesisSupport()))));
     await tester.pump();
-    expect(find.text('WESPRZYJ THE GENESIS ERA'), findsOneWidget);
+    expect(find.text('WSPARCIE ROZWOJU PLATFORMY'), findsOneWidget);
     expect(find.textContaining('Wpłaty nie są jeszcze uruchomione'), findsOneWidget);
-    expect(find.textContaining('pracy i zaangażowanie twórcy'), findsOneWidget);
+    expect(find.textContaining('pomaga rozwijać platformę'), findsOneWidget);
     expect(find.byType(ChoiceChip), findsNothing);
+  });
+  test('Forum accepts safe HTTPS article and video links', () {
+    expect(genesisExternalUrl('https://example.org/ai')?.host, 'example.org');
+    expect(genesisExternalUrl('http://example.org'), isNull);
+    expect(genesisExternalUrl('javascript:alert(1)'), isNull);
+    expect(genesisExternalUrl('https://user:pass@example.org'), isNull);
+    expect(genesisYoutubeId(Uri.parse(
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ')), 'dQw4w9WgXcQ');
+    expect(genesisYoutubeId(Uri.parse(
+      'https://youtu.be/dQw4w9WgXcQ')), 'dQw4w9WgXcQ');
+    expect(genesisYoutubeId(Uri.parse('https://example.org/watch')), isNull);
   });
   test('Discussion and support pages are available as dedicated widgets', () {
     expect(const GenesisDiscussions(), isA<StatefulWidget>());
