@@ -46,6 +46,13 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
     return rows;
   }
 
+  Future<List<Map<String, dynamic>>> starterTopics() async {
+    final rows = await AgcBackend.client.from('agc_group_prompts')
+      .select('body,agc_groups!inner(name,visibility)')
+      .limit(6);
+    return List<Map<String, dynamic>>.from(rows);
+  }
+
   void message(String text) {
     if(mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(text)));
@@ -158,10 +165,33 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
         if(snapshot.hasError) { return Text(
           '${GenesisLanguage.copy('Nie udało się pobrać postów','Could not load posts')}: ${snapshot.error}'); }
         if(!snapshot.hasData) { return const Center(child:CircularProgressIndicator()); }
-        if(snapshot.data!.isEmpty) { return Padding(
-          padding:const EdgeInsets.all(14),
-          child:Text(GenesisLanguage.copy('Jeszcze nie ma postów. Otwórz Dyskusje i napisz pierwszy.',
-            'No posts yet. Open Discussions and write the first post.'))); }
+        if(snapshot.data!.isEmpty) {
+          return FutureBuilder<List<Map<String, dynamic>>>(
+            future: starterTopics(),
+            builder: (context, starter) {
+              if (!starter.hasData || starter.data!.isEmpty) {
+                return Text(GenesisLanguage.copy(
+                  'Otwórz Dyskusje i napisz pierwszy post.',
+                  'Open Discussions and write the first post.'));
+              }
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(GenesisLanguage.copy(
+                  'TEMATY DO ROZMOWY · THE GENESIS ERA',
+                  'DISCUSSION STARTERS · THE GENESIS ERA'),
+                  style: const TextStyle(color: AgcLuxury.champagne,
+                    fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                for (final item in starter.data!)
+                  Card(child: ListTile(
+                    leading: const Icon(Icons.lightbulb_outline,
+                      color: AgcLuxury.champagne),
+                    title: Text((item['agc_groups'] as Map<String,dynamic>)['name'] as String),
+                    subtitle: Text(item['body'] as String),
+                    onTap: widget.onOpenDiscussions,
+                    trailing: const Icon(Icons.chevron_right))),
+              ]);
+            });
+        }
         return Column(children:[for(final post in snapshot.data!) tile(post)]);
       }),
     ]);
