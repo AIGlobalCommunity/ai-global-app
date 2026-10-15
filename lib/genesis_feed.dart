@@ -46,8 +46,9 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
   }
 
   void message(String text) {
-    if(mounted) ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content:Text(text)));
+    if(mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(text)));
+    }
   }
 
   Future<void> toggleLike(Map<String,dynamic> post) async {
@@ -149,13 +150,13 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
           tooltip:GenesisLanguage.copy('Odśwież','Refresh')),
       ]),
       FutureBuilder<List<Map<String,dynamic>>>(future:posts,builder:(context,snapshot){
-        if(snapshot.hasError) return Text(
+        if(snapshot.hasError) { return Text(
           '${GenesisLanguage.copy('Nie udało się pobrać postów','Could not load posts')}: ${snapshot.error}');
-        if(!snapshot.hasData) return const Center(child:CircularProgressIndicator());
-        if(snapshot.data!.isEmpty) return Padding(
+        if(!snapshot.hasData) { return const Center(child:CircularProgressIndicator()); }
+        if(snapshot.data!.isEmpty) { return Padding(
           padding:const EdgeInsets.all(14),
           child:Text(GenesisLanguage.copy('Jeszcze nie ma postów. Otwórz Dyskusje i napisz pierwszy.',
-            'No posts yet. Open Discussions and write the first post.')));
+            'No posts yet. Open Discussions and write the first post.'))); }
         return Column(children:[for(final post in snapshot.data!) tile(post)]);
       }),
     ]);
