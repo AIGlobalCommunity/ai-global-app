@@ -17,8 +17,8 @@ class GenesisSupport extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(
             GenesisLanguage.copy(
-              'WESPRZYJ THE GENESIS ERA',
-              'SUPPORT THE GENESIS ERA',
+              'WSPARCIE ROZWOJU PLATFORMY',
+              'SUPPORT PLATFORM DEVELOPMENT',
             ),
             style: const TextStyle(
               color: AgcLuxury.champagne,
@@ -42,8 +42,8 @@ class GenesisSupport extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             GenesisLanguage.copy(
-              'NA CO PRZEZNACZAMY WSPARCIE?',
-              'HOW CAN SUPPORT BE USED?',
+              'ROZWIJAMY THE GENESIS ERA',
+              'BUILDING THE GENESIS ERA',
             ),
             style: const TextStyle(
               color: AgcLuxury.champagne,
@@ -52,17 +52,12 @@ class GenesisSupport extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           Text(GenesisLanguage.copy(
-            'Na obecnym etapie datki wspierają pracę i zaangażowanie twórcy '
-            'oraz dalszy rozwój inicjatywy. W miarę rozwoju projektu '
-            'wsparcie może także pomagać w utrzymaniu platformy, '
-            'rozbudowie społeczności, moderacji, materiałach edukacyjnych '
-            'i nowych działaniach związanych z misją THE GENESIS ERA.',
-            'At this stage, contributions support the creator\'s work '
-            'and dedication, as well as the continued development of '
-            'the initiative. As the project grows, support may also '
-            'help maintain the platform, expand the community, fund '
-            'moderation, educational materials and new activities '
-            'related to THE GENESIS ERA mission.',
+            'Twoje dobrowolne wsparcie pomaga rozwijać platformę i społeczność '
+            'THE GENESIS ERA — tworzyć nowe funkcje, prowadzić dyskusje '
+            'i rozwijać naszą wspólną inicjatywę.',
+            'Your voluntary support helps develop THE GENESIS ERA platform '
+            'and community — build new features, foster discussions '
+            'and grow our shared initiative.',
           )),
           const SizedBox(height: 12),
           Text(GenesisLanguage.copy(
