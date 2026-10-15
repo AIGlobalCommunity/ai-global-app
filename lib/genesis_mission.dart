@@ -180,7 +180,9 @@ class _GenesisManifestoEndorsementState
   }
 
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => ValueListenableBuilder<String>(
+    valueListenable: GenesisLanguage.selected,
+    builder: (context, language, _) => Card(
     child: Padding(
       padding: const EdgeInsets.all(18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -222,5 +224,5 @@ class _GenesisManifestoEndorsementState
         ],
       ]),
     ),
-  );
+  ));
 }
