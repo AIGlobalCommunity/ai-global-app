@@ -18,7 +18,18 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   @override
   void initState() {
     super.initState();
+    GenesisLanguage.selected.addListener(onLanguageChanged);
     data = loadGroups();
+  }
+
+  void onLanguageChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    GenesisLanguage.selected.removeListener(onLanguageChanged);
+    super.dispose();
   }
 
   Future<List<Map<String, dynamic>>> loadGroups() async {
