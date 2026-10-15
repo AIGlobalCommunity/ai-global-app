@@ -125,15 +125,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Funding mission states that payments are not yet active',
+  testWidgets('Creator support explains personal compensation and inactive payments',
       (tester) async {
     GenesisLanguage.selected.value = 'pl';
     await tester.pumpWidget(const MaterialApp(home: Scaffold(
       body: SingleChildScrollView(child: GenesisSupport()))));
     await tester.pump();
-    expect(find.text('FUNDUSZ PRZYSZŁEGO DIALOGU'), findsOneWidget);
+    expect(find.text('WESPRZYJ TWÓRCĘ THE GENESIS ERA'), findsOneWidget);
     expect(find.textContaining('Wpłaty nie są jeszcze uruchomione'), findsOneWidget);
-    expect(find.byType(ChoiceChip), findsNWidgets(3));
+    expect(find.textContaining('osobiste wynagrodzenie'), findsOneWidget);
+    expect(find.byType(ChoiceChip), findsNothing);
   });
   test('Discussion and support pages are available as dedicated widgets', () {
     expect(const GenesisDiscussions(), isA<StatefulWidget>());
