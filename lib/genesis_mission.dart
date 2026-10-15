@@ -130,7 +130,9 @@ class _GenesisManifestoEndorsementState
     final client = Supabase.instance.client;
     final id = client.auth.currentUser?.id;
     if (id == null) {
-      if (mounted) setState(() { busy = false; error = 'Sign in required'; });
+      if (mounted) {
+        setState(() { busy = false; error = 'Sign in required'; });
+      }
       return;
     }
     try {
@@ -139,19 +141,23 @@ class _GenesisManifestoEndorsementState
             .select('signed_at').eq('member_id', id).maybeSingle(),
         client.rpc('agc_manifesto_supporter_count'),
       ]);
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         signed = result[0] != null;
         count = (result[1] as num).toInt();
         busy = false;
         error = null;
       });
+      }
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         busy = false;
         error = GenesisLanguage.copy(
           'Nie udało się wczytać podpisów. Spróbuj ponownie.',
           'Could not load endorsements. Try again.');
       });
+      }
     }
   }
 
@@ -170,12 +176,14 @@ class _GenesisManifestoEndorsementState
       }
       await load();
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         busy = false;
         error = GenesisLanguage.copy(
           'Nie udało się zapisać decyzji. Spróbuj ponownie.',
           'Could not save your choice. Try again.');
       });
+      }
     }
   }
 
