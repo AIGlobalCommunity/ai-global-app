@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
-import 'genesis_currency.dart';
 import 'genesis_language.dart';
 
 /// Read-only snapshot of points that have actually been awarded by Supabase.
@@ -73,7 +72,6 @@ class GenesisRankSimulator extends StatefulWidget {
 class _GenesisRankSimulatorState extends State<GenesisRankSimulator> {
   late Future<GenesisActualSnapshot> snapshot;
   int extraReferrals = 0;
-  int extraSupport = 0;
 
   @override
   void initState() {
@@ -83,12 +81,10 @@ class _GenesisRankSimulatorState extends State<GenesisRankSimulator> {
 
   void reset() => setState(() {
     extraReferrals = 0;
-    extraSupport = 0;
   });
 
   void refresh() => setState(() {
     extraReferrals = 0;
-    extraSupport = 0;
     snapshot = loadGenesisActualSnapshot();
   });
 
@@ -155,8 +151,7 @@ class _GenesisRankSimulatorState extends State<GenesisRankSimulator> {
         ]);
       }
       final real = state.data!;
-      final simulatedGain = extraReferrals * 100 +
-          (extraSupport * 20).clamp(0, 200);
+      final simulatedGain = extraReferrals * 100;
       final simulatedTotal = real.total + simulatedGain;
       final projected = real.rankingScores.isEmpty && real.actualRank == null
           ? null : real.projectedRank(simulatedTotal);
@@ -198,14 +193,6 @@ class _GenesisRankSimulatorState extends State<GenesisRankSimulator> {
           real.pointsFor('verified_referral'), extraReferrals,
           () => setState(() => extraReferrals--),
           () => setState(() => extraReferrals++)),
-        const GenesisCurrencyPanel(),
-        const SizedBox(height: 8),
-        counter(
-          '${GenesisLanguage.copy('Przykładowe wsparcie', 'Example support')} '
-              '10 ${GenesisCurrency.currency} (+20 GP)',
-          real.pointsFor('contribution'), extraSupport,
-          () => setState(() => extraSupport--),
-          () => setState(() => extraSupport++)),
         const SizedBox(height: 12),
         metric(GenesisLanguage.copy('Hipotetyczna suma', 'Hypothetical total'),
           '$simulatedTotal GP (+$simulatedGain GP)'),
