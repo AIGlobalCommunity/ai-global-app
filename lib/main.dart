@@ -125,7 +125,15 @@ class _AgcHomeState extends State<AgcHome> {
             const AgcCountdownBanner(compact: true),
             Expanded(child: IndexedStack(
               index: selected,
-              children: [_overview(), AgcDatabaseRanking(), AgcAccountPage(), _profile()],
+              children: [
+                KeyedSubtree(
+                  key: ValueKey('genesis-overview-${GenesisLanguage.selected.value}'),
+                  child: _overview(),
+                ),
+                AgcDatabaseRanking(),
+                AgcAccountPage(),
+                _profile(),
+              ],
             )),
           ])),
         ),
