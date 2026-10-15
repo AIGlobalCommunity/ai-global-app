@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
+import 'genesis_social.dart';
 
 String tr(String pl, String en) => GenesisLanguage.copy(pl, en);
 
@@ -73,7 +74,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
 
   Future<List<Map<String, dynamic>>> loadGroups() async {
     final rows = await AgcBackend.client.from('agc_groups')
-        .select('id,name,description,owner_label,created_at')
+        .select('id,name,description,owner_id,owner_label,visibility,created_at')
         .order('created_at', ascending: false).limit(100);
     return List<Map<String, dynamic>>.from(rows);
   }
@@ -90,6 +91,8 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     final comments = await AgcBackend.client.from('agc_post_comments')
         .select('post_id').inFilter('post_id', ids);
     for (final p in posts) {
+      p['visibility'] = group?['visibility'] ?? 'public';
+      p['group_name'] = group?['name'] ?? '';
       p['likes'] = likes.where((r) => r['post_id'] == p['id']).length;
       p['liked'] = likes.any((r) =>
         r['post_id'] == p['id'] && r['member_id'] == AgcBackend.user?.id);
@@ -138,12 +141,120 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       message(tr('Nazwa min. 4 znaki, opis min. 10.', 'Name min. 4, description min. 10 characters.'));
       return;
     }
+    final visibility = await showDialog<String>(
+      context: context, builder: (ctx) => AlertDialog(
+        title: Text(tr('Prywatność grupy', 'Group privacy')),
+        content: Text(tr('Publiczne posty trafiają do feedu i można je udostępniać. '
+          'Posty prywatne widzą tylko członkowie.',
+          'Public posts appear in the feed and can be shared. '
+          'Private posts are only visible to members.')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, 'private'),
+            child: Text(tr('Prywatna 🔒', 'Private 🔒'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, 'public'),
+            child: Text(tr('Publiczna 🌐', 'Public 🌐'))),
+        ]));
+    if (visibility == null) return;
     try {
       await AgcBackend.client.from('agc_groups').insert({
         'owner_id': AgcBackend.user!.id, 'name': name, 'description': description,
+        'visibility': visibility,
       });
       refresh();
     } catch (e) { message('$e'); }
+  }
+
+  Future<Map<String, dynamic>?> myMembership() async {
+    if (group == null) return null;
+    return await AgcBackend.client.from('agc_group_members')
+      .select('status').eq('group_id', group!['id'])
+      .eq('member_id', AgcBackend.user!.id).maybeSingle();
+  }
+
+  Future<void> joinGroup() async {
+    try {
+      await AgcBackend.client.from('agc_group_members').insert({
+        'group_id': group!['id'], 'member_id': AgcBackend.user!.id,
+        'status': 'active',
+      });
+      refresh();
+    } catch (e) { message('$e'); }
+  }
+
+  Future<void> acceptInvite() async {
+    try {
+      await AgcBackend.client.from('agc_group_members').update({'status':'active'})
+        .eq('group_id', group!['id']).eq('member_id', AgcBackend.user!.id)
+        .eq('status','invited');
+      refresh();
+    } catch (e) { message('$e'); }
+  }
+
+  Future<void> leaveGroup() async {
+    try {
+      await AgcBackend.client.from('agc_group_members').delete()
+        .eq('group_id', group!['id']).eq('member_id', AgcBackend.user!.id);
+      setState(() { group = null; data = loadGroups(); });
+    } catch (e) { message('$e'); }
+  }
+
+  Future<void> inviteMember() async {
+    final handle = await compose(
+      tr('Zaproś użytkownika', 'Invite a member'),
+      tr('Podaj dokładny publiczny nick użytkownika',
+        'Enter the member’s exact public nickname'), 64);
+    if (handle == null || handle.trim().isEmpty) return;
+    try {
+      final success = await AgcBackend.client.rpc('agc_invite_group_member',
+        params: {'p_group_id': group!['id'], 'p_handle': handle.trim()});
+      message(success == true
+        ? tr('Zaproszenie wysłane.', 'Invitation sent.')
+        : tr('Nie znaleziono użytkownika z publicznym nickiem.',
+          'No member with that public nickname was found.'));
+    } catch (e) { message('$e'); }
+  }
+
+  Widget membershipActions() {
+    if (group == null) return const SizedBox.shrink();
+    final owner = group!['owner_id'] == AgcBackend.user?.id;
+    if (owner) {
+      return Wrap(spacing: 8, runSpacing: 8, children: [
+        FilledButton.icon(onPressed: createPost, icon: const Icon(Icons.edit_outlined),
+          label: Text(tr('Napisz post', 'Write post'))),
+        OutlinedButton.icon(onPressed: inviteMember,
+          icon: const Icon(Icons.person_add_alt_1),
+          label: Text(tr('Zaproś po nicku', 'Invite by nickname'))),
+      ]);
+    }
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: myMembership(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData && snapshot.connectionState != ConnectionState.done) {
+          return const LinearProgressIndicator();
+        }
+        final status = snapshot.data?['status'];
+        if (status == 'invited') {
+          return FilledButton.icon(onPressed: acceptInvite,
+            icon: const Icon(Icons.mark_email_read_outlined),
+            label: Text(tr('Przyjmij zaproszenie', 'Accept invitation')));
+        }
+        if (status == 'active') {
+          return Wrap(spacing: 8, children: [
+            FilledButton.icon(onPressed: createPost, icon: const Icon(Icons.edit_outlined),
+              label: Text(tr('Napisz post', 'Write post'))),
+            TextButton.icon(onPressed: leaveGroup, icon: const Icon(Icons.logout),
+              label: Text(tr('Opuść grupę', 'Leave group'))),
+          ]);
+        }
+        if (group!['visibility'] == 'public') {
+          return FilledButton.icon(onPressed: joinGroup,
+            icon: const Icon(Icons.group_add_outlined),
+            label: Text(tr('Dołącz do grupy', 'Join group')));
+        }
+        return Text(tr('Grupa prywatna — dostęp tylko na zaproszenie.',
+          'Private group — invitation required.'));
+      },
+    );
   }
 
   Future<GenesisPostDraft?> composePost() async {
@@ -271,7 +382,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         }
         final now = DateTime.now().toUtc();
         imagePath = '${AgcBackend.user!.id}/${now.microsecondsSinceEpoch}_${now.millisecondsSinceEpoch}.$extension';
-        await AgcBackend.client.storage.from('agc-forum-images').uploadBinary(
+        await AgcBackend.client.storage.from(
+          group?['visibility'] == 'private' ? 'agc-private-forum-images' : 'agc-forum-images'
+        ).uploadBinary(
           imagePath, bytes, fileOptions: FileOptions(contentType: mime));
       }
       await AgcBackend.client.from('agc_group_posts').insert({
@@ -283,7 +396,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     } catch (e) {
       if (imagePath != null) {
         try {
-          await AgcBackend.client.storage.from('agc-forum-images').remove([imagePath]);
+          await AgcBackend.client.storage.from(
+            group?['visibility'] == 'private' ? 'agc-private-forum-images' : 'agc-forum-images'
+          ).remove([imagePath]);
         } catch (_) { /* Upload cleanup is best-effort. */ }
       }
       message('${tr('Nie udało się opublikować', 'Could not publish')}: $e');
@@ -307,7 +422,18 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (imagePath != null) ...[
         const SizedBox(height: 12),
-        ClipRRect(borderRadius: BorderRadius.circular(10),
+        if (post['visibility'] == 'private')
+          FutureBuilder<String>(
+            future: AgcBackend.client.storage.from('agc-private-forum-images')
+              .createSignedUrl(imagePath, 600),
+            builder: (context, snapshot) => snapshot.hasData
+              ? Image.network(snapshot.data!, height: 280,
+                  width: double.infinity, fit: BoxFit.contain)
+              : const SizedBox(height: 40, child: Center(
+                  child: CircularProgressIndicator())),
+          )
+        else
+          ClipRRect(borderRadius: BorderRadius.circular(10),
           child: Image.network(
             AgcBackend.client.storage.from('agc-forum-images').getPublicUrl(imagePath),
             height: 280, width: double.infinity, fit: BoxFit.contain,
@@ -392,7 +518,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       final imagePath = post['image_path'] as String?;
       if (imagePath != null) {
         try {
-          await AgcBackend.client.storage.from('agc-forum-images').remove([imagePath]);
+          await AgcBackend.client.storage.from(
+            group?['visibility'] == 'private' ? 'agc-private-forum-images' : 'agc-forum-images'
+          ).remove([imagePath]);
         } catch (_) { /* Best-effort media cleanup. */ }
       }
       refresh();
@@ -420,13 +548,15 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   Widget groupTile(Map<String, dynamic> item) => Card(
     child: ListTile(
       contentPadding: const EdgeInsets.all(14),
-      leading: const Icon(Icons.forum_outlined, color: AgcLuxury.champagne),
+      leading: Icon(item['visibility'] == 'private'
+         ? Icons.lock_outline : Icons.public, color: AgcLuxury.champagne),
       title: Text(item['name'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 5),
         Text(item['description'] as String),
         const SizedBox(height: 7),
-        Text('${item['owner_label']}', style: const TextStyle(fontSize: 12, color: Colors.white70)),
+        Text('${item['owner_label']} · ${item['visibility'] == 'private' ? tr('Prywatna', 'Private') : tr('Publiczna', 'Public')}',
+           style: const TextStyle(fontSize: 12, color: Colors.white70)),
       ]),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => setState(() {
@@ -455,6 +585,10 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
             refresh();
           }, icon: const Icon(Icons.chat_bubble_outline),
             label: Text('${item['comments']}')),
+          if (item['visibility'] == 'public')
+            TextButton.icon(onPressed: () => genesisSharePost(context, item),
+              icon: const Icon(Icons.share_outlined),
+              label: Text(tr('Udostępnij', 'Share'))),
           TextButton.icon(onPressed: () => report(item),
             icon: const Icon(Icons.flag_outlined),
             label: Text(tr('Zgłoś', 'Report'))),
@@ -484,9 +618,11 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         : group!['description'] as String),
       const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 8, children: [
-        FilledButton.icon(onPressed: group == null ? createGroup : createPost,
-          icon: const Icon(Icons.add),
-          label: Text(group == null ? tr('Nowa grupa', 'New group') : tr('Napisz post', 'Write a post'))),
+        if (group == null)
+          FilledButton.icon(onPressed: createGroup,
+            icon: const Icon(Icons.add),
+            label: Text(tr('Nowa grupa', 'New group')))
+        else membershipActions(),
         OutlinedButton.icon(onPressed: refresh, icon: const Icon(Icons.refresh),
           label: Text(tr('Odśwież', 'Refresh'))),
       ]),
