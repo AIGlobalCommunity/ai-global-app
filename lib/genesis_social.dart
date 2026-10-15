@@ -63,7 +63,7 @@ Future<void> genesisSharePost(BuildContext context, Map<String, dynamic> post) a
               'Share to other apps')),
             onTap:() async {
               Navigator.pop(ctx);
-              await SharePlus.instance.share(ShareParams(text:message,uri:Uri.parse(link)));
+              await SharePlus.instance.share(ShareParams(text:message));
             }),
           ListTile(leading:const Icon(Icons.copy),
             title:Text(GenesisLanguage.copy('Kopiuj link','Copy link')),
