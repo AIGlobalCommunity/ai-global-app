@@ -132,10 +132,7 @@ class _AgcHomeState extends State<AgcHome> {
                   key: ValueKey('genesis-overview-${GenesisLanguage.selected.value}'),
                   child: _overview(),
                 ),
-                KeyedSubtree(
-                  key: ValueKey('genesis-discussions-${GenesisLanguage.selected.value}'),
-                  child: const GenesisDiscussions(),
-                ),
+                const GenesisDiscussions(),
                 AgcDatabaseRanking(),
                 AgcAccountPage(),
                 _profile(),
