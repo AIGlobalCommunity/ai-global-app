@@ -2,6 +2,7 @@ import 'agc_backend.dart';
 import 'genesis_language.dart';
 import 'genesis_rank_simulator.dart';
 import 'genesis_artwork.dart';
+import 'genesis_mission.dart';
 import 'genesis_status_guide.dart';
 import 'agc_countdown.dart';
 import 'agc_luxury_theme.dart';
@@ -52,6 +53,7 @@ class _AgcAccessGateState extends State<AgcAccessGate> {
   @override
   void initState() {
     super.initState();
+    GenesisLanguage.selected.addListener(_onLanguageChanged);
     if (AgcBackend.configured) {
       authEvents = AgcBackend.client.auth.onAuthStateChange.listen((_) {
         if (mounted) setState(() {});
@@ -59,8 +61,11 @@ class _AgcAccessGateState extends State<AgcAccessGate> {
     }
   }
 
+  void _onLanguageChanged() { if (mounted) setState(() {}); }
+
   @override
   void dispose() {
+    GenesisLanguage.selected.removeListener(_onLanguageChanged);
     authEvents?.cancel();
     super.dispose();
   }
@@ -75,9 +80,9 @@ class _AgcAccessGateState extends State<AgcAccessGate> {
       )));
     }
     if (AgcBackend.user == null) {
-      return const Scaffold(body: SafeArea(child: AgcLuxuryBackdrop(child: AgcAccountPage())));
+      return Scaffold(body: SafeArea(child: AgcLuxuryBackdrop(child: AgcAccountPage())));
     }
-    return const AgcHome();
+    return AgcHome();
   }
 }
 
@@ -90,10 +95,26 @@ class AgcHome extends StatefulWidget {
 
 class _AgcHomeState extends State<AgcHome> {
   int selected = 0;
+
+  void _onLanguageChanged() { if (mounted) setState(() {}); }
+
+  @override
+  void initState() {
+    super.initState();
+    GenesisLanguage.selected.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    GenesisLanguage.selected.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('✦  THE GENESIS ERA  ✦'),
+          title: const FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text('✦  THE GENESIS ERA  ✦')),
           centerTitle: true,
           actions: const [GenesisLanguagePicker()],
           backgroundColor: background,
@@ -104,7 +125,7 @@ class _AgcHomeState extends State<AgcHome> {
             const AgcCountdownBanner(compact: true),
             Expanded(child: IndexedStack(
               index: selected,
-              children: [_overview(), const AgcDatabaseRanking(), const AgcAccountPage(), _profile()],
+              children: [_overview(), AgcDatabaseRanking(), AgcAccountPage(), _profile()],
             )),
           ])),
         ),
@@ -120,8 +141,10 @@ class _AgcHomeState extends State<AgcHome> {
         ),
       );
 
-  Widget _overview() => ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  Widget _overview() => Center(child: ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 900),
+    child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         children: [
           const SizedBox(height: 14),
           const Center(child: GenesisArtwork(size: 255)),
@@ -157,6 +180,8 @@ class _AgcHomeState extends State<AgcHome> {
           Center(child: Container(width: 85, height: 1,
             color: AgcLuxury.champagne.withValues(alpha: .65))),
           const SizedBox(height: 24),
+          const GenesisMission(),
+          const SizedBox(height: 14),
           const GenesisStatusGuide(),
           const SizedBox(height: 14),
           GenesisPanel(icon: Icons.auto_awesome_outlined,
@@ -193,7 +218,7 @@ class _AgcHomeState extends State<AgcHome> {
             style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
-      );
+      )));
 
-  Widget _profile() => const GenesisRankSimulator();
+  Widget _profile() => GenesisRankSimulator();
 }
