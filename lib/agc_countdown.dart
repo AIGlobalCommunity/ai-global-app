@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'agc_backend.dart';
+import 'genesis_language.dart';
 
 const _gold = Color(0xFFE3C78C);
 const _panel = Color(0xFF132239);
@@ -97,16 +98,16 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
 
     Widget countdown(String title, DateTime? date, IconData icon) {
       final label = loading
-          ? 'Wczytywanie...'
+          ? GenesisLanguage.copy('Wczytywanie...', 'Loading...')
           : loadFailed
-              ? 'Nie można odczytać daty'
+              ? GenesisLanguage.copy('Nie można odczytać daty', 'Date unavailable')
               : date == null
-                  ? 'OCZEKIWANIE NA START'
+                  ? GenesisLanguage.copy('OCZEKIWANIE NA START', 'AWAITING START')
                   : now.isBefore(date)
                       ? agcDurationLabel(date.difference(now))
-                      : 'ETAP ZAKOŃCZONY';
+                      : GenesisLanguage.copy('ETAP ZAKOŃCZONY', 'STAGE COMPLETED');
       final sub = date == null
-          ? 'Data startu nie została ogłoszona'
+          ? GenesisLanguage.copy('Data startu nie została ogłoszona', 'Start date not announced')
           : title == 'START'
               ? '01.11.2026, 00:00 UTC'
               : title == 'MANIFEST'
