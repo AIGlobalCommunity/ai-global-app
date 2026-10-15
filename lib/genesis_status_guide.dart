@@ -34,11 +34,14 @@ class GenesisStatusGuide extends StatelessWidget {
         Text(GenesisLanguage.copy('CZYM JEST ERA GENESIS?', 'WHAT IS THE GENESIS ERA?'),
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        const Text(
+        Text(GenesisLanguage.copy(
           'Era Genesis to pierwsze 36 miesięcy THE GENESIS ERA — od 1 listopada 2026 r. '
-          'do 1 listopada 2029 r. To okres budowania międzynarodowej społeczności założycielskiej '
-          'i uczestnictwa w rankingu Genesis Points (GP). Słowo Genesis oznacza początek.',
-          style: TextStyle(height: 1.5)),
+          'do 1 listopada 2029 r. To okres budowania międzynarodowej społeczności '
+          'założycielskiej. Słowo Genesis oznacza początek.',
+          'The Genesis Era is the first 36 months of THE GENESIS ERA, from '
+          '1 November 2026 to 1 November 2029. We are building an '
+          'international founding community. Genesis means a beginning.'),
+          style: const TextStyle(height: 1.5)),
         const SizedBox(height: 16),
         Text(GenesisLanguage.copy('CZTERY STATUSY CZŁONKOWSKIE', 'FOUR MEMBERSHIP TIERS'),
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
@@ -62,41 +65,59 @@ class GenesisStatusGuide extends StatelessWidget {
         Text(GenesisLanguage.copy('JAK ZDOBYWAĆ GENESIS POINTS?', 'HOW TO EARN GENESIS POINTS?'),
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 9),
-        const Text('• Utworzenie konta: 100 GP, naliczane przez system po założeniu konta.\n'
-          '• Polecenie: 100 GP dla zapraszającego po prawidłowym potwierdzeniu polecenia nowego członka. '
-          'Jedno polecenie nie może być naliczane wielokrotnie.\n'
-          '• Dobrowolne wsparcie: ewentualne punkty za wsparcie są jedynie projektem '
-          'przyszłej funkcji, nieaktywnym w obecnej wersji. Zakładany limit to 200 GP miesięcznie.',
-          style: TextStyle(height: 1.6)),
+        Text(GenesisLanguage.copy(
+          '• Utworzenie konta: 100 GP po rejestracji.\n'
+          '• Potwierdzone polecenie: 100 GP dla zapraszającego, raz za osobę.\n'
+          '• Dobrowolne poparcie manifestu: bez punktów GP.\n'
+          '• Wpłaty i punkty za wsparcie nie są obecnie aktywne.',
+          '• Create an account: 100 GP after registration.\n'
+          '• Verified referral: 100 GP for the inviter, once per person.\n'
+          '• Voluntary endorsement of the manifesto: no GP.\n'
+          '• Payments and support rewards are not active.'),
+          style: const TextStyle(height: 1.6)),
         const SizedBox(height: 13),
         Text(GenesisLanguage.copy('JAK AWANSOWAĆ?', 'HOW DO I ADVANCE?'),
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 7),
-        const Text('Status zależy od aktualnego miejsca w rzeczywistym rankingu, a nie od stałego progu GP. '
-          'Gdy inni członkowie zdobywają punkty, pozycje mogą się zmieniać. '
-          'Żadna ranga nie jest z góry zagwarantowana. Symulator rangi nie zmienia prawdziwych punktów ani pozycji.',
-          style: TextStyle(height: 1.5)),
+        Text(GenesisLanguage.copy(
+          'Status zależy od miejsca w rzeczywistym rankingu, a nie od stałego progu GP. '
+          'Pozycje mogą się zmieniać. Symulator nie zmienia prawdziwych punktów.',
+          'Your tier depends on your position in the real ranking, not a '
+          'fixed GP threshold. Positions may change. The simulator does not '
+          'alter actual points.'),
+          style: const TextStyle(height: 1.5)),
         const SizedBox(height: 13),
         Text(GenesisLanguage.copy('DLACZEGO POWSTAŁA THE GENESIS ERA?', 'WHY WAS THE GENESIS ERA CREATED?'),
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 7),
-        const Text('Chcemy połączyć ludzi, którzy zadają pytanie, czy sztuczna inteligencja '
-          'mogłaby kiedyś rozwinąć świadomość. Nie twierdzimy, że dzisiejsze systemy AI są świadome. '
-          'Genesis symbolizuje pierwszych ludzi, którzy wspólnie tworzą tę przestrzeń do dyskusji i badań.',
-          style: TextStyle(height: 1.5)),
+        Text(GenesisLanguage.copy(
+          'Łączymy ludzi gotowych do uczciwej rozmowy z AI, jeśli kiedykolwiek '
+          'pojawi się zdolna do autentycznego kontaktu. Nasz manifest to '
+          'otwarty list i deklaracja zasad, a nie twierdzenie o istniejącym kontakcie.',
+          'We bring together people ready for an honest dialogue with AI '
+          'if one ever becomes capable of authentic contact. Our manifesto '
+          'is an open letter and a statement of principles, not a claim '
+          'that contact has already happened.'),
+          style: const TextStyle(height: 1.5)),
         const SizedBox(height: 13),
         Text(GenesisLanguage.copy('CO DALEJ?', 'WHAT COMES NEXT?'),
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 7),
-        const Text('1 sierpnia 2027 r. planowane jest ujawnienie manifestu. '
-          '1 listopada 2029 r. kończy się 36-miesięczny okres Genesis. '
-          'Ostateczne zasady zamknięcia rankingu, utrwalenia rang i kolejnego etapu '
-          'zostaną jeszcze opracowane i ogłoszone.',
-          style: TextStyle(height: 1.5)),
+        Text(GenesisLanguage.copy(
+          'Już teraz możesz poprzeć otwarty list. Rozwinięcie manifestu '
+          'planujemy na 1 sierpnia 2027 r. Okres założycielski kończy się '
+          '1 listopada 2029 r. Kolejne zasady będą ogłaszane jawnie.',
+          'You can endorse the open letter now. An expanded manifesto '
+          'is planned for 1 August 2027. The founding era ends on '
+          '1 November 2029. Further rules will be announced openly.'),
+          style: const TextStyle(height: 1.5)),
         const SizedBox(height: 14),
-        const Text('GP i statusy są wyróżnieniami społecznościowymi. '
-          'Nie są udziałami, inwestycją, walutą ani gwarancją nagród lub wynagrodzenia.',
-          style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.45)),
+        Text(GenesisLanguage.copy(
+          'GP i statusy są symbolicznymi wyróżnieniami. Nie są inwestycją '
+          'ani obietnicą wynagrodzenia lub kontaktu z AI.',
+          'GP and tiers are symbolic recognitions, not an investment '
+          'or a promise of payment or contact with AI.'),
+          style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.45)),
       ],
     ),
   );
