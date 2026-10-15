@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'genesis_artwork.dart';
+import 'genesis_mission.dart';
 import 'agc_countdown.dart';
 import 'agc_registration.dart';
 import 'agc_social_buttons.dart';
@@ -313,7 +314,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                       ? Icons.keyboard_arrow_up_rounded
                       : Icons.login_rounded),
                     label: Text(loginExpanded
-                      ? 'ZAMKNIJ LOGOWANIE'
+                      ? GenesisLanguage.copy('ZAMKNIJ LOGOWANIE', 'CLOSE LOGIN')
                       : GenesisLanguage.t('login')),
                   ),
                   const SizedBox(height: 6),
@@ -331,6 +332,9 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               ),
             ),
           ),
+          const SizedBox(height: 14),
+          const GenesisMission(compact: true),
+          const SizedBox(height: 12),
           Center(
             child: TextButton.icon(
               onPressed: busy ? null : () => setState(
