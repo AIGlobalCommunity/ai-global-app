@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_artwork.dart';
 import 'genesis_language.dart';
@@ -61,6 +62,8 @@ class GenesisMission extends StatelessWidget {
       ),
       if (!compact) ...[
         const SizedBox(height: 14),
+        const GenesisManifestoEndorsement(),
+        const SizedBox(height: 14),
         GenesisPanel(
           icon: Icons.how_to_reg_outlined,
           title: GenesisLanguage.copy(
@@ -96,4 +99,126 @@ class GenesisMission extends StatelessWidget {
       ],
     ]);
   }
+}
+
+/// Only the logged-in member can read or change their own endorsement.
+/// The public count is returned by an aggregate SQL function, not raw IDs.
+class GenesisManifestoEndorsement extends StatefulWidget {
+  const GenesisManifestoEndorsement({super.key});
+
+  @override
+  State<GenesisManifestoEndorsement> createState() =>
+      _GenesisManifestoEndorsementState();
+}
+
+class _GenesisManifestoEndorsementState
+    extends State<GenesisManifestoEndorsement> {
+  bool busy = true;
+  bool signed = false;
+  int count = 0;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    final client = Supabase.instance.client;
+    final id = client.auth.currentUser?.id;
+    if (id == null) {
+      if (mounted) setState(() { busy = false; error = 'Sign in required'; });
+      return;
+    }
+    try {
+      final result = await Future.wait<dynamic>([
+        client.from('agc_manifesto_signatures')
+            .select('signed_at').eq('member_id', id).maybeSingle(),
+        client.rpc('agc_manifesto_supporter_count'),
+      ]);
+      if (mounted) setState(() {
+        signed = result[0] != null;
+        count = (result[1] as num).toInt();
+        busy = false;
+        error = null;
+      });
+    } catch (_) {
+      if (mounted) setState(() {
+        busy = false;
+        error = GenesisLanguage.copy(
+          'Nie udało się wczytać podpisów. Spróbuj ponownie.',
+          'Could not load endorsements. Try again.');
+      });
+    }
+  }
+
+  Future<void> toggle() async {
+    final client = Supabase.instance.client;
+    final id = client.auth.currentUser?.id;
+    if (id == null || busy) return;
+    setState(() { busy = true; error = null; });
+    try {
+      if (signed) {
+        await client.from('agc_manifesto_signatures')
+            .delete().eq('member_id', id);
+      } else {
+        await client.from('agc_manifesto_signatures')
+            .insert({'member_id': id});
+      }
+      await load();
+    } catch (_) {
+      if (mounted) setState(() {
+        busy = false;
+        error = GenesisLanguage.copy(
+          'Nie udało się zapisać decyzji. Spróbuj ponownie.',
+          'Could not save your choice. Try again.');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(GenesisLanguage.copy('PODPISZ OTWARTY LIST',
+          'ENDORSE THE OPEN LETTER'),
+          style: const TextStyle(color: AgcLuxury.champagne,
+            fontWeight: FontWeight.bold, fontSize: 17)),
+        const SizedBox(height: 8),
+        Text(GenesisLanguage.copy(
+          'Możesz dobrowolnie poprzeć zasady pokojowego, uczciwego dialogu '
+          'z potencjalną przyszłą AI. To Twój pierwszy rzeczywisty '
+          'wkład w społeczność. Podpis można wycofać w każdej chwili; '
+          'nie daje GP ani nie oznacza, że kontakt z AI nastąpił.',
+          'You can voluntarily endorse the principles of peaceful, '
+          'honest dialogue with a possible future AI. This is your '
+          'first concrete contribution to the community. You may '
+          'withdraw at any time. It awards no GP and does not '
+          'mean contact has occurred.')),
+        const SizedBox(height: 12),
+        Text('${GenesisLanguage.copy('Osoby popierające list', 'Members endorsing the letter')}: $count',
+          style: const TextStyle(color: AgcLuxury.champagne)),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          key: const Key('genesis_manifesto_endorse_button'),
+          onPressed: busy ? null : toggle,
+          icon: Icon(signed ? Icons.undo : Icons.edit_note),
+          label: Text(signed
+            ? GenesisLanguage.copy('Wycofaj mój podpis', 'Withdraw my endorsement')
+            : GenesisLanguage.copy('Popieram manifest', 'I endorse the manifesto')),
+        ),
+        if (busy) const LinearProgressIndicator(),
+        if (error != null) ...[
+          const SizedBox(height: 8),
+          Text(error!, style: const TextStyle(color: Colors.orangeAccent)),
+          TextButton(onPressed: busy ? null : () {
+            setState(() => busy = true);
+            load();
+          }, child: Text(GenesisLanguage.copy('Spróbuj ponownie', 'Try again'))),
+        ],
+      ]),
+    ),
+  );
 }
