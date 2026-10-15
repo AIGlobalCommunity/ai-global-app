@@ -55,8 +55,17 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
   bool submitted = false;
   String? error;
 
+  void _onLanguageChanged() { if (mounted) setState(() {}); }
+
+  @override
+  void initState() {
+    super.initState();
+    GenesisLanguage.selected.addListener(_onLanguageChanged);
+  }
+
   @override
   void dispose() {
+    GenesisLanguage.selected.removeListener(_onLanguageChanged);
     nick.dispose();
     email.dispose();
     password.dispose();
