@@ -151,7 +151,7 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
       ]),
       FutureBuilder<List<Map<String,dynamic>>>(future:posts,builder:(context,snapshot){
         if(snapshot.hasError) { return Text(
-          '${GenesisLanguage.copy('Nie udało się pobrać postów','Could not load posts')}: ${snapshot.error}');
+          '${GenesisLanguage.copy('Nie udało się pobrać postów','Could not load posts')}: ${snapshot.error}'); }
         if(!snapshot.hasData) { return const Center(child:CircularProgressIndicator()); }
         if(snapshot.data!.isEmpty) { return Padding(
           padding:const EdgeInsets.all(14),
