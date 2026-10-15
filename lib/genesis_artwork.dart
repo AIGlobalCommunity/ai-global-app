@@ -36,37 +36,57 @@ class GenesisPanel extends StatelessWidget {
   final IconData icon;
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(colors: [
-        Color(0xFF203249), Color(0xFF101D30), Color(0xFF0B1424),
-      ], begin: Alignment.topLeft, end: Alignment.bottomRight),
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: agcGold.withValues(alpha: .33), width: .8),
-      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .18),
-        blurRadius: 20, offset: const Offset(0, 9))],
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(
-          padding: const EdgeInsets.all(11),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: agcGold.withValues(alpha: .35)),
-            color: agcGold.withValues(alpha: .07)),
-          child: Icon(icon, color: agcGold),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final narrow = constraints.maxWidth < 430;
+      final iconBox = Container(
+        padding: EdgeInsets.all(narrow ? 8 : 11),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: agcGold.withValues(alpha: .35)),
+          color: agcGold.withValues(alpha: .07)),
+        child: Icon(icon, color: agcGold, size: narrow ? 20 : 24),
+      );
+      final heading = Text(title, softWrap: true,
+        style: TextStyle(color: agcGold,
+          letterSpacing: narrow ? .5 : 1.1,
+          fontWeight: FontWeight.w700, fontSize: narrow ? 12 : 13));
+      final content = Text(body, softWrap: true,
+        style: const TextStyle(height: 1.5,
+          color: Color(0xFFE3E5EA)));
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [
+            Color(0xFF203249), Color(0xFF101D30), Color(0xFF0B1424),
+          ], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: agcGold.withValues(alpha: .33), width: .8),
         ),
-        const SizedBox(width: 17),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(color: agcGold,
-              letterSpacing: 1.5, fontWeight: FontWeight.w700, fontSize: 13)),
-            const SizedBox(height: 8),
-            Text(body, style: const TextStyle(height: 1.6,
-              color: Color(0xFFE3E5EA))),
-          ])),
-      ]),
-    ),
+        child: Padding(
+          padding: EdgeInsets.all(narrow ? 14 : 20),
+          child: narrow
+            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  iconBox,
+                  const SizedBox(width: 10),
+                  Expanded(child: heading),
+                ]),
+                const SizedBox(height: 12),
+                content,
+              ])
+            : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                iconBox,
+                const SizedBox(width: 16),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    heading,
+                    const SizedBox(height: 8),
+                    content,
+                  ])),
+              ]),
+        ),
+      );
+    },
   );
 }
