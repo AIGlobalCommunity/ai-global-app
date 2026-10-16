@@ -1,36 +1,28 @@
-# AI Global Community
+# AI Global Community (AGC)
 
-Social platform in Flutter (Android, iOS and web), connected to the live Supabase project.
+Flutter prototype for Android and iOS. Genesis rankings, referral and contribution point simulations, and a 36-month founding era.
 
-## Features
+The project explores the *possibility* of consciousness in any AI system without claiming that present systems are conscious.
 
-- Public home feed, community editorial discussion starters, member posts, comments and likes.
-- Public/private groups, membership, invitation and acceptance.
-- Group and member search, editable profiles, personal post history.
-- Photos and HTTPS links; public posts share through a server-rendered Open Graph preview with image.
-- Authenticated AI chat with conversation history and a welcome message for new users.
-- Data access protected by Supabase Row Level Security.
-
-## Run
-
-Install Flutter, then run:
+## Local or Codespaces development
 
 ```sh
-flutter create --project-name ai_global_community --platforms=android,ios,web .
+flutter create --platforms=android,ios .
 flutter pub get
-flutter run -d chrome
+flutter run
 ```
 
-The Flutter app uses the public Supabase publishable key; no secret is embedded in client code. The backend AI function `agc-ai-chat` is deployed. **To activate live model replies**, configure `OPENAI_API_KEY` in Supabase Edge Function secrets. Optionally configure `OPENAI_MODEL` (default: `gpt-4.1-mini`). Without the key, the chat displays an explicit service-unavailable error; it never fabricates AI answers.
+The Flutter SDK is required. GitHub Actions runs analysis, tests and an Android debug build.
 
-## Social sharing
+## Important
 
-Public posts share through `https://gjnddmurmegbklvedhnp.supabase.co/functions/v1/genesis-share?id=<post-id>`. This endpoint emits Open Graph and X/Twitter image metadata for compatible sharing platforms. Some platforms choose their own preview behavior.
+All ranking names and figures are **demo data**. The points simulator processes **no real donations or referrals**. There is no authentication or backend yet. The official launch date, nine-month manifesto date, and three-year season end date have not been set. The ranking rules must be published and frozen before launch; any real contribution processing requires payment, privacy, and legal review.
 
-## Deployment
+## Ranking tiers
 
-GitHub Actions builds the Flutter web app and deploys it to GitHub Pages (repository Settings → Pages → Source: GitHub Actions). Mobile builds require normal platform signing/configuration. The app does not create fake accounts or pass synthetic posts off as member conversations. Editorial discussion starters are attributed to the AGC team.
+- Top 1–100: Genesis Eternal
+- 101–1000: Gold Genesis
+- 1001–10000: Silver Genesis
+- 10001+: Global Member
 
-## Security
-
-Never add service-role keys or OpenAI keys to Flutter source. Private-group content is only available to authorized members. Public images are for public posts only. For production, finish moderation, privacy policy, reporting workflows and full end-to-end tests before launch.
+The ranking is intended to be public and dynamic during the first 36 months. Historical snapshots may be recorded at month 9 and month 36. Members use pseudonyms by default.
