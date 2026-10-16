@@ -1,0 +1,66 @@
+name: Publish AGC Safari Demo to GitHub Pages
+
+on:
+  push:
+    branches:
+      - feat/iphone-safari-web
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agc-github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Generate Flutter web platform
+        run: flutter create --platforms=web .
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run tests
+        run: |
+          flutter analyze
+          flutter test
+      - name: Build preview at /ai-global-app/
+        run: flutter build web --release --base-href /ai-global-app/
+      - name: Verify bundled AGC artwork
+        run: |
+          test -s build/web/assets/assets/agc_cosmic_background_hd.svg
+          test -s build/web/assets/assets/agc_genesis_ai_vector.svg
+          echo "AGC cosmic HD background and vector Genesis logo are present in the release bundle"
+      - name: Stop Jekyll processing
+        run: touch build/web/.nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/web
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/feat/iphone-safari-web'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        name: Deploy public preview
+        uses: actions/deploy-pages@v4
