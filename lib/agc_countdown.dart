@@ -137,7 +137,7 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
               fontFeatures: [FontFeature.tabularFigures()]))),
           SizedBox(height: widget.compact ? 2 : 3),
           Text(sub, textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white60, fontSize: widget.compact ? 9 : 10)),
+            style: TextStyle(color: Colors.white60, fontSize: widget.compact ? 9 : 10)),
         ]),
       ));
     }
