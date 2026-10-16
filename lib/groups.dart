@@ -105,20 +105,22 @@ class _GroupDetailState extends State<GroupDetail> {
   if(result==true)setState(reload);
  }
  Future<void> invite() async {
-  final users=await db.from('agc_social_profiles').select('member_id,display_name').eq('is_public',true).limit(100);
-  if(!mounted)return;
-  final list=List<Map<String,dynamic>>.from(users).where((x)=>x['member_id']!=db.auth.currentUser?.id).toList();
-  await showDialog<void>(context:context,builder:(ctx)=>AlertDialog(title:const Text('Zaproś użytkownika'),content:SizedBox(width:380,height:320,child:ListView(children:list.map((u)=>ListTile(
-   title:Text('${u['display_name']??'Użytkownik'}'),
-   trailing:const Icon(Icons.person_add),
-   onTap:() async {
-    try {
-     await db.from('agc_group_members').insert({'group_id':id,'member_id':u['member_id'],'invited_by':db.auth.currentUser!.id,'status':'invited'});
-     if(ctx.mounted)Navigator.pop(ctx);
-     notify('Zaproszenie wysłane.');
-    }catch(e){notify('Nie udało się zaprosić: $e');}
-   },
-  )).toList())),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Zamknij'))]));
+  final handle=TextEditingController();
+  await showDialog<void>(context:context,builder:(ctx)=>AlertDialog(
+   title:const Text('Zaproś użytkownika'),
+   content:TextField(controller:handle,decoration:const InputDecoration(labelText:'Publiczny nick użytkownika',hintText:'Wpisz nick')),
+   actions:[
+    TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Anuluj')),
+    FilledButton(onPressed:() async {
+     try {
+      final ok=await db.rpc('agc_invite_group_member',params:{'p_group_id':id,'p_handle':handle.text.trim()});
+      if(ctx.mounted)Navigator.pop(ctx);
+      notify(ok==true?'Zaproszenie wysłane.':'Nie znaleziono publicznego użytkownika o tym nicku.');
+     }catch(e){notify('Nie udało się zaprosić: $e');}
+    },child:const Text('Wyślij zaproszenie')),
+   ],
+  ));
+  handle.dispose();
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text('${widget.group['name']}')),body:RefreshIndicator(onRefresh:() async {setState(reload);await posts;},child:ListView(padding:const EdgeInsets.all(12),children:[
   Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
