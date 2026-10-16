@@ -11,7 +11,7 @@ const accent = Color(0xFF4464EA);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: projectUrl, anonKey: publishableKey);
+  await Supabase.initialize(url: projectUrl, publishableKey: publishableKey);
   runApp(const CommunityApp());
 }
 
