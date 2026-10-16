@@ -137,9 +137,9 @@ class _AgcHomeState extends State<AgcHome> {
                 ),
                 _news(),
                 const GenesisDiscussions(),
-                AgcDatabaseRanking(),
-                AgcAccountPage(),
-                _profile(),
+                _tabContent(const AgcDatabaseRanking()),
+                const AgcAccountPage(),
+                _tabContent(_profile()),
               ],
             )),
           ])),
@@ -159,9 +159,17 @@ class _AgcHomeState extends State<AgcHome> {
         ),
       );
 
+  // Keep wide-screen content centered without stretching cards and controls.
+  Widget _tabContent(Widget child) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 650),
+      child: child,
+    ),
+  );
+
   // News has its own destination; Genesis remains focused on the project vision.
   Widget _news() => Center(child: ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 900),
+    constraints: const BoxConstraints(maxWidth: 650),
     child: ListView(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       children: [
@@ -186,7 +194,7 @@ class _AgcHomeState extends State<AgcHome> {
   ));
 
   Widget _overview() => Center(child: ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 900),
+    constraints: const BoxConstraints(maxWidth: 650),
     child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         children: [
