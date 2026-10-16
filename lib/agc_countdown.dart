@@ -146,7 +146,7 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
       padding: EdgeInsets.symmetric(horizontal: widget.compact ? 10 : 14,
         vertical: widget.compact ? 5 : 9),
       child: Center(child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: widget.compact ? 520 : 820),
+        constraints: BoxConstraints(maxWidth: widget.compact ? 650 : 820),
         child: Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
