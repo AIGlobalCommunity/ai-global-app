@@ -620,7 +620,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
 
   @override
   Widget build(BuildContext context) => Center(child: ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 900),
+    constraints: const BoxConstraints(maxWidth: 650),
     child: ListView(padding: const EdgeInsets.all(14), children: [
       if (group != null)
         Align(alignment: Alignment.centerLeft, child: TextButton.icon(
