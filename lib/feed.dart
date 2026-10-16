@@ -60,34 +60,3 @@ class _FeedScreenState extends State<FeedScreen> {
   ]),
  );
 }
-).hasMatch(id) || items.any((p)=>p['id']==id))return items;
-  final p=await db.from('agc_group_posts').select('id,group_id,author_id,author_label,body,image_path,link_url,video_url,created_at,agc_groups(name,visibility)').eq('id',id).maybeSingle();
-  if(p!=null)items.insert(0,Map<String,dynamic>.from(p));
-  return items;
- }
- Future<void> compose() async {
-  final groups=await db.from('agc_groups').select('id,name,visibility,owner_id').eq('visibility','public').order('name');
-  if(!mounted)return;
-  final result=await Navigator.push<bool>(context,MaterialPageRoute(builder:(_)=>ComposeScreen(groups:List<Map<String,dynamic>>.from(groups))));
-  if(result==true)setState(reload);
- }
- @override Widget build(BuildContext context)=>RefreshIndicator(
-  onRefresh:() async {setState(reload);await future;},
-  child:ListView(padding:const EdgeInsets.all(12),children:[
-   Card(child:Padding(padding:const EdgeInsets.all(18),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text('Twoja społeczność AI 🌍',style:Theme.of(context).textTheme.titleLarge),
-    const SizedBox(height:6),
-    const Text('Wpisy, pomysły i rozmowy członków AI Global Community.'),
-    const SizedBox(height:12),
-    if(db.auth.currentUser!=null) FilledButton.icon(onPressed:compose,icon:const Icon(Icons.edit),label:const Text('Co nowego? Dodaj post'))
-    else const Text('Zaloguj się, aby publikować i reagować.'),
-   ]))),
-   FutureBuilder<List<Map<String,dynamic>>>(future:future,builder:(context,snapshot){
-    if(snapshot.hasError)return Padding(padding:const EdgeInsets.all(20),child:Text('Błąd pobierania wpisów: ${snapshot.error}'));
-    if(!snapshot.hasData)return const Center(child:Padding(padding:EdgeInsets.all(24),child:CircularProgressIndicator()));
-    if(snapshot.data!.isEmpty)return const Padding(padding:EdgeInsets.all(24),child:Text('Jeszcze nie ma wpisów. Rozpocznij dyskusję!'));
-    return Column(children:snapshot.data!.map((p)=>PostCard(post:p)).toList());
-   }),
-  ]),
- );
-}
