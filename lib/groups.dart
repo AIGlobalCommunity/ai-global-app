@@ -34,7 +34,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
    if(!s.hasData)return const Center(child:CircularProgressIndicator());
    final items=s.data!.where((g)=>'${g['name']} ${g['description']}'.toLowerCase().contains(search.text.toLowerCase())).toList();
    return RefreshIndicator(onRefresh:() async {setState(reload);await future;},child:ListView(children:items.map((g)=>Card(margin:const EdgeInsets.symmetric(horizontal:12,vertical:5),child:ListTile(
-    leading:CircleAvatar(child:Icon(g['visibility']=='private'?Icons.lock:Icons.groups)),
+    leading:Container(width:56,height:56,decoration:BoxDecoration(borderRadius:BorderRadius.circular(14),gradient:const LinearGradient(colors:[Color(0xFF24357D),Color(0xFF7B74EE)])),child:Icon(g['visibility']=='private'?Icons.lock_outline:Icons.hub_outlined,color:gold,size:28)),
     title:Text('${g['name']}'),
     subtitle:Text('${g['description']}',maxLines:2,overflow:TextOverflow.ellipsis),
     trailing:const Icon(Icons.chevron_right),
