@@ -17,8 +17,9 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
  Future<List<Map<String,dynamic>>> _search() async {
   final q=query.text.trim();
   if(people){
-   final r=await db.from('agc_social_profiles').select('member_id,display_name,bio,interests,location_text,avatar_url').eq('is_public',true).limit(100);
-   return List<Map<String,dynamic>>.from(r).where((x)=>q.isEmpty||'${x['display_name']} ${x['bio']} ${x['interests']}'.toLowerCase().contains(q.toLowerCase())).toList();
+   if(q.length<2)return <Map<String,dynamic>>[];
+   final r=await db.rpc('agc_search_members',params:{'p_query':q});
+   return List<Map<String,dynamic>>.from(r as List);
   }
   final r=await db.from('agc_groups').select('id,name,description,visibility,owner_id,official').limit(100);
   return List<Map<String,dynamic>>.from(r).where((x)=>q.isEmpty||'${x['name']} ${x['description']}'.toLowerCase().contains(q.toLowerCase())).toList();
@@ -36,7 +37,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
    if(s.data!.isEmpty)return const Center(child:Text('Brak wyników.'));
    return ListView(children:s.data!.map((x)=>Card(margin:const EdgeInsets.symmetric(horizontal:12,vertical:4),child:ListTile(
     leading:CircleAvatar(child:Icon(people?Icons.person:Icons.groups)),
-    title:Text('${people?(x['display_name']??'Użytkownik'):x['name']}'),
+    title:Text('${people?(x['display_name']??x['handle']??'Użytkownik'):x['name']}'),
     subtitle:Text('${people?(x['bio']??''):x['description']}',maxLines:2,overflow:TextOverflow.ellipsis),
     onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>people?PublicProfile(memberId:'${x['member_id']}'):GroupDetail(group:x))),
    ))).toList());
