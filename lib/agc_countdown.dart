@@ -119,8 +119,8 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
                   : '01.11.2029';
 
       return Expanded(child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: widget.compact ? 5 : 10,
-          vertical: widget.compact ? 10 : 15),
+        padding: EdgeInsets.symmetric(horizontal: widget.compact ? 4 : 8,
+          vertical: widget.compact ? 6 : 11),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(icon, size: 14, color: _gold),
@@ -130,12 +130,12 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
               style: const TextStyle(color: _gold, letterSpacing: 1,
                 fontWeight: FontWeight.w700, fontSize: 11))),
           ]),
-          const SizedBox(height: 7),
+          SizedBox(height: widget.compact ? 4 : 7),
           FittedBox(fit: BoxFit.scaleDown, child: Text(label,
             style: const TextStyle(color: Colors.white,
-              fontWeight: FontWeight.bold, fontSize: 16,
+              fontWeight: FontWeight.bold, fontSize: widget.compact ? 14 : 16,
               fontFeatures: [FontFeature.tabularFigures()]))),
-          const SizedBox(height: 3),
+          SizedBox(height: widget.compact ? 2 : 3),
           Text(sub, textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white60, fontSize: 10)),
         ]),
@@ -143,27 +143,30 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
     }
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: widget.compact ? 8 : 14,
+      padding: EdgeInsets.symmetric(horizontal: widget.compact ? 10 : 14,
         vertical: widget.compact ? 5 : 9),
-      child: Container(
+      child: Center(child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: widget.compact ? 650 : 820),
+        child: Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF26364A), _panel, Color(0xFF0A1426)],
             begin: Alignment.topLeft, end: Alignment.bottomRight),
           border: Border.all(color: _gold.withValues(alpha: .38), width: .8),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(widget.compact ? 14 : 20),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .22),
-            blurRadius: 19, offset: const Offset(0, 8))],
+            blurRadius: widget.compact ? 10 : 19,
+            offset: Offset(0, widget.compact ? 3 : 8))],
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Padding(padding: EdgeInsets.only(top: 9), child: Text(
+          Padding(padding: EdgeInsets.only(top: widget.compact ? 7 : 9), child: const Text(
             'START AGC: 01.11.2026 • 00:00 UTC',
             textAlign: TextAlign.center,
             style: TextStyle(color: _gold, fontWeight: FontWeight.bold,
               letterSpacing: 1, fontSize: 10))),
           Row(children: [
           countdown('START', launchDate, Icons.rocket_launch_outlined),
-          Container(height: widget.compact ? 75 : 84, width: 1,
+          Container(height: widget.compact ? 56 : 84, width: 1,
             color: _gold.withValues(alpha: .25)),
           countdown('MANIFEST', manifestoDate, Icons.auto_awesome_outlined),
           Container(height: widget.compact ? 75 : 84, width: 1,
@@ -171,7 +174,7 @@ class _AgcCountdownBannerState extends State<AgcCountdownBanner> {
           countdown('ERA GENESIS', genesisEndDate, Icons.hourglass_bottom_outlined),
         ]),
         ]),
-      ),
+      ))),
     );
   }
 }
