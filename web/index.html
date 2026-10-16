@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="theme-color" content="#101e4e">
+  <meta name="description" content="AI Global Community — społeczność ludzi zainteresowanych sztuczną inteligencją. Dołącz, poznaj grupy, rozmawiaj i twórz.">
+  <meta property="og:title" content="AI Global Community — The Genesis Era">
+  <meta property="og:description" content="Przyszłość AI tworzymy razem. Dołącz do globalnej społeczności.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <title>AI Global Community — The Genesis Era</title>
+  <style>
+    html,body{height:100%;margin:0;background:#f5f7fd;font-family:Arial,sans-serif}
+    #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(135deg,#101e4e,#4b51b6);color:#fff;z-index:1;pointer-events:none}
+    #loading .globe{width:76px;height:76px;border:2px solid #b5c7ff;border-radius:50%;position:relative;box-shadow:0 0 45px #91a4ff70;animation:pulse 2s ease-in-out infinite}
+    #loading .globe:before{content:"";position:absolute;inset:0;border-left:2px solid #b5c7ff;border-right:2px solid #b5c7ff;border-radius:50%;transform:scaleX(.45)}
+    #loading .globe:after{content:"";position:absolute;top:35px;left:0;width:76px;border-top:2px solid #b5c7ff}
+    #loading strong{letter-spacing:3px;font-size:17px}
+    #loading small{letter-spacing:2px;color:#d5dafa}
+    @keyframes pulse{50%{transform:scale(1.05);box-shadow:0 0 65px #91a4ff80}}
+    body.loaded #loading{display:none}
+  </style>
+  <script>
+    window.addEventListener('flutter-first-frame',function(){document.body.classList.add('loaded')});
+    window.addEventListener('load',function(){setTimeout(function(){document.body.classList.add('loaded')},11000)});
+  </script>
+</head>
+<body>
+  <div id="loading" aria-label="Ładowanie AI Global Community">
+    <div class="globe"></div><strong>AI GLOBAL COMMUNITY</strong><small>THE GENESIS ERA</small>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
