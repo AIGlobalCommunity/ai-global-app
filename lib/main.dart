@@ -98,7 +98,8 @@ class AgcHome extends StatefulWidget {
 }
 
 class _AgcHomeState extends State<AgcHome> {
-  int selected = 0;
+  // Keep shared post links opening the news feed after sign-in.
+  int selected = Uri.base.queryParameters.containsKey('post') ? 1 : 0;
 
   void _onLanguageChanged() { if (mounted) setState(() {}); }
 
@@ -134,6 +135,7 @@ class _AgcHomeState extends State<AgcHome> {
                   key: ValueKey('genesis-overview-${GenesisLanguage.selected.value}'),
                   child: _overview(),
                 ),
+                _news(),
                 const GenesisDiscussions(),
                 AgcDatabaseRanking(),
                 AgcAccountPage(),
@@ -148,6 +150,7 @@ class _AgcHomeState extends State<AgcHome> {
           onDestinationSelected: (value) => setState(() => selected = value),
           destinations: [
             NavigationDestination(icon: Icon(Icons.public), label: 'Genesis'),
+            NavigationDestination(icon: Icon(Icons.article_outlined), label: GenesisLanguage.copy('Aktualności', 'News')),
             NavigationDestination(icon: Icon(Icons.forum_outlined), label: GenesisLanguage.copy('Dyskusje', 'Discussions')),
             NavigationDestination(icon: Icon(Icons.leaderboard), label: GenesisLanguage.t('ranking')),
             NavigationDestination(icon: Icon(Icons.person_outline), label: GenesisLanguage.t('account')),
@@ -155,6 +158,32 @@ class _AgcHomeState extends State<AgcHome> {
           ],
         ),
       );
+
+  // News has its own destination; Genesis remains focused on the project vision.
+  Widget _news() => Center(child: ConstrainedBox(
+    constraints: const BoxConstraints(maxWidth: 900),
+    child: ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      children: [
+        const SizedBox(height: 8),
+        Text(
+          GenesisLanguage.copy('AKTUALNOŚCI', 'NEWS'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontFamily: 'Georgia',
+            fontSize: 25,
+            color: AgcLuxury.champagne,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(height: 18),
+        GenesisCommunityFeed(
+          onOpenDiscussions: () => setState(() => selected = 2),
+        ),
+      ],
+    ),
+  ));
 
   Widget _overview() => Center(child: ConstrainedBox(
     constraints: const BoxConstraints(maxWidth: 900),
@@ -195,8 +224,6 @@ class _AgcHomeState extends State<AgcHome> {
           Center(child: Container(width: 85, height: 1,
             color: AgcLuxury.champagne.withValues(alpha: .65))),
           const SizedBox(height: 24),
-          GenesisCommunityFeed(onOpenDiscussions: () => setState(() => selected = 1)),
-          const SizedBox(height: 18),
           const GenesisMission(),
           const SizedBox(height: 14),
           const GenesisAiContactRoom(),
