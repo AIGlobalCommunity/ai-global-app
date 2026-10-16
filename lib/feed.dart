@@ -29,7 +29,11 @@ class _FeedScreenState extends State<FeedScreen> {
  Future<List<Map<String,dynamic>>> _loadWithSharedPost() async {
   final items=await communityFeed();
   final id=Uri.base.queryParameters['post'];
-  if(id==null || !RegExp(r'^[0-9a-fA-F-]{36}
+  if(id==null || id.length!=36 || items.any((p)=>p['id']==id))return items;
+  final p=await db.from('agc_group_posts').select('id,group_id,author_id,author_label,body,image_path,link_url,video_url,created_at,agc_groups(name,visibility)').eq('id',id).maybeSingle();
+  if(p!=null)items.insert(0,Map<String,dynamic>.from(p));
+  return items;
+ }
  Future<void> compose() async {
   final groups=await db.from('agc_groups').select('id,name,visibility,owner_id').eq('visibility','public').order('name');
   if(!mounted)return;
