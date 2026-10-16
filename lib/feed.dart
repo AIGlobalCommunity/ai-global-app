@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
 import 'posts.dart';
-import 'social.dart';
 
 Future<List<Map<String,dynamic>>> communityFeed({String? groupId,String? authorId}) async {
   var q=db.from('agc_group_posts').select('id,group_id,author_id,author_label,body,image_path,link_url,video_url,created_at,agc_groups(name,visibility)');
@@ -80,7 +79,7 @@ class AGCHero extends StatelessWidget {
     const SizedBox(height:24),
     const Text('Przyszłość AI\ntworzymy razem.',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w900,fontSize:32,height:1.15)),
     const SizedBox(height:14),
-    const ConstrainedBox(constraints:BoxConstraints(maxWidth:420),child:Text('Miejsce dla ludzi, pomysłów i rozmów o sztucznej inteligencji. Odkrywaj grupy, publikuj i poznawaj społeczność.',style:TextStyle(color:Color(0xFFE5E9FF),fontSize:15,height:1.5))),
+    ConstrainedBox(constraints:const BoxConstraints(maxWidth:420),child:Text('Miejsce dla ludzi, pomysłów i rozmów o sztucznej inteligencji. Odkrywaj grupy, publikuj i poznawaj społeczność.',style:TextStyle(color:Color(0xFFE5E9FF),fontSize:15,height:1.5))),
     const SizedBox(height:24),
     FilledButton.icon(
      style:FilledButton.styleFrom(backgroundColor:gold,foregroundColor:dark),
