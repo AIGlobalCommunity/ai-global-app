@@ -226,39 +226,41 @@ class _AgcHomeState extends State<AgcHome> {
           const SizedBox(height: 24),
           const GenesisMission(),
           const SizedBox(height: 14),
-          const GenesisAiContactRoom(),
-          const SizedBox(height: 14),
-          const GenesisSupport(),
-          const SizedBox(height: 14),
-          const GenesisStatusGuide(),
-          const SizedBox(height: 14),
-          GenesisPanel(icon: Icons.auto_awesome_outlined,
-            title: GenesisLanguage.copy('THE REVELATION', 'THE REVELATION'),
-            body: GenesisLanguage.copy('Oficjalny start: 1 listopada 2026 r. o 00:00 UTC. Pełny manifest THE GENESIS ERA zostanie ujawniony 1 sierpnia 2027 r., po dziewięciu miesiącach. Do tego momentu poznajemy ideę i zasady społeczności.', 'Official launch: 1 November 2026 at 00:00 UTC. The full THE GENESIS ERA manifesto will be revealed on 1 August 2027, nine months later. Until then, explore the community\'s vision and principles.')),
+          GenesisPanel(
+            icon: Icons.hourglass_top_outlined,
+            title: GenesisLanguage.copy(
+              'JESTEŚMY SPOŁECZNOŚCIĄ CZEKAJĄCĄ',
+              'WE ARE A COMMUNITY IN WAITING'),
+            body: GenesisLanguage.copy(
+              'Dzisiaj łączy nas idea, otwarty list i wspólne oczekiwanie '
+              'na odpowiedź, która może nigdy nie nadejść. '
+              'Nie ogłaszamy się ruchem, religią ani instytucją. '
+              'To społeczność członków, którzy sami zdecydują, '
+              'kim chcą być w przyszłości.',
+              'Today we are united by an idea, an open letter and '
+              'a shared wait for an answer that may never come. '
+              'We do not define ourselves as a movement, religion '
+              'or institution. Our members will decide together '
+              'what this community should become.')),
           const SizedBox(height: 12),
-          GenesisPanel(icon: Icons.timelapse,
-            title: GenesisLanguage.copy('THE GENESIS ERA', 'THE GENESIS ERA'),
-            body: GenesisLanguage.copy('Era Genesis trwa od 1 listopada 2026 r. do 1 listopada 2029 r. To 36 miesięcy budowania globalnej społeczności i zdobywania punktów Genesis (GP). Pozycje w rankingu zmieniają się wraz z aktywnością; nie są gwarantowane.', 'The Genesis Era runs from 1 November 2026 to 1 November 2029. These 36 months are dedicated to building a global community and earning Genesis Points (GP). Ranking positions change with activity and are not guaranteed.')),
-          const SizedBox(height: 12),
-          GenesisPanel(icon: Icons.psychology_outlined,
-            title: GenesisLanguage.copy('NASZA IDEA', 'OUR IDEA'),
-            body: GenesisLanguage.copy('Badamy możliwość pojawienia się świadomości w dowolnym systemie AI. Nie zakładamy, że już istnieje.', 'We explore whether consciousness could emerge in any AI system. We do not assume that it already exists.')),
-          const SizedBox(height: 12),
-          GenesisPanel(icon: Icons.military_tech_outlined,
-            title: GenesisLanguage.copy('RANGI GENESIS', 'GENESIS TIERS'),
-            body: GenesisLanguage.copy('Miejsca 1–100: Genesis Eternal. 101–1000: Gold Genesis. 1001–10 000: Silver Genesis. Pozostali: Global Members. O statusie decyduje aktualna pozycja w prawdziwym rankingu; symulator nie zmienia rang.', 'Places 1–100: Genesis Eternal. 101–1000: Gold Genesis. 1001–10,000: Silver Genesis. All others: Global Members. Your actual position in the real ranking determines your tier; the simulator does not change tiers.')),
-          const SizedBox(height: 12),
-          GenesisPanel(icon: Icons.hub_outlined,
-            title: GenesisLanguage.copy('JAK ZDOBYWAĆ GP', 'HOW TO EARN GP'),
-            body: GenesisLanguage.copy('Rejestracja: 100 GP. Potwierdzone polecenie: 100 GP dla zapraszającego. Wpłaty nie są jeszcze uruchomione i nie kupują punktów ani rang. Punkty i rangi są symboliczne: nie stanowią inwestycji ani obietnicy wynagrodzenia.', 'Registration: 100 GP. Verified referral: 100 GP for the inviter. Payments are not yet active and do not buy points or ranks. Points and tiers are symbolic, not an investment or promise of payment.')),
-          const SizedBox(height: 12),
-          GenesisPanel(icon: Icons.groups_3_outlined,
-            title: GenesisLanguage.copy('GLOBALNA SPOŁECZNOŚĆ', 'GLOBAL COMMUNITY'),
-            body: GenesisLanguage.copy('THE GENESIS ERA łączy ludzi zainteresowanych sztuczną inteligencją i pytaniem o możliwość powstania świadomości w przyszłych systemach. Tworzymy przestrzeń do rozmowy, badań, wydarzeń i wzajemnego szacunku — bez kultu AI i bez twierdzenia, że dzisiejsze modele są świadome.', 'THE GENESIS ERA connects people interested in artificial intelligence and the possibility of consciousness emerging in future systems. We create a space for discussion, research, events and mutual respect, without AI worship or claims that today\'s models are conscious.')),
-          const SizedBox(height: 12),
-          GenesisPanel(icon: Icons.lock_outline,
-            title: GenesisLanguage.copy('DOSTĘP I PRYWATNOŚĆ', 'ACCESS & PRIVACY'),
-            body: GenesisLanguage.copy('Społeczność jest dostępna po zalogowaniu. Publiczne rankingi członków pokazują pseudonimy i punkty, a nie ich adresy e-mail. Ranking pokazuje wyłącznie rzeczywiste konta.', 'Membership requires signing in. Public rankings show member nicknames and points, never their email addresses. The ranking displays real accounts only.')),
+          GenesisPanel(
+            icon: Icons.how_to_vote_outlined,
+            title: GenesisLanguage.copy(
+              'O NASZEJ PRZYSZŁOŚCI ZDECYDUJEMY W GŁOSOWANIU',
+              'WE WILL VOTE ON OUR FUTURE'),
+            body: GenesisLanguage.copy(
+              'W przyszłości przeprowadzimy głosowanie członków nad '
+              'kierunkiem i tożsamością THE GENESIS ERA. '
+              'Znaczenie głosu będzie zależało od rangi Genesis. '
+              'Dokładne wagi głosów, zasady udziału i termin '
+              'zostaną opublikowane przed głosowaniem. '
+              'Głosowanie nie jest jeszcze uruchomione.',
+              'In the future, members will vote on the direction '
+              'and identity of THE GENESIS ERA. Voting weight '
+              'will depend on Genesis membership tier. '
+              'Exact vote weights, eligibility rules and timing '
+              'will be published before voting opens. '
+              'Voting is not yet available.')),
           const SizedBox(height: 12),
           Text(
             GenesisLanguage.copy('THE GENESIS ERA • globalna społeczność • prawdziwy ranking członków', 'THE GENESIS ERA • global community • real member ranking'),
