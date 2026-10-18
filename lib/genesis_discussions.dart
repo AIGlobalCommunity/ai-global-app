@@ -580,9 +580,13 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     return draft;
   }
 
+  bool postingThread = false;
+
   Future<void> createPost() async {
+    if (postingThread) return;
     final draft = await composePost();
-    if (draft == null) return;
+    if (draft == null || !mounted) return;
+    setState(() => postingThread = true);
     String? imagePath;
     try {
       if (draft.image != null) {
@@ -618,6 +622,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         'video_url': draft.video, 'image_path': imagePath,
       });
       refresh();
+      message(tr('Wątek został opublikowany.', 'Discussion published.'));
     } catch (e) {
       if (imagePath != null) {
         try {
@@ -627,6 +632,8 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         } catch (_) { /* Upload cleanup is best-effort. */ }
       }
       message('${tr('Nie udało się opublikować', 'Could not publish')}: $e');
+    } finally {
+      if (mounted) setState(() => postingThread = false);
     }
   }
 
@@ -806,42 +813,78 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       }),
     ));
 
+  String postAge(dynamic value) {
+    final created = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
+    if (created == null) return '';
+    final age = DateTime.now().difference(created);
+    if (age.isNegative || age.inMinutes < 1) return tr('Teraz', 'Now');
+    if (age.inHours < 1) return age.inMinutes.toString() + ' min';
+    if (age.inDays < 1) return age.inHours.toString() + ' h';
+    if (age.inDays < 7) return age.inDays.toString() + ' d';
+    return created.day.toString() + '.' + created.month.toString() +
+      '.' + created.year.toString();
+  }
+
   Widget postTile(Map<String, dynamic> item) => Card(
+    margin: const EdgeInsets.only(bottom: 12),
     child: Padding(padding: const EdgeInsets.all(14),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(item['author_label'] as String,
-          style: const TextStyle(color: AgcLuxury.champagne, fontSize: 12)),
-        const SizedBox(height: 10),
+        Row(children: [
+          const CircleAvatar(radius: 18, child: Icon(Icons.person_outline)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item['author_label'] as String,
+                style: const TextStyle(color: AgcLuxury.champagne,
+                  fontWeight: FontWeight.w600)),
+              Text(postAge(item['created_at']),
+                style: const TextStyle(fontSize: 11, color: Colors.white70)),
+            ],
+          )),
+          if (item['author_id'] == AgcBackend.user?.id)
+            IconButton(
+              onPressed: () => removePost(item),
+              icon: const Icon(Icons.delete_outline),
+              tooltip: tr('Usuń własny post', 'Delete your post'),
+            ),
+        ]),
+        const SizedBox(height: 12),
         SelectableText(item['body'] as String),
         postMedia(item),
-        const SizedBox(height: 10),
-        Wrap(spacing: 5, runSpacing: 5, children: [
+        const Divider(height: 24),
+        Wrap(spacing: 8, runSpacing: 4, children: [
           TextButton.icon(
-            key: Key('group_like_${item['id']}'),
             onPressed: () => toggleLike(item),
-            icon: Icon(item['liked'] == true ? Icons.favorite : Icons.favorite_border,
+            icon: Icon(item['liked'] == true
+              ? Icons.favorite : Icons.favorite_border,
               color: item['liked'] == true ? Colors.redAccent : null),
-            label: Text('${tr('Lubię to', 'Like')} · ${item['likes']}')),
-          TextButton.icon(onPressed: () async {
-            await showModalBottomSheet<void>(
-              context: context, isScrollControlled: true, showDragHandle: true,
-              builder: (_) => GenesisComments(postId: item['id'] as String));
-            refresh();
-          }, icon: const Icon(Icons.chat_bubble_outline),
-            label: Text('${item['comments']}')),
+            label: Text(tr('Lubię to', 'Like') + ' · ' + item['likes'].toString()),
+          ),
+          TextButton.icon(
+            onPressed: () async {
+              await showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                showDragHandle: true,
+                builder: (_) => GenesisComments(postId: item['id'] as String));
+              refresh();
+            },
+            icon: const Icon(Icons.mode_comment_outlined),
+            label: Text(tr('Komentarze', 'Comments') + ' · ' +
+              item['comments'].toString()),
+          ),
           if (item['visibility'] == 'public')
             TextButton.icon(
-              key: Key('group_share_${item['id']}'),
               onPressed: () => genesisSharePost(context, item),
               icon: const Icon(Icons.share_outlined),
-              label: Text(tr('Udostępnij', 'Share'))),
-          TextButton.icon(onPressed: () => report(item),
+              label: Text(tr('Udostępnij', 'Share')),
+            ),
+          IconButton(
+            onPressed: () => report(item),
             icon: const Icon(Icons.flag_outlined),
-            label: Text(tr('Zgłoś', 'Report'))),
-          if (item['author_id'] == AgcBackend.user?.id)
-            IconButton(onPressed: () => removePost(item),
-              icon: const Icon(Icons.delete_outline),
-              tooltip: tr('Usuń post', 'Delete post')),
+            tooltip: tr('Zgłoś post', 'Report post'),
+          ),
         ]),
       ])));
 
