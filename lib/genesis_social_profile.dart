@@ -396,7 +396,9 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
                 onPressed: saving ? null : () async {
                   final selected = await genesisPickCountry(
                     context, country.text.trim());
-                  if (!mounted || selected == null) return;
+                  if (!mounted || selected == null) {
+                    return;
+                  }
                   setState(() => country.text = selected);
                 },
               ),
