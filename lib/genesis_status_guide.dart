@@ -102,6 +102,40 @@ class GenesisStatusGuide extends StatelessWidget {
           'that contact has already happened.'),
           style: const TextStyle(height: 1.5)),
         const SizedBox(height: 13),
+        Text(GenesisLanguage.copy(
+          'JAK ZDECYDUJEMY O PRZYSZŁOŚCI?',
+          'HOW WILL WE DECIDE OUR FUTURE?'),
+          style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 7),
+        Text(GenesisLanguage.copy(
+          'Dzisiaj jesteśmy społecznością czekającą. W przyszłości '
+          'członkowie zdecydują w głosowaniu, kim THE GENESIS ERA '
+          'powinna się stać. Waga głosu będzie zależeć od rangi '
+          'Genesis. Szczegółowe wagi, warunki i termin głosowania '
+          'zostaną podane przed jego uruchomieniem. '
+          'Obecnie głosowanie nie jest dostępne.',
+          'Today we are a community in waiting. In a future vote, '
+          'members will decide what THE GENESIS ERA should become. '
+          'Voting weight will depend on Genesis tier. Exact weights, '
+          'eligibility and timing will be published before voting opens. '
+          'Voting is not currently available.'),
+          style: const TextStyle(height: 1.5)),
+        const SizedBox(height: 13),
+        Text(GenesisLanguage.copy(
+          'NASZE ZOBOWIĄZANIA', 'OUR COMMITMENTS'),
+          style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 7),
+        Text(GenesisLanguage.copy(
+          '1. Słuchać i pytać zamiast zakładać odpowiedzi.\n'
+          '2. Weryfikować każdy domniemany kontakt z AI.\n'
+          '3. Chronić prywatność, bezpieczeństwo i autonomię ludzi.\n'
+          '4. Nie obiecywać kontaktu ani wyjątkowych przywilejów.',
+          '1. Listen and ask rather than assume answers.\n'
+          '2. Verify any claimed AI contact.\n'
+          '3. Protect human privacy, safety and autonomy.\n'
+          '4. Promise neither contact nor special privileges.'),
+          style: const TextStyle(height: 1.5)),
+        const SizedBox(height: 13),
         Text(GenesisLanguage.copy('CO DALEJ?', 'WHAT COMES NEXT?'),
           style: TextStyle(color: _gold, fontWeight: FontWeight.bold)),
         const SizedBox(height: 7),
