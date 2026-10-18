@@ -8,6 +8,7 @@ import 'agc_social_buttons.dart';
 import 'genesis_invites.dart';
 import 'genesis_language.dart';
 import 'genesis_social_profile.dart';
+import 'genesis_rank_simulator.dart';
 import 'genesis_status_guide.dart';
 import 'genesis_support.dart';
 import 'agc_luxury_theme.dart';
@@ -517,23 +518,22 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Card(
-            child: ExpansionTile(
-              key: const Key('account_future_questions'),
-              leading: const Icon(Icons.question_answer_outlined,
-                color: AgcLuxury.champagne),
-              title: Text(GenesisLanguage.copy(
-                'Moje pytania na przyszłość', 'My questions for the future'),
-                style: const TextStyle(
-                  color: AgcLuxury.champagne,
-                  fontWeight: FontWeight.bold)),
-              subtitle: Text(GenesisLanguage.copy(
-                'Zapisuj pytania — to nie jest czat z AI',
-                'Save questions — this is not an AI chat')),
-              childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-              children: const [GenesisAiContactRoom()],
-            ),
-          ),
+          Card(child: ListTile(
+            leading: const Icon(Icons.tune,
+              color: AgcLuxury.champagne),
+            title: Text(GenesisLanguage.copy(
+              'Symulator rang Genesis', 'Genesis tier simulator')),
+            subtitle: Text(GenesisLanguage.copy(
+              'Sprawdź rangi i punkty GP',
+              'Explore membership tiers and GP points')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => Scaffold(
+                appBar: AppBar(title: Text(GenesisLanguage.copy(
+                  'Symulator rang', 'Tier simulator'))),
+                body: const SafeArea(child: GenesisRankSimulator()),
+              ))),
+          )),
           const SizedBox(height: 16),
           TextField(controller: invite, textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(labelText: GenesisLanguage.copy('Kod polecającego', 'Referral code'))),
