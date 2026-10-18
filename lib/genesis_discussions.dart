@@ -969,92 +969,302 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
 class GenesisComments extends StatefulWidget {
   const GenesisComments({super.key, required this.postId});
   final String postId;
+
   @override
   State<GenesisComments> createState() => _GenesisCommentsState();
 }
 
 class _GenesisCommentsState extends State<GenesisComments> {
   final input = TextEditingController();
+  final inputFocus = FocusNode();
   late Future<List<Map<String, dynamic>>> rows;
+  String? replyingTo;
   bool busy = false;
 
   @override
-  void initState() { super.initState(); refresh(); }
+  void initState() {
+    super.initState();
+    rows = fetch();
+    input.addListener(onInputChanged);
+  }
+
+  void onInputChanged() {
+    if (mounted) setState(() {});
+  }
+
   void refresh() => setState(() { rows = fetch(); });
+
   Future<List<Map<String, dynamic>>> fetch() async {
     final result = await AgcBackend.client.from('agc_post_comments')
       .select('id,author_id,author_label,body,created_at')
-      .eq('post_id', widget.postId).order('created_at').limit(100);
+      .eq('post_id', widget.postId)
+      .order('created_at')
+      .limit(100);
     return List<Map<String, dynamic>>.from(result);
   }
 
+  String commentAge(dynamic value) {
+    final date = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
+    if (date == null) return '';
+    final age = DateTime.now().difference(date);
+    if (age.isNegative || age.inMinutes < 1) return tr('Teraz', 'Now');
+    if (age.inHours < 1) return age.inMinutes.toString() + ' min';
+    if (age.inDays < 1) return age.inHours.toString() + ' h';
+    if (age.inDays < 7) return age.inDays.toString() + ' d';
+    return date.day.toString() + '.' + date.month.toString() +
+      '.' + date.year.toString();
+  }
+
+  void replyTo(Map<String, dynamic> comment) {
+    final label = comment['author_label'] as String;
+    setState(() {
+      replyingTo = label;
+      input.text = '@' + label + ' ';
+      input.selection = TextSelection.collapsed(offset: input.text.length);
+    });
+    inputFocus.requestFocus();
+  }
+
+  void cancelReply() {
+    setState(() {
+      replyingTo = null;
+      input.clear();
+    });
+  }
+
+  bool get canSend {
+    final text = input.text.trim();
+    if (replyingTo == null) return text.length >= 2;
+    return text.replaceFirst('@' + replyingTo!, '').trim().length >= 2;
+  }
+
   Future<void> send() async {
-    if (busy || input.text.trim().length < 2) return;
+    if (busy || !canSend || AgcBackend.user == null) return;
     setState(() => busy = true);
     try {
       await AgcBackend.client.from('agc_post_comments').insert({
-        'post_id': widget.postId, 'author_id': AgcBackend.user!.id,
+        'post_id': widget.postId,
+        'author_id': AgcBackend.user!.id,
         'body': input.text.trim(),
       });
       input.clear();
+      setState(() => replyingTo = null);
+      inputFocus.unfocus();
       refresh();
     } catch (e) {
-      if (mounted) { ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('$e'))); }
-    } finally { if (mounted) { setState(() => busy = false); } }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('Nie udało się dodać komentarza: ',
+            'Could not add comment: ') + e.toString()),
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
   }
 
   Future<void> remove(String id) async {
     try {
-      await AgcBackend.client.from('agc_post_comments').delete().eq('id', id);
+      await AgcBackend.client.from('agc_post_comments')
+        .delete().eq('id', id);
       refresh();
     } catch (e) {
-      if (mounted) { ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('$e'))); }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString()),
+        ));
+      }
     }
   }
 
   @override
-  void dispose() { input.dispose(); super.dispose(); }
+  void dispose() {
+    input.removeListener(onInputChanged);
+    input.dispose();
+    inputFocus.dispose();
+    super.dispose();
+  }
 
   @override
-  Widget build(BuildContext context) => SafeArea(child: Padding(
-    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-    child: SizedBox(height: MediaQuery.sizeOf(context).height * .7,
-      child: Column(children: [
-        Padding(padding: const EdgeInsets.all(12),
-          child: Text(tr('KOMENTARZE', 'COMMENTS'),
-            style: const TextStyle(color: AgcLuxury.champagne, fontWeight: FontWeight.bold))),
-        Expanded(child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: rows, builder: (context, snapshot) {
-            if (snapshot.hasError) { return Center(child: Text('${snapshot.error}')); }
-            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-            if (snapshot.data!.isEmpty) { return Center(child: Text(
-              tr('Bądź pierwszą osobą, która odpowie.', 'Be the first to reply.'))); }
-            return ListView.builder(itemCount: snapshot.data!.length,
-              itemBuilder: (context, i) {
-                final row = snapshot.data![i];
-                return Card(child: ListTile(
-                  title: Text(row['author_label'] as String,
-                    style: const TextStyle(color: AgcLuxury.champagne, fontSize: 12)),
-                  subtitle: SelectableText(row['body'] as String),
-                  trailing: row['author_id'] == AgcBackend.user?.id
-                    ? IconButton(onPressed: () => remove(row['id'] as String),
-                      icon: const Icon(Icons.delete_outline))
-                    : null,
+  Widget build(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * .78,
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 8, 10),
+            child: Row(children: [
+              const Icon(Icons.forum_outlined, color: AgcLuxury.champagne),
+              const SizedBox(width: 8),
+              Expanded(child: Text(tr('Komentarze', 'Comments'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: AgcLuxury.champagne,
+                  fontWeight: FontWeight.bold))),
+              IconButton(
+                onPressed: refresh,
+                tooltip: tr('Odśwież komentarze', 'Refresh comments'),
+                icon: const Icon(Icons.refresh),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                tooltip: tr('Zamknij', 'Close'),
+                icon: const Icon(Icons.close),
+              ),
+            ]),
+          ),
+          const Divider(height: 1),
+          Expanded(child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: rows,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(tr('Nie udało się wczytać komentarzy.',
+                      'Could not load comments.')),
+                    TextButton(onPressed: refresh,
+                      child: Text(tr('Spróbuj ponownie', 'Try again'))),
+                  ],
                 ));
-              });
-          })),
-        Padding(padding: const EdgeInsets.all(12),
-          child: Row(children: [
-            Expanded(child: TextField(controller: input, maxLength: 1000,
-              minLines: 1, maxLines: 2,
-              decoration: InputDecoration(counterText: '',
-                hintText: tr('Napisz komentarz…', 'Write a comment…')))),
-            IconButton(onPressed: busy ? null : send,
-              icon: const Icon(Icons.send, color: AgcLuxury.champagne)),
-          ])),
-      ]),
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final comments = snapshot.data!;
+              if (comments.isEmpty) {
+                return Center(child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.chat_bubble_outline,
+                        size: 36, color: AgcLuxury.champagne),
+                      const SizedBox(height: 10),
+                      Text(tr('Jeszcze nie ma komentarzy.',
+                        'No comments yet.')),
+                      const SizedBox(height: 5),
+                      Text(tr('Rozpocznij rozmowę jako pierwszy!',
+                        'Be the first to join the conversation!'),
+                        textAlign: TextAlign.center),
+                    ],
+                  ),
+                ));
+              }
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 12),
+                itemCount: comments.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, i) {
+                  final comment = comments[i];
+                  final isMine = comment['author_id'] == AgcBackend.user?.id;
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const CircleAvatar(
+                        radius: 16, child: Icon(Icons.person_outline, size: 18)),
+                      const SizedBox(width: 8),
+                      Expanded(child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(comment['author_label'] as String,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AgcLuxury.champagne)),
+                                const SizedBox(height: 5),
+                                SelectableText(comment['body'] as String),
+                              ],
+                            ),
+                          ),
+                          Row(children: [
+                            Text(commentAge(comment['created_at']),
+                              style: const TextStyle(
+                                fontSize: 11, color: Colors.white70)),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: () => replyTo(comment),
+                              child: Text(tr('Odpowiedz', 'Reply')),
+                            ),
+                            if (isMine)
+                              IconButton(
+                                onPressed: () => remove(comment['id'] as String),
+                                icon: const Icon(Icons.delete_outline, size: 17),
+                                tooltip: tr('Usuń komentarz', 'Delete comment'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                          ]),
+                        ],
+                      )),
+                    ],
+                  );
+                },
+              );
+            },
+          )),
+          const Divider(height: 1),
+          if (replyingTo != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+              child: Row(children: [
+                Expanded(child: Text(
+                  tr('Odpowiadasz: ', 'Replying to: ') + replyingTo!,
+                  style: const TextStyle(
+                    fontSize: 12, color: AgcLuxury.champagne))),
+                IconButton(
+                  onPressed: cancelReply,
+                  icon: const Icon(Icons.close, size: 18),
+                  tooltip: tr('Anuluj odpowiedź', 'Cancel reply'),
+                ),
+              ]),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              const CircleAvatar(
+                radius: 17, child: Icon(Icons.person_outline, size: 19)),
+              const SizedBox(width: 8),
+              Expanded(child: TextField(
+                key: const Key('group_comment_input'),
+                controller: input,
+                focusNode: inputFocus,
+                maxLength: 1000,
+                minLines: 1,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: tr('Napisz komentarz…', 'Write a comment…'),
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 12),
+                ),
+              )),
+              const SizedBox(width: 6),
+              IconButton.filled(
+                key: const Key('group_comment_send'),
+                onPressed: busy || !canSend ? null : send,
+                tooltip: tr('Wyślij komentarz', 'Send comment'),
+                icon: busy
+                  ? const SizedBox(width: 18, height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.send),
+              ),
+            ]),
+          ),
+        ]),
+      ),
     ),
-  ));
+  );
 }
