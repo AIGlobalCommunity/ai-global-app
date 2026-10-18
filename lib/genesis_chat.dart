@@ -30,7 +30,9 @@ class _GenesisChatState extends State<GenesisChat> {
     super.initState();
     refresh();
     refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (mounted && !questions) refresh(silent: true);
+      if (mounted && !questions) {
+        refresh(silent: true);
+      }
     });
   }
 
@@ -42,8 +44,12 @@ class _GenesisChatState extends State<GenesisChat> {
 
   Future<void> refresh({bool silent = false}) async {
     final me = AgcBackend.user?.id;
-    if (me == null) return;
-    if (!silent && mounted) setState(() { loading = true; error = null; });
+    if (me == null) {
+      return;
+    }
+    if (!silent && mounted) {
+      setState(() { loading = true; error = null; });
+    }
     try {
       final rows = await AgcBackend.client.from('agc_direct_messages')
         .select('id,sender_id,recipient_id,body,created_at')
@@ -61,20 +67,24 @@ class _GenesisChatState extends State<GenesisChat> {
             member['handle'] as String? ?? chatText('Członek', 'Member');
         }
       }
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         messages = fetched;
         names = labels;
         loading = false;
         error = null;
-      });
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         loading = false;
         if (!silent) {
           error = chatText('Nie udało się pobrać rozmów.',
             'Could not load conversations.');
         }
-      });
+        });
+      }
     }
   }
 
@@ -174,7 +184,9 @@ class _GenesisChatState extends State<GenesisChat> {
                                     memberName: names[entry.key] ??
                                       chatText('Członek Genesis',
                                         'Genesis member'))));
-                              if (mounted) refresh(silent: true);
+                              if (mounted) {
+                                refresh(silent: true);
+                              }
                             },
                           )),
                     ]))),
@@ -210,7 +222,9 @@ class _GenesisConversationPageState extends State<GenesisConversationPage> {
     super.initState();
     refresh();
     timer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (mounted && !sending) refresh(silent: true);
+      if (mounted && !sending) {
+        refresh(silent: true);
+      }
     });
   }
 
@@ -233,7 +247,9 @@ class _GenesisConversationPageState extends State<GenesisConversationPage> {
         .inFilter('recipient_id', [me, widget.memberId])
         .order('created_at', ascending: false).limit(300);
       final fetched = List<Map<String, dynamic>>.from(rows.reversed);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final changed = fetched.length != messages.length ||
         (fetched.isNotEmpty && messages.isNotEmpty &&
           fetched.last['id'] != messages.last['id']);
@@ -252,13 +268,15 @@ class _GenesisConversationPageState extends State<GenesisConversationPage> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         loading = false;
         if (!silent) {
           error = chatText('Nie udało się pobrać wiadomości.',
             'Could not load messages.');
         }
-      });
+        });
+      }
     }
   }
 
@@ -266,7 +284,9 @@ class _GenesisConversationPageState extends State<GenesisConversationPage> {
     final me = AgcBackend.user?.id;
     final body = composer.text.trim();
     if (me == null || me == widget.memberId || body.isEmpty || sending ||
-        body.length > 3000) return;
+        body.length > 3000) {
+      return;
+    }
     setState(() { sending = true; error = null; });
     try {
       await AgcBackend.client.from('agc_direct_messages').insert({
@@ -275,11 +295,15 @@ class _GenesisConversationPageState extends State<GenesisConversationPage> {
       composer.clear();
       await refresh(silent: true);
     } catch (_) {
-      if (mounted) setState(() => error = chatText(
-        'Nie udało się wysłać wiadomości. Spróbuj ponownie.',
-        'Could not send the message. Please try again.'));
+      if (mounted) {
+        setState(() => error = chatText(
+          'Nie udało się wysłać wiadomości. Spróbuj ponownie.',
+          'Could not send the message. Please try again.'));
+      }
     } finally {
-      if (mounted) setState(() => sending = false);
+      if (mounted) {
+        setState(() => sending = false);
+      }
     }
   }
 
