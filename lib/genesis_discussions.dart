@@ -114,6 +114,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         membership['group_id'] as String: membership['status'] as String,
     };
     final postCounts = <String, int>{};
+    final commentCounts = <String, int>{};
     final lastActivity = <String, DateTime>{};
     final latestPost = <String, Map<String, dynamic>>{};
     final latestComment = <String, Map<String, dynamic>>{};
@@ -130,8 +131,11 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     }
     for (final comment in comments) {
       final id = postGroupIds[comment['post_id']];
-      if (id == null) continue;
+      if (id == null) {
+        continue;
+      }
       latestComment.putIfAbsent(id, () => comment);
+      commentCounts[id] = (commentCounts[id] ?? 0) + 1;
       final date = DateTime.tryParse(comment['created_at'] as String? ?? '');
       if (date != null &&
           (lastActivity[id] == null || date.isAfter(lastActivity[id]!))) {
@@ -142,6 +146,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       final id = item['id'] as String;
       item['my_status'] = memberStatus[id];
       item['post_count'] = postCounts[id] ?? 0;
+      item['activity_count'] = (postCounts[id] ?? 0) + (commentCounts[id] ?? 0);
       item['last_activity'] = lastActivity[id];
       final canRead = item['visibility'] == 'public' ||
         item['owner_id'] == userId || memberStatus[id] == 'active';
@@ -511,8 +516,8 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               alignment: Alignment.centerLeft,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
             ),
-            child: Text(tr('O czym chcesz porozmawiać?',
-              'What would you like to discuss?')),
+            child: Text(tr('Co słychać? Napisz post…',
+              'What’s happening? Write a post…')),
           )),
         ]),
         const SizedBox(height: 8),
@@ -520,7 +525,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
           TextButton.icon(
             onPressed: createPost,
             icon: const Icon(Icons.edit_note_outlined),
-            label: Text(tr('Nowy wątek', 'New discussion')),
+            label: Text(tr('Napisz post', 'Write post')),
           ),
           TextButton.icon(
             onPressed: createPost,
@@ -594,7 +599,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(tr('Nowy wątek', 'New discussion')),
+          title: Text(tr('Utwórz post', 'Create post')),
           content: SizedBox(width: 480, child: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Align(alignment: Alignment.centerLeft,
@@ -603,9 +608,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                   style: const TextStyle(fontSize: 12, color: Colors.white70))),
               const SizedBox(height: 12),
               TextField(controller: body, maxLength: 3000, minLines: 3, maxLines: 6,
-                decoration: InputDecoration(labelText: tr('Twoja wypowiedź', 'Your post'),
-                  hintText: tr('Podziel się pomysłem lub zadaj pytanie…',
-                    'Share an idea or ask a question…'))),
+                decoration: InputDecoration(labelText: tr('Treść posta', 'Post content'),
+                  hintText: tr('Co chcesz przekazać społeczności?',
+                    'What would you like to share?'))),
               const SizedBox(height: 8),
               TextField(controller: link, maxLength: 1500,
                 keyboardType: TextInputType.url,
@@ -682,7 +687,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               Navigator.pop(ctx, GenesisPostDraft(
                 content, article.isEmpty ? null : article,
                 movie.isEmpty ? null : movie, photo));
-            }, child: Text(tr('Opublikuj wątek', 'Publish discussion'))),
+            }, child: Text(tr('Opublikuj', 'Post'))),
           ],
         ),
       ),
@@ -735,7 +740,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         'video_url': draft.video, 'image_path': imagePath,
       });
       refresh();
-      message(tr('Wątek został opublikowany.', 'Discussion published.'));
+      message(tr('Post opublikowany.', 'Post published.'));
     } catch (e) {
       if (imagePath != null) {
         try {
@@ -891,10 +896,10 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     }).toList();
     if (groupFilter == 'active') {
       items.sort((a, b) {
-        final byPosts = (b['post_count'] as int)
-          .compareTo(a['post_count'] as int);
-        if (byPosts != 0) {
-          return byPosts;
+        final byActivity = (b['activity_count'] as int)
+          .compareTo(a['activity_count'] as int);
+        if (byActivity != 0) {
+          return byActivity;
         }
         final aDate = a['last_activity'] as DateTime? ??
           DateTime.tryParse(a['created_at'] as String? ?? '');
@@ -986,7 +991,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     required String heading,
     required Map<String, dynamic>? entry,
   }) {
-    if (entry == null) return const SizedBox.shrink();
+    if (entry == null) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1000,7 +1007,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                 color: AgcLuxury.champagne, fontWeight: FontWeight.w600)),
             const SizedBox(height: 3),
             Text((entry['body'] as String? ?? '').replaceAll(
-              RegExp(r'\\s+'), ' ').trim(),
+              RegExp(r'\s+'), ' ').trim(),
               maxLines: 2, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 13)),
           ],
@@ -1163,7 +1170,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
             icon: Icon(item['liked'] == true
               ? Icons.favorite : Icons.favorite_border,
               color: item['liked'] == true ? Colors.redAccent : null),
-            label: Text("${tr('Lubię to', 'Like')} · ${item['likes']}"),
+            label: Text("${tr('Polub', 'Like')} · ${item['likes']}"),
           ),
           TextButton.icon(
             onPressed: () async {
@@ -1175,7 +1182,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               refresh();
             },
             icon: const Icon(Icons.mode_comment_outlined),
-            label: Text("${tr('Komentarze', 'Comments')} · ${item['comments']}"),
+            label: Text("${tr('Komentuj', 'Comment')} · ${item['comments']}"),
           ),
           if (item['visibility'] == 'public')
             TextButton.icon(
@@ -1404,11 +1411,6 @@ class _GenesisCommentsState extends State<GenesisComments> {
                   color: AgcLuxury.champagne,
                   fontWeight: FontWeight.bold))),
               IconButton(
-                onPressed: refresh,
-                tooltip: tr('Odśwież komentarze', 'Refresh comments'),
-                icon: const Icon(Icons.refresh),
-              ),
-              IconButton(
                 onPressed: () => Navigator.pop(context),
                 tooltip: tr('Zamknij', 'Close'),
                 icon: const Icon(Icons.close),
@@ -1443,11 +1445,11 @@ class _GenesisCommentsState extends State<GenesisComments> {
                       const Icon(Icons.chat_bubble_outline,
                         size: 36, color: AgcLuxury.champagne),
                       const SizedBox(height: 10),
-                      Text(tr('Jeszcze nie ma komentarzy.',
+                      Text(tr('Brak komentarzy.',
                         'No comments yet.')),
                       const SizedBox(height: 5),
-                      Text(tr('Rozpocznij rozmowę jako pierwszy!',
-                        'Be the first to join the conversation!'),
+                      Text(tr('Napisz pierwszy komentarz.',
+                        'Write the first comment.'),
                         textAlign: TextAlign.center),
                     ],
                   ),
@@ -1546,7 +1548,7 @@ class _GenesisCommentsState extends State<GenesisComments> {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   counterText: '',
-                  hintText: tr('Napisz komentarz…', 'Write a comment…'),
+                  hintText: tr('Dodaj komentarz…', 'Add a comment…'),
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 12),
