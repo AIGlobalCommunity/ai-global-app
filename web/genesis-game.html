@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#071323">
+<title>GENESIS SIGNAL — gra THE GENESIS ERA</title>
+<style>
+:root{color-scheme:dark;--bg:#071323;--panel:#0d2036;--line:#29465a;--gold:#d9bb7b;--ice:#89ddf5;--muted:#a9b8c7;--good:#89f1cc}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -15%,#193d55 0,transparent 62%),var(--bg);color:#f4f1e8;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;background-image:radial-gradient(#b9d8ed 1px,transparent 1px);background-size:47px 53px}
+main{position:relative;max-width:820px;margin:auto;padding:22px 15px 32px}
+.eyebrow{font-size:10px;letter-spacing:3px;color:var(--gold);text-align:center;font-weight:700}
+h1{font-size:clamp(25px,5vw,40px);font-family:Georgia,serif;font-weight:400;text-align:center;letter-spacing:3px;margin:7px 0 5px;color:#f4e4bd}
+.lead{font-size:13px;text-align:center;color:var(--muted);line-height:1.65;margin:0 auto 18px;max-width:550px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 auto 14px;max-width:580px}
+.stat{border:1px solid #304559;background:#0c1c2fcb;border-radius:11px;padding:10px 5px;text-align:center}
+.stat b{display:block;font-size:20px;color:#f4e4bd;font-variant-numeric:tabular-nums}.stat span{font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.status{text-align:center;font-size:12px;color:var(--ice);min-height:38px;line-height:1.45;max-width:590px;margin:auto}
+.board-wrap{position:relative;width:min(100%,555px);margin:0 auto;padding:10px;border:1px solid #426178;border-radius:18px;background:linear-gradient(135deg,#10273d,#071522);box-shadow:0 15px 45px #0006,inset 0 0 30px #06121f}
+.board{display:grid;gap:5px;aspect-ratio:1}
+.tile{appearance:none;border:1px solid #30475b;background:linear-gradient(145deg,#1b3247,#102437);border-radius:9px;position:relative;cursor:pointer;touch-action:manipulation;padding:0;min-width:0;min-height:0;transition:border-color .16s,background .16s,box-shadow .16s}
+.tile svg{display:block;width:100%;height:100%;overflow:visible}.tile .wire{stroke:#60798a;stroke-width:12;stroke-linecap:round;fill:none;transition:stroke .14s}.tile .core{fill:#668495;transition:fill .14s}
+.tile.live{border-color:#4d9eb0;background:linear-gradient(145deg,#174658,#0c3448);box-shadow:inset 0 0 12px #47c7e624}
+.tile.live .wire{stroke:var(--ice);filter:drop-shadow(0 0 4px #68cce0)}.tile.live .core{fill:#c6f6ff}
+.tile.source{border-color:#d9bb7b}.tile.target{border-color:#bd9d67}.tile.source:after,.tile.target:after{content:"S";position:absolute;top:3px;left:5px;font-size:9px;color:var(--gold);font-weight:800}.tile.target:after{content:"C"}
+.tile.hint{animation:hint 1s ease-in-out 2}@keyframes hint{50%{box-shadow:0 0 20px #efcf75;border-color:#efcf75}}
+.tile:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.legend{display:flex;justify-content:space-between;gap:8px;max-width:555px;margin:9px auto 13px;color:var(--muted);font-size:11px}
+.legend strong{color:var(--gold)}
+.actions{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;max-width:600px;margin:0 auto}
+button.action{border:1px solid #8d7549;background:#cfb27b;color:#102235;border-radius:10px;padding:12px 15px;font-weight:800;cursor:pointer;font-size:12px;min-height:43px}
+button.action.secondary{background:#142c40;color:#f3dfb6;border-color:#4e6778}
+button.action:disabled{opacity:.45;cursor:not-allowed}
+.foot{text-align:center;color:#8396a7;font-size:11px;line-height:1.7;max-width:570px;margin:16px auto 0}
+.overlay{position:absolute;inset:0;z-index:3;background:#05121ddc;display:flex;align-items:center;justify-content:center;border-radius:18px;padding:20px;backdrop-filter:blur(5px)}
+.overlay[hidden]{display:none}
+.modal{width:min(100%,390px);background:#10263b;border:1px solid #8d7549;border-radius:17px;padding:27px 20px;text-align:center;box-shadow:0 15px 70px #0008}
+.modal .symbol{font-size:45px;color:var(--gold)}.modal h2{font:normal 29px Georgia,serif;color:#e9d5a8;margin:10px 0}.modal p{font-size:13px;color:#c8d4dc;line-height:1.6}.modal button{margin-top:7px}
+@media(max-width:460px){main{padding:14px 8px 26px}.board-wrap{padding:6px;border-radius:12px}.board{gap:3px}.tile{border-radius:5px}.stats{gap:5px}.stat{padding:8px 2px}.stat b{font-size:17px}.stat span{font-size:9px}.actions{gap:6px}button.action{padding:10px 12px;font-size:11px}.legend{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">THE GENESIS ERA · INTERAKTYWNA GRA HTML5</div>
+<h1>GENESIS SIGNAL</h1>
+<p class="lead">Połącz źródło sygnału <strong>S</strong> z celem <strong>C</strong>. Obracaj fragmenty sieci, odkrywaj połączenia i przywracaj transmisję.</p>
+<div class="stats" aria-label="Statystyki gry">
+  <div class="stat"><b id="level">01</b><span>Poziom</span></div>
+  <div class="stat"><b id="moves">0</b><span>Ruchy</span></div>
+  <div class="stat"><b id="clock">00:00</b><span>Czas</span></div>
+  <div class="stat"><b id="score">0</b><span>Wynik</span></div>
+</div>
+<div class="status" id="status" role="status" aria-live="polite">Obróć segment, aby poprowadzić sygnał.</div>
+<div class="board-wrap">
+  <div class="board" id="board" role="group" aria-label="Plansza gry Genesis Signal"></div>
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="symbol" id="modalSymbol">✦</div>
+      <h2 id="modalTitle">Odbierz sygnał</h2>
+      <p id="modalText">Każde dotknięcie obraca segment o 90°. Połącz świecącą linię od S do C. Im mniej ruchów i krótszy czas, tym więcej punktów.</p>
+      <button class="action" id="modalButton" type="button">Rozpocznij misję →</button>
+    </div>
+  </div>
+</div>
+<div class="legend"><span><strong>S</strong> — źródło transmisji</span><span><strong>C</strong> — cel transmisji</span></div>
+<div class="actions">
+  <button class="action secondary" type="button" id="hint">✧ Wskazówka (2)</button>
+  <button class="action secondary" type="button" id="restart">↺ Powtórz poziom</button>
+  <button class="action secondary" type="button" id="newGame">✦ Nowa gra</button>
+</div>
+<p class="foot">Sterowanie: dotknij segmentu lub wybierz go klawiszem Tab i naciśnij Enter. Postęp i najlepszy wynik są zapisywane tylko w tej przeglądarce. Gra jest fikcyjną łamigłówką — nie symuluje rzeczywistego kontaktu z AI. <span id="best"></span></p>
+</main>
+<script>
+(function(){
+"use strict";
+var N=1,E=2,S=4,W=8, dirs=[[-1,0,N,S],[0,1,E,W],[1,0,S,N],[0,-1,W,E]];
+var level=1,score=0,moves=0,hints=2,startedAt=0,elapsed=0,tick=null,tiles=[],solution=[],path=[],size=5,locked=true;
+var board=document.getElementById("board"),overlay=document.getElementById("overlay");
+var modalButton=document.getElementById("modalButton"),modalTitle=document.getElementById("modalTitle"),modalText=document.getElementById("modalText"),modalSymbol=document.getElementById("modalSymbol");
+var best=0;
+try{best=Number(localStorage.getItem("genesis-signal-best")||0)||0;}catch(e){}
+document.getElementById("best").textContent=best?"Najlepszy wynik: "+best:"";
+function rand(n){return Math.floor(Math.random()*n);}
+function rotate(m){return ((m<<1)&15)|(m>>3);}
+function neighbor(i,d){var r=Math.floor(i/size),c=i%size,rr=r+dirs[d][0],cc=c+dirs[d][1];return rr<0||rr>=size||cc<0||cc>=size?-1:rr*size+cc;}
+function generatePath(){
+ var visited=new Set([0]),route=[0],target=size*size-1;
+ function dfs(i){
+   if(i===target)return true;
+   var options=[0,1,2,3];
+   for(var k=options.length-1;k>0;k--){var j=rand(k+1),t=options[k];options[k]=options[j];options[j]=t;}
+   for(var d of options){var next=neighbor(i,d);if(next<0||visited.has(next))continue;
+     visited.add(next);route.push(next);
+     if(dfs(next))return true;
+     route.pop();
+   }
+   return false;
+ }
+ dfs(0);return route;
+}
+function direction(a,b){for(var d=0;d<4;d++)if(neighbor(a,d)===b)return d;return -1;}
+function buildLevel(){
+ size=level<3?5:level<6?6:level<9?7:8;
+ path=generatePath();solution=Array(size*size).fill(0);
+ for(var i=0;i<path.length;i++){
+   var here=path[i];
+   if(i>0)solution[here]|=dirs[direction(here,path[i-1])][2];
+   if(i<path.length-1)solution[here]|=dirs[direction(here,path[i+1])][2];
+ }
+ tiles=solution.map(function(mask){
+   if(mask)return mask;
+   var choices=[5,10,3,6,9,12,7,11,13,14,15];
+   return choices[rand(choices.length)];
+ });
+ scramble();
+ moves=0;hints=2;elapsed=0;startedAt=Date.now();locked=false;
+ board.style.gridTemplateColumns="repeat("+size+",1fr)";
+ draw();updateStats();document.getElementById("status").textContent="Sygnał czeka na połączenie. Obracaj fragmenty sieci.";
+ clearInterval(tick);tick=setInterval(function(){if(!locked){elapsed=Math.floor((Date.now()-startedAt)/1000);updateStats();}},1000);
+}
+function scramble(){
+ for(var i=0;i<tiles.length;i++){var turns=rand(4);while(turns--)tiles[i]=rotate(tiles[i]);}
+ var tries=0;
+ while(connected().won&&tries++<8){tiles[0]=rotate(tiles[0]);}
+}
+function connected(){
+ var seen=new Set([0]),queue=[0];
+ for(var k=0;k<queue.length;k++){
+   var i=queue[k];
+   for(var d=0;d<4;d++){
+     if(!(tiles[i]&dirs[d][2]))continue;
+     var j=neighbor(i,d);
+     if(j>=0&&(tiles[j]&dirs[d][3])&&!seen.has(j)){seen.add(j);queue.push(j);}
+   }
+ }
+ return {seen:seen,won:seen.has(size*size-1)};
+}
+function tileSVG(mask){
+ var paths="";
+ if(mask&N)paths+='<path class="wire" d="M50 50 L50 4"/>';
+ if(mask&E)paths+='<path class="wire" d="M50 50 L96 50"/>';
+ if(mask&S)paths+='<path class="wire" d="M50 50 L50 96"/>';
+ if(mask&W)paths+='<path class="wire" d="M50 50 L4 50"/>';
+ return '<svg viewBox="0 0 100 100" aria-hidden="true">'+paths+'<circle class="core" cx="50" cy="50" r="10"/></svg>';
+}
+function draw(){
+ var active=connected();
+ board.replaceChildren();
+ for(var i=0;i<tiles.length;i++){
+   var tile=document.createElement("button");tile.type="button";
+   tile.className="tile"+(active.seen.has(i)?" live":"")+(i===0?" source":"")+(i===tiles.length-1?" target":"");
+   tile.setAttribute("aria-label","Segment "+(i+1)+(i===0?", źródło":i===tiles.length-1?", cel":"")+". Obróć o 90 stopni");
+   tile.innerHTML=tileSVG(tiles[i]);
+   (function(index){tile.addEventListener("click",function(){turn(index);});})(i);
+   board.appendChild(tile);
+ }
+ return active;
+}
+function updateStats(){
+ document.getElementById("level").textContent=String(level).padStart(2,"0");
+ document.getElementById("moves").textContent=moves;
+ document.getElementById("score").textContent=score;
+ var t=elapsed;document.getElementById("clock").textContent=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");
+ document.getElementById("hint").textContent="✧ Wskazówka ("+hints+")";
+ document.getElementById("hint").disabled=locked||hints===0;
+}
+function turn(i){
+ if(locked)return;
+ tiles[i]=rotate(tiles[i]);moves++;
+ var state=draw();updateStats();
+ if(state.won)win();
+ else document.getElementById("status").textContent="Aktywne segmenty: "+state.seen.size+" / "+tiles.length+" · Połącz źródło S z celem C.";
+}
+function win(){
+ locked=true;clearInterval(tick);elapsed=Math.floor((Date.now()-startedAt)/1000);
+ var gain=Math.max(100,1200-moves*22-elapsed*4)+hints*75;
+ score+=gain;
+ if(score>best){best=score;try{localStorage.setItem("genesis-signal-best",String(best));}catch(e){}}
+ document.getElementById("best").textContent="Najlepszy wynik: "+best;
+ updateStats();document.getElementById("status").textContent="Transmisja przywrócona! +"+gain+" punktów.";
+ modalSymbol.textContent="✦";modalTitle.textContent="Sygnał odebrany!";
+ modalText.textContent="Poziom "+level+" ukończony w "+moves+" ruchach i "+elapsed+" sekundach. Zdobywasz "+gain+" punktów. Następna misja będzie trudniejsza.";
+ modalButton.textContent="Następna transmisja →";overlay.hidden=false;
+ modalButton.onclick=function(){overlay.hidden=true;level++;buildLevel();};
+}
+function showStart(){
+ overlay.hidden=false;modalSymbol.textContent="✦";modalTitle.textContent="GENESIS SIGNAL";
+ modalText.textContent="Odkryj drogę dla sygnału. Dotykaj kafelków, aby obracać przewody. Gdy świecąca linia połączy S z C, przejdziesz na kolejny poziom. Masz 2 wskazówki na misję.";
+ modalButton.textContent="Rozpocznij misję →";
+ modalButton.onclick=function(){overlay.hidden=true;level=1;score=0;buildLevel();};
+}
+document.getElementById("hint").addEventListener("click",function(){
+ if(locked||hints<1)return;
+ var incorrect=path.filter(function(i){return tiles[i]!==solution[i];});
+ if(!incorrect.length){document.getElementById("status").textContent="Trasa jest ustawiona. Sprawdź pozostałe połączenia.";return;}
+ var i=incorrect[0],steps=0,mask=tiles[i];
+ while(mask!==solution[i]&&steps<4){mask=rotate(mask);steps++;}
+ if(steps>=4)return;
+ tiles[i]=mask;moves+=steps;hints--;
+ var state=draw();updateStats();
+ var element=board.children[i];if(element)element.classList.add("hint");
+ document.getElementById("status").textContent="Wskazówka: poprawiono jeden fragment głównej trasy (+"+steps+" ruchów).";
+ if(state.won)win();
+});
+document.getElementById("restart").addEventListener("click",function(){
+ if(locked&&overlay.hidden===false)return;
+ overlay.hidden=true;score=0;level=1;buildLevel();
+});
+document.getElementById("newGame").addEventListener("click",function(){clearInterval(tick);locked=true;showStart();});
+showStart();
+})();
+</script>
+</body>
+</html>
