@@ -28,7 +28,9 @@ class _GenesisPasswordChangeState extends State<GenesisPasswordChange> {
   }
 
   Future<void> changePassword() async {
-    if (busy) return;
+    if (busy) {
+      return;
+    }
     final next = password.text;
     if (next.length < 8) {
       setState(() {
