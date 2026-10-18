@@ -36,13 +36,15 @@ jobs:
         run: |
           flutter analyze
           flutter test
-      - name: Build preview at /ai-global-app/
-        run: flutter build web --release --base-href /ai-global-app/
+      - name: Build production site at thegenesisera.com
+        run: flutter build web --release --base-href /
       - name: Verify bundled AGC artwork
         run: |
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
           test -s build/web/assets/assets/agc_genesis_ai_vector.svg
           echo "AGC cosmic HD background and vector Genesis logo are present in the release bundle"
+      - name: Configure GitHub Pages custom domain
+        run: echo 'thegenesisera.com' > build/web/CNAME
       - name: Stop Jekyll processing
         run: touch build/web/.nojekyll
       - name: Upload Pages artifact
