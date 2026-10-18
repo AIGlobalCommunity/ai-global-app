@@ -594,9 +594,12 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         postMedia(item),
         const SizedBox(height: 10),
         Wrap(spacing: 5, runSpacing: 5, children: [
-          TextButton.icon(onPressed: () => toggleLike(item),
-            icon: Icon(item['liked'] == true ? Icons.favorite : Icons.favorite_border),
-            label: Text('${item['likes']}')),
+          TextButton.icon(
+            key: Key('group_like_${item['id']}'),
+            onPressed: () => toggleLike(item),
+            icon: Icon(item['liked'] == true ? Icons.favorite : Icons.favorite_border,
+              color: item['liked'] == true ? Colors.redAccent : null),
+            label: Text('${tr('Lubię to', 'Like')} · ${item['likes']}')),
           TextButton.icon(onPressed: () async {
             await showModalBottomSheet<void>(
               context: context, isScrollControlled: true, showDragHandle: true,
@@ -605,7 +608,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
           }, icon: const Icon(Icons.chat_bubble_outline),
             label: Text('${item['comments']}')),
           if (item['visibility'] == 'public')
-            TextButton.icon(onPressed: () => genesisSharePost(context, item),
+            TextButton.icon(
+              key: Key('group_share_${item['id']}'),
+              onPressed: () => genesisSharePost(context, item),
               icon: const Icon(Icons.share_outlined),
               label: Text(tr('Udostępnij', 'Share'))),
           TextButton.icon(onPressed: () => report(item),
@@ -664,6 +669,15 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                   subtitle: Text(prompt['body'] as String))),
             ]);
           }),
+      ],
+      if (group != null) ...[
+        const SizedBox(height: 10),
+        Text(group!['visibility'] == 'private'
+          ? tr('🔒 Tylko członkowie widzą wypowiedzi i mogą je polubić lub komentować. Udostępnianie publiczne jest wyłączone.',
+              '🔒 Only members can see, like and comment on posts. Public sharing is disabled.')
+          : tr('🌐 Członkowie mogą polubić, komentować i udostępniać publiczne wypowiedzi.',
+              '🌐 Members can like, comment and share public posts.'),
+          style: const TextStyle(fontSize: 12, color: Colors.white70)),
       ],
       const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 8, children: [
