@@ -22,6 +22,9 @@ class _GenesisAccountEditorState extends State<GenesisAccountEditor> {
   final nickname = TextEditingController();
   final country = TextEditingController();
   bool isPublic = true;
+  bool nicknamePublic = true;
+  bool checkingNickname = false;
+  String? nicknameAvailability;
   bool loading = true;
   bool saving = false;
   bool checking = false;
@@ -410,6 +413,8 @@ class GenesisSocialProfile extends StatefulWidget {
 }
 
 class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
+  final nickname = TextEditingController();
+  final country = TextEditingController();
   final bio = TextEditingController();
   final interests = TextEditingController();
   final website = TextEditingController();
@@ -442,6 +447,8 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       if (!mounted) return;
       final row = results[0] as Map<String, dynamic>?;
       final profile = results[1] as Map<String, dynamic>?;
+      nickname.text = profile?['handle'] as String? ?? '';
+      country.text = profile?['country_code'] as String? ?? '';
       bio.text = row?['bio'] as String? ?? '';
       interests.text = row?['interests'] as String? ?? '';
       website.text = row?['website'] as String? ?? '';
@@ -450,6 +457,7 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       cover.text = row?['cover_url'] as String? ?? '';
       setState(() {
         handle = profile?['handle'] as String? ?? '';
+        nicknamePublic = profile?['show_nick_publicly'] == true;
         memberNumber = (profile?['member_number'] as num?)?.toInt();
         joined = profile?['created_at'] == null
           ? null : agcRegistrationDate(profile?['created_at']);
@@ -467,7 +475,49 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
     }
   }
 
+  Future<bool> checkNick() async {
+    final name = nickname.text.trim();
+    if (validateAgcNick(name) != null) {
+      setState(() => nicknameAvailability = socialText(
+        'Nick musi mieć 3–20 znaków: litery, cyfry lub _.',
+        'Nickname must be 3–20 characters: letters, digits or _.'));
+      return false;
+    }
+    setState(() {
+      checkingNickname = true;
+      nicknameAvailability = null;
+    });
+    try {
+      final result = await AgcBackend.client.rpc(
+        'agc_nick_available', params: {'p_handle': name});
+      if (!mounted) return false;
+      if (nickname.text.trim() != name) return false;
+      setState(() => nicknameAvailability = result == true
+        ? socialText('Pseudonim dostępny ✓', 'Nickname available ✓')
+        : socialText('Pseudonim jest już zajęty.', 'Nickname is taken.'));
+      return result == true;
+    } catch (_) {
+      if (mounted) {
+        setState(() => nicknameAvailability = socialText(
+          'Nie udało się sprawdzić nicku.', 'Could not check nickname.'));
+      }
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() => checkingNickname = false);
+      }
+    }
+  }
+
   Future<void> save() async {
+    if (saving || checkingNickname) return;
+    final code = country.text.trim().toUpperCase();
+    if (code.isNotEmpty && !RegExp(r'^[A-Z]{2}$').hasMatch(code)) {
+      setState(() => notice = socialText(
+        'Podaj dwuliterowy kod kraju, np. PL.',
+        'Enter a two-letter country code, e.g. PL.'));
+      return;
+    }
     for (final controller in [website, avatar, cover]) {
       if (controller.text.trim().isNotEmpty &&
           GenesisIdentityCard.safeUrl(controller.text) == null) {
@@ -477,8 +527,20 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
         return;
       }
     }
+    final nickOk = await checkNick();
+    if (!nickOk || !mounted) return;
     setState(() { saving = true; notice = null; });
     try {
+      final updated = await AgcBackend.client.from('agc_profiles')
+        .update({
+          'handle': nickname.text.trim(),
+          'country_code': code.isEmpty ? null : code,
+          'show_nick_publicly': nicknamePublic,
+        })
+        .eq('id', AgcBackend.user!.id).select('id');
+      if (updated.isEmpty) {
+        throw StateError('Account update did not match a row');
+      }
       await AgcBackend.client.from('agc_social_profiles').upsert({
         'member_id': AgcBackend.user!.id,
         'bio': bio.text.trim(),
@@ -492,9 +554,16 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       });
       if (mounted) {
         setState(() {
+          handle = nickname.text.trim();
           editing = false;
           notice = socialText('Karta Genesis zapisana.', 'Genesis card saved.');
         });
+      }
+    } on PostgrestException catch (e) {
+      if (mounted) {
+        setState(() => notice = e.code == '23505'
+          ? socialText('Ten pseudonim został już zajęty.', 'Nickname is taken.')
+          : socialText('Nie udało się zapisać karty.', 'Could not save card.'));
       }
     } catch (_) {
       if (mounted) {
@@ -503,13 +572,15 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
           'Could not save your card. Please try again.'));
       }
     } finally {
-      if (mounted) setState(() => saving = false);
+      if (mounted) {
+        setState(() => saving = false);
+      }
     }
   }
 
   @override
   void dispose() {
-    for (final controller in [bio, interests, website, location, avatar, cover]) {
+    for (final controller in [nickname, country, bio, interests, website, location, avatar, cover]) {
       controller.dispose();
     }
     super.dispose();
@@ -556,7 +627,42 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
               child: Text(socialText('PSEUDONIM I KONTO', 'NICKNAME AND ACCOUNT'),
                 style: const TextStyle(color: AgcLuxury.champagne,
                   fontWeight: FontWeight.bold))),
-            GenesisAccountEditor(embedded: true, onSaved: load),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('account_edit_nickname'),
+              controller: nickname, maxLength: 20,
+              onChanged: (_) => setState(() => nicknameAvailability = null),
+              decoration: InputDecoration(
+                labelText: socialText('Pseudonim Genesis', 'Genesis nickname'),
+                helperText: socialText('3–20 znaków: litery, cyfry lub _',
+                  '3–20 characters: letters, digits or _'))),
+            Align(alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('account_check_nickname'),
+                onPressed: saving || checkingNickname ? null : checkNick,
+                icon: const Icon(Icons.fact_check_outlined),
+                label: Text(socialText(
+                  'Sprawdź pseudonim', 'Check nickname')))),
+            if (nicknameAvailability != null)
+              Align(alignment: Alignment.centerLeft,
+                child: Text(nicknameAvailability!,
+                  style: const TextStyle(color: AgcLuxury.champagne))),
+            const SizedBox(height: 10),
+            TextField(
+              key: const Key('account_edit_country'),
+              controller: country, maxLength: 2,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                labelText: socialText('Kraj (opcjonalnie)', 'Country (optional)'),
+                hintText: 'PL')),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero, value: nicknamePublic,
+              onChanged: (value) => setState(() => nicknamePublic = value),
+              title: Text(socialText(
+                'Pokazuj pseudonim w rankingu', 'Show nickname in ranking')),
+              subtitle: Text(socialText(
+                'Po wyłączeniu ranking użyje anonimowego identyfikatora.',
+                'When disabled, ranking uses an anonymous identifier.'))),
             const Divider(height: 28),
             Align(alignment: Alignment.centerLeft,
               child: Text(socialText('O MNIE', 'ABOUT ME'),
@@ -591,9 +697,13 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
               onChanged: (v) => setState(() => isPublic = v),
               title: Text(socialText('Pokaż kartę innym członkom',
                 'Show my card to other members'))),
-            FilledButton.icon(onPressed: saving ? null : save,
+            FilledButton.icon(
+              key: const Key('account_save_changes'),
+              onPressed: saving || checkingNickname ? null : save,
               icon: const Icon(Icons.save_outlined),
-              label: Text(socialText('Zapisz kartę', 'Save card'))),
+              label: Text(saving
+                ? socialText('Zapisywanie…', 'Saving…')
+                : socialText('Zapisz kartę Genesis', 'Save Genesis card'))),
           ]),
         )),
       ],
