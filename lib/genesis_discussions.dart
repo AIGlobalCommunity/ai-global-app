@@ -125,7 +125,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               .inFilter('group_id', ids));
     final posts = List<Map<String, dynamic>>.from(
       await AgcBackend.client.from('agc_group_posts')
-        .select('id,group_id,body,author_label,created_at,image_path,video_url,link_url')
+        .select('id,group_id,body,author_id,author_label,created_at,image_path,video_url,link_url')
         .inFilter('group_id', ids)
         .order('created_at', ascending: false)
         .limit(1000));
@@ -134,7 +134,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       ? <Map<String, dynamic>>[]
       : List<Map<String, dynamic>>.from(
           await AgcBackend.client.from('agc_post_comments')
-            .select('id,post_id,body,author_label,created_at')
+            .select('id,post_id,body,author_id,author_label,created_at')
             .inFilter('post_id', postIds)
             .order('created_at', ascending: false)
             .limit(1000));
@@ -1102,10 +1102,21 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
             style: const TextStyle(fontSize: 10, color: Colors.white54))),
         ]),
         const SizedBox(height: 7),
-        Text(entry['author_label'] as String? ??
-          tr('Użytkownik', 'Member'),
-          style: const TextStyle(fontSize: 12,
-            color: AgcLuxury.champagne, fontWeight: FontWeight.w600)),
+        Align(alignment: Alignment.centerLeft,
+          child: InkWell(
+            onTap: () => genesisOpenMemberProfile(context,
+              entry['author_id'] as String?,
+              entry['author_label'] as String? ?? tr('Użytkownik', 'Member')),
+            child: Padding(padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Flexible(child: Text(entry['author_label'] as String? ??
+                  tr('Użytkownik', 'Member'),
+                  style: const TextStyle(fontSize: 12,
+                    color: AgcLuxury.champagne, fontWeight: FontWeight.w600))),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, size: 15,
+                  color: AgcLuxury.champagne),
+              ])))),
         const SizedBox(height: 5),
         Text(body, maxLines: isComment ? 3 : 4,
           overflow: TextOverflow.ellipsis,
@@ -1364,17 +1375,32 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     child: Padding(padding: const EdgeInsets.all(14),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          const CircleAvatar(radius: 18, child: Icon(Icons.person_outline)),
+          InkWell(
+            onTap: () => genesisOpenMemberProfile(context,
+              item['author_id'] as String?,
+              item['author_label'] as String? ?? ''),
+            borderRadius: BorderRadius.circular(30),
+            child: const CircleAvatar(radius: 18,
+              child: Icon(Icons.person_outline))),
           const SizedBox(width: 10),
-          Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item['author_label'] as String,
-                style: const TextStyle(color: AgcLuxury.champagne,
-                  fontWeight: FontWeight.w600)),
-              Text(postAge(item['created_at']),
-                style: const TextStyle(fontSize: 11, color: Colors.white70)),
-            ],
+          Expanded(child: InkWell(
+            onTap: () => genesisOpenMemberProfile(context,
+              item['author_id'] as String?,
+              item['author_label'] as String? ?? ''),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Flexible(child: Text(item['author_label'] as String,
+                    style: const TextStyle(color: AgcLuxury.champagne,
+                      fontWeight: FontWeight.w600))),
+                  const Icon(Icons.chevron_right, size: 17,
+                    color: AgcLuxury.champagne),
+                ]),
+                Text(postAge(item['created_at']),
+                  style: const TextStyle(fontSize: 11, color: Colors.white70)),
+              ],
+            ),
           )),
           if (item['author_id'] == AgcBackend.user?.id)
             IconButton(
@@ -1735,8 +1761,12 @@ class _GenesisCommentsState extends State<GenesisComments> {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CircleAvatar(
-                        radius: 16, child: Icon(Icons.person_outline, size: 18)),
+                      InkWell(
+                        onTap: () => genesisOpenMemberProfile(context,
+                          comment['author_id'] as String?,
+                          comment['author_label'] as String? ?? ''),
+                        child: const CircleAvatar(radius: 16,
+                          child: Icon(Icons.person_outline, size: 18))),
                       const SizedBox(width: 8),
                       Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1751,10 +1781,19 @@ class _GenesisCommentsState extends State<GenesisComments> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(comment['author_label'] as String,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: AgcLuxury.champagne)),
+                                InkWell(
+                                  onTap: () => genesisOpenMemberProfile(context,
+                                    comment['author_id'] as String?,
+                                    comment['author_label'] as String? ?? ''),
+                                  child: Row(mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(comment['author_label'] as String,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AgcLuxury.champagne)),
+                                      const Icon(Icons.chevron_right,
+                                        size: 16, color: AgcLuxury.champagne),
+                                    ])),
                                 const SizedBox(height: 5),
                                 SelectableText(comment['body'] as String),
                               ],
