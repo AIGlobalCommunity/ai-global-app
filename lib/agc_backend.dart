@@ -333,6 +333,11 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               ),
             ),
           ),
+          Center(child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 380),
+            child: AgcSocialButtons(
+              onSignIn: AgcBackend.signInWithSocial),
+          )),
           AnimatedSize(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeInOut,
@@ -386,8 +391,6 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                             () => AgcBackend.signIn(
                               email.text, password.text)),
                           child: Text(GenesisLanguage.copy('WEJDŹ DO GENESIS  →', 'ENTER GENESIS  →'))),
-                        AgcSocialButtons(
-                          onSignIn: AgcBackend.signInWithSocial),
                       ],
                     ),
                   ),
