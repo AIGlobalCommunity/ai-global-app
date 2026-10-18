@@ -1,8 +1,8 @@
 import 'agc_backend.dart';
 import 'genesis_language.dart';
-import 'genesis_rank_simulator.dart';
 import 'genesis_discussions.dart';
 import 'genesis_feed.dart';
+import 'genesis_chat.dart';
 import 'genesis_artwork.dart';
 import 'genesis_mission.dart';
 import 'agc_countdown.dart';
@@ -147,8 +147,8 @@ class _AgcHomeState extends State<AgcHome> {
                   initialGroupId: targetGroupId,
                 ),
                 _tabContent(const AgcDatabaseRanking()),
+                const GenesisChat(),
                 const AgcAccountPage(),
-                _tabContent(_profile()),
               ],
             )),
           ])),
@@ -162,8 +162,8 @@ class _AgcHomeState extends State<AgcHome> {
             NavigationDestination(icon: Icon(Icons.article_outlined), label: GenesisLanguage.copy('Aktualności', 'News')),
             NavigationDestination(icon: Icon(Icons.forum_outlined), label: GenesisLanguage.copy('Dyskusje', 'Discussions')),
             NavigationDestination(icon: Icon(Icons.leaderboard), label: GenesisLanguage.t('ranking')),
+            NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: GenesisLanguage.copy('CZAT', 'CHAT')),
             NavigationDestination(icon: Icon(Icons.person_outline), label: GenesisLanguage.t('account')),
-            NavigationDestination(icon: Icon(Icons.tune), label: GenesisLanguage.t('simulator')),
           ],
         ),
       );
@@ -267,5 +267,4 @@ class _AgcHomeState extends State<AgcHome> {
         ],
       )));
 
-  Widget _profile() => GenesisRankSimulator();
 }
