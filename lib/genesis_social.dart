@@ -69,10 +69,14 @@ Future<void> genesisShareGroup(
         'Private groups cannot be shared publicly.'))));
     return;
   }
+  final cover = Uri.tryParse(group['cover_url'] as String? ?? '');
+  final image = cover != null && cover.scheme == 'https' &&
+      cover.host.isNotEmpty && cover.userInfo.isEmpty
+      ? cover.toString() : genesisShareDefaultImage;
   await genesisShareDialog(context,
     title: group['name'] as String? ?? 'THE GENESIS ERA',
     excerpt: genesisShareExcerpt(group['description'] as String? ?? ''),
-    image: genesisShareDefaultImage,
+    image: image,
     link: genesisPublicGroupUrl(group['id'] as String),
     kind: GenesisLanguage.copy('Grupa dyskusyjna', 'Discussion group'));
 }
