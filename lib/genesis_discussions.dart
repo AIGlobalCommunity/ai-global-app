@@ -381,23 +381,62 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     } catch (e) { message('$e'); }
   }
 
+  Widget threadComposer() => Card(
+    margin: const EdgeInsets.only(bottom: 12),
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const CircleAvatar(radius: 19, child: Icon(Icons.person_outline)),
+          const SizedBox(width: 10),
+          Expanded(child: OutlinedButton(
+            key: const Key('start_group_thread'),
+            onPressed: createPost,
+            style: OutlinedButton.styleFrom(
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            ),
+            child: Text(tr('O czym chcesz porozmawiać?',
+              'What would you like to discuss?')),
+          )),
+        ]),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, runSpacing: 4, children: [
+          TextButton.icon(
+            onPressed: createPost,
+            icon: const Icon(Icons.edit_note_outlined),
+            label: Text(tr('Nowy wątek', 'New discussion')),
+          ),
+          TextButton.icon(
+            onPressed: createPost,
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            label: Text(tr('Zdjęcie / link', 'Photo / link')),
+          ),
+        ]),
+      ]),
+    ),
+  );
+
   Widget membershipActions() {
     if (group == null) return const SizedBox.shrink();
     final owner = group!['owner_id'] == AgcBackend.user?.id;
     if (owner) {
-      return Wrap(spacing: 8, runSpacing: 8, children: [
-        FilledButton.icon(onPressed: createPost, icon: const Icon(Icons.edit_outlined),
-          label: Text(tr('Napisz post', 'Write post'))),
-        OutlinedButton.icon(onPressed: inviteMember,
-          icon: const Icon(Icons.person_add_alt_1),
-          label: Text(tr('Zaproś po nicku', 'Invite by nickname'))),
-        if (group!['official'] != true)
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        threadComposer(),
+        Wrap(spacing: 8, runSpacing: 8, children: [
           OutlinedButton.icon(
-            key: const Key('delete_owned_group'),
-            onPressed: deletingGroup ? null : () => deleteGroup(group!),
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-            label: Text(tr('Usuń grupę', 'Delete group')),
+            onPressed: inviteMember,
+            icon: const Icon(Icons.person_add_alt_1),
+            label: Text(tr('Zaproś po nicku', 'Invite by nickname')),
           ),
+          if (group!['official'] != true)
+            OutlinedButton.icon(
+              key: const Key('delete_owned_group'),
+              onPressed: deletingGroup ? null : () => deleteGroup(group!),
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              label: Text(tr('Usuń grupę', 'Delete group')),
+            ),
+        ]),
       ]);
     }
     return FutureBuilder<Map<String, dynamic>?>(
@@ -408,22 +447,28 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         }
         final status = snapshot.data?['status'];
         if (status == 'invited') {
-          return FilledButton.icon(onPressed: acceptInvite,
+          return FilledButton.icon(
+            onPressed: acceptInvite,
             icon: const Icon(Icons.mark_email_read_outlined),
-            label: Text(tr('Przyjmij zaproszenie', 'Accept invitation')));
+            label: Text(tr('Przyjmij zaproszenie', 'Accept invitation')),
+          );
         }
         if (status == 'active') {
-          return Wrap(spacing: 8, children: [
-            FilledButton.icon(onPressed: createPost, icon: const Icon(Icons.edit_outlined),
-              label: Text(tr('Napisz post', 'Write post'))),
-            TextButton.icon(onPressed: leaveGroup, icon: const Icon(Icons.logout),
-              label: Text(tr('Opuść grupę', 'Leave group'))),
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            threadComposer(),
+            TextButton.icon(
+              onPressed: leaveGroup,
+              icon: const Icon(Icons.logout),
+              label: Text(tr('Opuść grupę', 'Leave group')),
+            ),
           ]);
         }
         if (group!['visibility'] == 'public') {
-          return FilledButton.icon(onPressed: joinGroup,
+          return FilledButton.icon(
+            onPressed: joinGroup,
             icon: const Icon(Icons.group_add_outlined),
-            label: Text(tr('Dołącz do grupy', 'Join group')));
+            label: Text(tr('Dołącz, aby rozpocząć dyskusję', 'Join to start a discussion')),
+          );
         }
         return Text(tr('Grupa prywatna — dostęp tylko na zaproszenie.',
           'Private group — invitation required.'));
@@ -441,12 +486,13 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(tr('Nowy post', 'New post')),
+          title: Text(tr('Nowy wątek', 'New discussion')),
           content: SizedBox(width: 480, child: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               TextField(controller: body, maxLength: 3000, minLines: 3, maxLines: 6,
-                decoration: InputDecoration(labelText: tr('Treść postu', 'Post content'),
-                  hintText: tr('Co myślisz o AI?', 'What do you think about AI?'))),
+                decoration: InputDecoration(labelText: tr('Twoja wypowiedź', 'Your post'),
+                  hintText: tr('Podziel się pomysłem lub zadaj pytanie…',
+                    'Share an idea or ask a question…'))),
               const SizedBox(height: 8),
               TextField(controller: link, maxLength: 1500,
                 keyboardType: TextInputType.url,
@@ -485,10 +531,15 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                       overflow: TextOverflow.ellipsis),
                       onDeleted: () => setDialogState(() => photo = null)),
                 ]),
-              Text(tr('Zdjęcie: JPG, PNG, WebP lub GIF, maks. 5 MB. '
-                  'Zdjęcia są publicznie dostępne przez link.',
-                  'Photo: JPG, PNG, WebP or GIF, max 5 MB. '
-                  'Uploaded images are publicly accessible by link.'),
+              Text(group?['visibility'] == 'private'
+                  ? tr('Zdjęcie: JPG, PNG, WebP lub GIF, maks. 5 MB. '
+                      'Widoczne tylko dla członków grupy.',
+                      'Photo: JPG, PNG, WebP or GIF, max 5 MB. '
+                      'Visible to group members only.')
+                  : tr('Zdjęcie: JPG, PNG, WebP lub GIF, maks. 5 MB. '
+                      'Publiczne zdjęcia są dostępne przez link.',
+                      'Photo: JPG, PNG, WebP or GIF, max 5 MB. '
+                      'Public photos can be accessed by link.'),
                 style: const TextStyle(fontSize: 11, color: Colors.white70)),
               if (validation != null)
                 Padding(padding: const EdgeInsets.only(top: 8),
@@ -518,7 +569,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               Navigator.pop(ctx, GenesisPostDraft(
                 content, article.isEmpty ? null : article,
                 movie.isEmpty ? null : movie, photo));
-            }, child: Text(tr('Opublikuj', 'Publish'))),
+            }, child: Text(tr('Opublikuj wątek', 'Publish discussion'))),
           ],
         ),
       ),
