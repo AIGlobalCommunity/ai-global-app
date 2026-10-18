@@ -489,6 +489,11 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
           title: Text(tr('Nowy wątek', 'New discussion')),
           content: SizedBox(width: 480, child: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Align(alignment: Alignment.centerLeft,
+                child: Text((group?['name'] as String? ?? '') +
+                    (group?['visibility'] == 'private' ? ' · 🔒' : ' · 🌐'),
+                  style: const TextStyle(fontSize: 12, color: Colors.white70))),
+              const SizedBox(height: 12),
               TextField(controller: body, maxLength: 3000, minLines: 3, maxLines: 6,
                 decoration: InputDecoration(labelText: tr('Twoja wypowiedź', 'Your post'),
                   hintText: tr('Podziel się pomysłem lub zadaj pytanie…',
