@@ -837,26 +837,99 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     } catch (e) { message('$e'); }
   }
 
+  List<Map<String, dynamic>> filteredGroups(List<Map<String, dynamic>> rows) {
+    final currentId = AgcBackend.user?.id;
+    final items = rows.where((item) {
+      final matchesSearch = groupQuery.isEmpty ||
+        (item['name'] as String).toLowerCase().contains(groupQuery) ||
+        (item['description'] as String).toLowerCase().contains(groupQuery);
+      if (!matchesSearch) return false;
+      return switch (groupFilter) {
+        'public' => item['visibility'] == 'public',
+        'private' => item['visibility'] == 'private',
+        'mine' => item['owner_id'] == currentId ||
+          item['my_status'] == 'active',
+        _ => true,
+      };
+    }).toList();
+    if (groupFilter == 'active') {
+      items.sort((a, b) {
+        final byPosts = (b['post_count'] as int)
+          .compareTo(a['post_count'] as int);
+        if (byPosts != 0) return byPosts;
+        final aDate = a['last_activity'] as DateTime? ??
+          DateTime.tryParse(a['created_at'] as String? ?? '');
+        final bDate = b['last_activity'] as DateTime? ??
+          DateTime.tryParse(b['created_at'] as String? ?? '');
+        return (bDate ?? DateTime(1970))
+          .compareTo(aDate ?? DateTime(1970));
+      });
+    } else if (groupFilter == 'newest') {
+      items.sort((a, b) =>
+        (b['created_at'] as String).compareTo(a['created_at'] as String));
+    } else {
+      items.sort((a, b) => (a['name'] as String)
+        .toLowerCase().compareTo((b['name'] as String).toLowerCase()));
+    }
+    return items;
+  }
+
+  Widget groupFilters() => Wrap(
+    spacing: 7, runSpacing: 6, children: [
+      for (final filter in <String>[
+        'all', 'public', 'private', 'mine', 'newest', 'active'
+      ])
+        ChoiceChip(
+          key: Key('group_filter_$filter'),
+          selected: groupFilter == filter,
+          label: Text(switch (filter) {
+            'public' => tr('🌐 Publiczne', '🌐 Public'),
+            'private' => tr('🔒 Prywatne', '🔒 Private'),
+            'mine' => tr('👤 Moje grupy', '👤 My groups'),
+            'newest' => tr('🕒 Najnowsze', '🕒 Newest'),
+            'active' => tr('🔥 Najaktywniejsze', '🔥 Most active'),
+            _ => tr('Wszystkie', 'All'),
+          }),
+          onSelected: (_) => setState(() => groupFilter = filter),
+        ),
+    ],
+  );
+
   Widget content() => FutureBuilder<List<Map<String, dynamic>>>(
     future: data, builder: (context, snapshot) {
-      if (snapshot.hasError) { return Column(children: [
-        Text('${snapshot.error}'),
-        TextButton(onPressed: refresh, child: Text(tr('Ponów', 'Retry'))),
-      ]); }
-      if (!snapshot.hasData) { return const Center(child: CircularProgressIndicator()); }
-      if (snapshot.data!.isEmpty) { return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(group == null
-          ? tr('Nie ma jeszcze grup. Utwórz pierwszą!', 'No groups yet. Create the first one!')
-          : tr('Nie ma jeszcze postów. Rozpocznij rozmowę!', 'No posts yet. Start a conversation!'))); }
-      final items = group == null && groupQuery.isNotEmpty
-        ? snapshot.data!.where((item) =>
-            (item['name'] as String).toLowerCase().contains(groupQuery) ||
-            (item['description'] as String).toLowerCase().contains(groupQuery))
-            .toList()
+      if (snapshot.hasError) {
+        return Column(children: [
+          Text('${snapshot.error}'),
+          TextButton(onPressed: refresh, child: Text(tr('Ponów', 'Retry'))),
+        ]);
+      }
+      if (!snapshot.hasData) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.data!.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(group == null
+            ? tr('Nie ma jeszcze grup. Utwórz pierwszą!',
+                'No groups yet. Create the first one!')
+            : tr('Nie ma jeszcze postów. Rozpocznij rozmowę!',
+                'No posts yet. Start a conversation!')),
+        );
+      }
+      final items = group == null
+        ? filteredGroups(snapshot.data!)
         : snapshot.data!;
       if (items.isEmpty) {
-        return Text(tr('Nie znaleziono pasujących grup.', 'No matching groups found.'));
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(groupFilter == 'mine' && groupQuery.isEmpty
+            ? tr('Nie należysz jeszcze do żadnej grupy. '
+                'Dołącz do publicznej lub utwórz własną.',
+                'You have not joined any groups yet. '
+                'Join a public group or create your own.')
+            : tr('Nie znaleziono pasujących grup.',
+                'No matching groups found.')),
+        );
       }
       return Column(children: [
         for (final item in items)
@@ -864,32 +937,64 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       ]);
     });
 
-  Widget groupTile(Map<String, dynamic> item) => Card(
-    child: ListTile(
-      contentPadding: const EdgeInsets.all(14),
-      leading: Icon(item['visibility'] == 'private'
-         ? Icons.lock_outline : Icons.public, color: AgcLuxury.champagne),
-      title: Text(item['name'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const SizedBox(height: 5),
-        Text(item['description'] as String),
-        const SizedBox(height: 7),
-        Text('${item['owner_label']} · ${item['visibility'] == 'private' ? tr('Prywatna', 'Private') : tr('Publiczna', 'Public')}',
-           style: const TextStyle(fontSize: 12, color: Colors.white70)),
+  Widget groupTile(Map<String, dynamic> item) {
+    final isOwner = item['owner_id'] == AgcBackend.user?.id;
+    final canLeave = !isOwner && item['my_status'] == 'active';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 9),
+      child: Column(children: [
+        ListTile(
+          contentPadding: const EdgeInsets.all(14),
+          leading: Icon(item['visibility'] == 'private'
+            ? Icons.lock_outline : Icons.public,
+            color: AgcLuxury.champagne),
+          title: Text(item['name'] as String,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const SizedBox(height: 5),
+              Text(item['description'] as String),
+              const SizedBox(height: 7),
+              Text(
+                "${item['owner_label']} · ${item['visibility'] == 'private' ? tr('Prywatna', 'Private') : tr('Publiczna', 'Public')} · ${tr('Wątki', 'Posts')}: ${item['post_count']}",
+                style: const TextStyle(fontSize: 12, color: Colors.white70)),
+              if (groupFilter == 'mine' && isOwner)
+                Text(tr('Zarządzasz tą grupą', 'You manage this group'),
+                  style: const TextStyle(fontSize: 12,
+                    color: AgcLuxury.champagne)),
+            ],
+          ),
+          trailing: isOwner && item['official'] != true
+            ? IconButton(
+                key: Key('delete_group_${item['id']}'),
+                tooltip: tr('Usuń swoją grupę', 'Delete your group'),
+                onPressed: deletingGroup ? null : () => deleteGroup(item),
+                icon: const Icon(Icons.delete_outline,
+                  color: Colors.redAccent),
+              )
+            : const Icon(Icons.chevron_right),
+          onTap: () => setState(() {
+            group = item;
+            data = loadPosts(item['id'] as String);
+          }),
+        ),
+        if (groupFilter == 'mine' && canLeave)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 12, 8),
+              child: OutlinedButton.icon(
+                key: Key('leave_group_${item['id']}'),
+                onPressed: leavingGroups.contains(item['id'])
+                  ? null : () => leaveGroup(item),
+                icon: const Icon(Icons.logout, size: 18),
+                label: Text(tr('Opuść grupę', 'Leave group')),
+              ),
+            ),
+          ),
       ]),
-      trailing: item['owner_id'] == AgcBackend.user?.id && item['official'] != true
-        ? IconButton(
-            key: Key('delete_group_${item['id']}'),
-            tooltip: tr('Usuń swoją grupę', 'Delete your group'),
-            onPressed: deletingGroup ? null : () => deleteGroup(item),
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-          )
-        : const Icon(Icons.chevron_right),
-      onTap: () => setState(() {
-        group = item;
-        data = loadPosts(item['id'] as String);
-      }),
-    ));
+    );
+  }
 
   String postAge(dynamic value) {
     final created = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
@@ -987,6 +1092,8 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
           setState(() => groupQuery = value.trim().toLowerCase()),
           decoration: InputDecoration(prefixIcon: const Icon(Icons.search),
             hintText: tr('Szukaj grup...', 'Search groups...'))),
+        const SizedBox(height: 10),
+        groupFilters(),
         const SizedBox(height: 8),
         TextButton.icon(
           onPressed: () => setState(() => showMemberSearch = !showMemberSearch),
@@ -1027,8 +1134,6 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
             icon: const Icon(Icons.add),
             label: Text(tr('Nowa grupa', 'New group')))
         else membershipActions(),
-        OutlinedButton.icon(onPressed: refresh, icon: const Icon(Icons.refresh),
-          label: Text(tr('Odśwież', 'Refresh'))),
       ]),
       const SizedBox(height: 12),
       content(),
