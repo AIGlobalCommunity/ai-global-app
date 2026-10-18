@@ -7,8 +7,10 @@ import 'genesis_language.dart';
 import 'genesis_social.dart';
 
 class GenesisCommunityFeed extends StatefulWidget {
-  const GenesisCommunityFeed({super.key, this.onOpenDiscussions});
+  const GenesisCommunityFeed({super.key, this.onOpenDiscussions,
+    this.onOpenGroup});
   final VoidCallback? onOpenDiscussions;
+  final ValueChanged<String>? onOpenGroup;
   @override
   State<GenesisCommunityFeed> createState() => _GenesisCommunityFeedState();
 }
@@ -124,7 +126,19 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
               style:const TextStyle(fontSize:11,color:Colors.white70)),
           ])),
         ]),
-        const SizedBox(height:12),
+        const SizedBox(height:8),
+        Align(alignment:Alignment.centerLeft,child:TextButton.icon(
+          key:Key('feed_open_group_${post['id']}'),
+          onPressed:widget.onOpenGroup==null ? widget.onOpenDiscussions
+            :()=>widget.onOpenGroup!(post['group_id'] as String),
+          icon:const Icon(Icons.groups_outlined,size:17),
+          label:Text(GenesisLanguage.copy('Przejdź do grupy i dołącz do rozmowy',
+            'Open group and join the conversation')),
+          style:TextButton.styleFrom(
+            visualDensity:VisualDensity.compact,
+            padding:const EdgeInsets.symmetric(horizontal:4)),
+        )),
+        const SizedBox(height:8),
         SelectableText(post['body'] as String),
         media(post),
         const Divider(height:25),
@@ -134,13 +148,13 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
             onPressed:()=>toggleLike(post),
             icon:Icon(post['liked']==true?Icons.favorite:Icons.favorite_border,
               color:post['liked']==true?Colors.redAccent:null),
-            label:Text('${GenesisLanguage.copy('Lubię to','Like')} · ${post['likes']}')),
+            label:Text('${GenesisLanguage.copy('Polub','Like')} · ${post['likes']}')),
           TextButton.icon(onPressed:() async {
             await showModalBottomSheet<void>(context:context,isScrollControlled:true,
               showDragHandle:true,builder:(_)=>GenesisComments(postId:post['id'] as String));
             refresh();
           },icon:const Icon(Icons.mode_comment_outlined),
-            label:Text('${post['comments']}')),
+            label:Text('${GenesisLanguage.copy('Komentuj','Comment')} · ${post['comments']}')),
           if(post['visibility']=='public')
             TextButton.icon(
               key: Key('feed_share_${post['id']}'),
@@ -192,7 +206,8 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
                       color: AgcLuxury.champagne),
                     title: Text((item['agc_groups'] as Map<String,dynamic>)['name'] as String),
                     subtitle: Text(item['body'] as String),
-                    onTap: widget.onOpenDiscussions,
+                    onTap: widget.onOpenGroup == null
+                      ? widget.onOpenDiscussions : () => widget.onOpenDiscussions?.call(),
                     trailing: const Icon(Icons.chevron_right))),
               ]);
             });
