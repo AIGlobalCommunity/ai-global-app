@@ -333,41 +333,6 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
-          const GenesisMission(compact: true),
-          const SizedBox(height: 12),
-          Center(
-            child: TextButton.icon(
-              onPressed: busy ? null : () => setState(
-                () => resendExpanded = !resendExpanded),
-              icon: const Icon(Icons.mark_email_unread_outlined),
-              label: Text(GenesisLanguage.copy('Nie dotarł e-mail? Wyślij link ponownie', "Didn't receive the email? Resend confirmation")),
-            ),
-          ),
-          if (resendExpanded) Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  key: const Key('resend_confirmation_email'),
-                  controller: email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: GenesisLanguage.copy('Adres e-mail do aktywacji', 'Confirmation email address'),
-                    prefixIcon: Icon(Icons.mail_outline),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                FilledButton(
-                  key: const Key('resend_confirmation_submit'),
-                  onPressed: busy ? null : () => execute(
-                    () => AgcBackend.resendConfirmation(email.text)),
-                  child: Text(GenesisLanguage.copy('Wyślij nowy link aktywacyjny', 'Send a new confirmation link')),
-                ),
-              ],
-            ),
-          ),
           AnimatedSize(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeInOut,
@@ -428,6 +393,41 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                   ),
                 )
               : const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 14),
+          const GenesisMission(compact: true),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton.icon(
+              onPressed: busy ? null : () => setState(
+                () => resendExpanded = !resendExpanded),
+              icon: const Icon(Icons.mark_email_unread_outlined),
+              label: Text(GenesisLanguage.copy('Nie dotarł e-mail? Wyślij link ponownie', "Didn't receive the email? Resend confirmation")),
+            ),
+          ),
+          if (resendExpanded) Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  key: const Key('resend_confirmation_email'),
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: GenesisLanguage.copy('Adres e-mail do aktywacji', 'Confirmation email address'),
+                    prefixIcon: Icon(Icons.mail_outline),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                FilledButton(
+                  key: const Key('resend_confirmation_submit'),
+                  onPressed: busy ? null : () => execute(
+                    () => AgcBackend.resendConfirmation(email.text)),
+                  child: Text(GenesisLanguage.copy('Wyślij nowy link aktywacyjny', 'Send a new confirmation link')),
+                ),
+              ],
+            ),
           ),
         ] else ...[
           AgcLuxuryHeading(title: GenesisLanguage.copy('KONTO GENESIS', 'GENESIS ACCOUNT'),
