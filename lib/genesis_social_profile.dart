@@ -6,6 +6,7 @@ import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
 import 'genesis_chat.dart';
+import 'genesis_countries.dart';
 
 String socialText(String pl, String en) => GenesisLanguage.copy(pl, en);
 
@@ -384,13 +385,22 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
                 child: Text(nicknameAvailability!,
                   style: const TextStyle(color: AgcLuxury.champagne))),
             const SizedBox(height: 10),
-            TextField(
-              key: const Key('account_edit_country'),
-              controller: country, maxLength: 2,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                labelText: socialText('Kraj (opcjonalnie)', 'Country (optional)'),
-                hintText: 'PL')),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('account_edit_country'),
+                icon: const Icon(Icons.public),
+                label: Text(
+                  '${socialText('Kraj', 'Country')}: '
+                  '${genesisCountryLabel(country.text)}'),
+                onPressed: saving ? null : () async {
+                  final selected = await genesisPickCountry(
+                    context, country.text.trim());
+                  if (!mounted || selected == null) return;
+                  setState(() => country.text = selected);
+                },
+              ),
+            ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero, value: nicknamePublic,
               onChanged: (value) => setState(() => nicknamePublic = value),
