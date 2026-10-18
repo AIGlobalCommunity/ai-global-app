@@ -278,10 +278,12 @@ class GenesisIdentityCard extends StatelessWidget {
   const GenesisIdentityCard({
     super.key, required this.name, this.handle, this.description,
     this.interests, this.website, this.location, this.avatar, this.cover,
-    this.editable = false,
+    this.editable = false, this.memberNumber, this.joined,
   });
   final String name;
   final String? handle, description, interests, website, location, avatar, cover;
+  final int? memberNumber;
+  final String? joined;
   final bool editable;
 
   static Uri? safeUrl(String? value) {
@@ -338,6 +340,19 @@ class GenesisIdentityCard extends StatelessWidget {
                       color: Colors.white70, fontSize: 12)),
                 ])),
             ]),
+            if (memberNumber != null || joined != null) ...[
+              const SizedBox(height: 12),
+              Wrap(spacing: 12, runSpacing: 5, children: [
+                if (memberNumber != null)
+                  Text('#$memberNumber',
+                    style: const TextStyle(color: AgcLuxury.champagne,
+                      fontWeight: FontWeight.bold)),
+                if (joined != null)
+                  Text('${socialText('Dołączono', 'Joined')}: $joined',
+                    style: const TextStyle(color: Colors.white70,
+                      fontSize: 12)),
+              ]),
+            ],
             const SizedBox(height: 14),
             if (description != null && description!.trim().isNotEmpty)
               Text(description!, style: const TextStyle(height: 1.5, fontSize: 14))
@@ -395,7 +410,6 @@ class GenesisSocialProfile extends StatefulWidget {
 }
 
 class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
-  final display = TextEditingController();
   final bio = TextEditingController();
   final interests = TextEditingController();
   final website = TextEditingController();
@@ -408,6 +422,8 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
   bool editing = false;
   String? notice;
   String handle = '';
+  int? memberNumber;
+  String? joined;
 
   @override
   void initState() {
@@ -426,7 +442,6 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       if (!mounted) return;
       final row = results[0] as Map<String, dynamic>?;
       final profile = results[1] as Map<String, dynamic>?;
-      display.text = row?['display_name'] as String? ?? '';
       bio.text = row?['bio'] as String? ?? '';
       interests.text = row?['interests'] as String? ?? '';
       website.text = row?['website'] as String? ?? '';
@@ -434,8 +449,10 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       avatar.text = row?['avatar_url'] as String? ?? '';
       cover.text = row?['cover_url'] as String? ?? '';
       setState(() {
-        handle = profile?['show_nick_publicly'] == true
-          ? (profile?['handle'] as String? ?? '') : '';
+        handle = profile?['handle'] as String? ?? '';
+        memberNumber = (profile?['member_number'] as num?)?.toInt();
+        joined = profile?['created_at'] == null
+          ? null : agcRegistrationDate(profile?['created_at']);
         isPublic = row?['is_public'] as bool? ?? true;
         loading = false;
       });
@@ -464,7 +481,6 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
     try {
       await AgcBackend.client.from('agc_social_profiles').upsert({
         'member_id': AgcBackend.user!.id,
-        'display_name': display.text.trim(),
         'bio': bio.text.trim(),
         'interests': interests.text.trim(),
         'website': website.text.trim().isEmpty ? null : website.text.trim(),
@@ -493,7 +509,7 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
 
   @override
   void dispose() {
-    for (final controller in [display, bio, interests, website, location, avatar, cover]) {
+    for (final controller in [bio, interests, website, location, avatar, cover]) {
       controller.dispose();
     }
     super.dispose();
@@ -513,8 +529,8 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       const SizedBox(height: 12),
       if (loading) const LinearProgressIndicator() else ...[
         GenesisIdentityCard(
-          name: display.text.trim().isEmpty ? handle : display.text.trim(),
-          handle: handle,
+          name: handle,
+          memberNumber: memberNumber, joined: joined,
           description: bio.text, interests: interests.text,
           website: isPublic ? website.text : null,
           location: location.text,
@@ -536,9 +552,17 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
         if (editing) Card(child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(children: [
-            TextField(controller: display, maxLength: 70,
-              decoration: InputDecoration(labelText: socialText(
-                'Imię lub nazwa wyświetlana', 'Display name'))),
+            Align(alignment: Alignment.centerLeft,
+              child: Text(socialText('PSEUDONIM I KONTO', 'NICKNAME AND ACCOUNT'),
+                style: const TextStyle(color: AgcLuxury.champagne,
+                  fontWeight: FontWeight.bold))),
+            GenesisAccountEditor(embedded: true, onSaved: load),
+            const Divider(height: 28),
+            Align(alignment: Alignment.centerLeft,
+              child: Text(socialText('O MNIE', 'ABOUT ME'),
+                style: const TextStyle(color: AgcLuxury.champagne,
+                  fontWeight: FontWeight.bold))),
+            const SizedBox(height: 10),
             TextField(controller: bio, maxLength: 700, maxLines: 3,
               decoration: InputDecoration(labelText: socialText(
                 'Moja perspektywa / dlaczego tu jestem',
@@ -631,8 +655,7 @@ class _GenesisMemberProfilePageState extends State<GenesisMemberProfilePage> {
               widget.memberId == AgcBackend.user?.id;
           return ListView(padding: const EdgeInsets.all(16), children: [
             GenesisIdentityCard(
-              name: visible && (row?['display_name'] as String? ?? '').trim().isNotEmpty
-                ? row!['display_name'] as String : widget.authorLabel,
+              name: widget.authorLabel,
               description: visible ? (row?['bio'] as String?) : null,
               interests: visible ? (row?['interests'] as String?) : null,
               website: visible ? (row?['website'] as String?) : null,
