@@ -435,41 +435,37 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             ),
           ),
         ] else ...[
-          AgcLuxuryHeading(title: GenesisLanguage.copy('KONTO GENESIS', 'GENESIS ACCOUNT'),
-            subtitle: GenesisLanguage.copy('Ekskluzywna przestrzeń członków THE GENESIS ERA', 'Exclusive THE GENESIS ERA member space')),
-          const SizedBox(height: 18),
-          Text('${GenesisLanguage.copy('Zalogowano', 'Signed in')}: '
-            '${AgcBackend.user!.email ?? GenesisLanguage.copy('członek', 'member')}'),
-          FutureBuilder<Map<String, dynamic>?>(
-            future: AgcBackend.myProfile(),
-            builder: (context, snapshot) => Text(
-              snapshot.hasData
-                ? '${GenesisLanguage.copy('Pseudonim', 'Nickname')}: ${snapshot.data?['handle']}\n'
-                  '${GenesisLanguage.copy('Numer członka', 'Member number')}: #${snapshot.data?['member_number']}\n'
-                  '${GenesisLanguage.copy('Data rejestracji', 'Joined')}: ${agcRegistrationDate(snapshot.data?['created_at'])}\n'
-                  '${GenesisLanguage.copy('Widoczność', 'Visibility')}: '
-                  '${snapshot.data?['show_nick_publicly'] == true ? GenesisLanguage.copy('publiczny', 'public') : GenesisLanguage.copy('anonimowy', 'anonymous')}\n'
-                  '${GenesisLanguage.copy('Twój kod polecenia', 'Your referral code')}: ${snapshot.data?['referral_code']}'
-                : GenesisLanguage.copy('Wczytywanie profilu...', 'Loading profile...'),
-            ),
-          ),
+          const GenesisSocialProfile(),
+          const SizedBox(height: 12),
           FutureBuilder<Map<String, dynamic>?>(
             future: AgcBackend.myProfile(),
             builder: (context, profile) {
               final code = profile.data?['referral_code'] as String?;
-              if (code == null || code.isEmpty) return const SizedBox.shrink();
+              if (code == null || code.isEmpty) {
+                return const SizedBox.shrink();
+              }
               return FutureBuilder<int>(
                 future: AgcBackend.myConfirmedReferrals(),
                 builder: (context, count) => GenesisInvitePanel(
                   code: code, confirmedCount: count.data ?? 0));
             },
           ),
-          const SizedBox(height: 16),
-          GenesisAccountEditor(onSaved: () {
-            if (mounted) setState(() {});
-          }),
-          const SizedBox(height: 16),
-          const GenesisSocialProfile(),
+          const SizedBox(height: 12),
+          Card(child: ExpansionTile(
+            key: const Key('account_login_details'),
+            leading: const Icon(Icons.lock_person_outlined,
+              color: AgcLuxury.champagne),
+            title: Text(GenesisLanguage.copy(
+              'Logowanie i bezpieczeństwo', 'Login and security')),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+            children: [
+              Align(alignment: Alignment.centerLeft,
+                child: Text(
+                  '${GenesisLanguage.copy('Adres e-mail konta', 'Account email')}: '
+                  '${AgcBackend.user!.email ?? '—'}',
+                  style: const TextStyle(color: Colors.white70))),
+            ],
+          )),
           const SizedBox(height: 16),
           Card(
             child: ExpansionTile(
