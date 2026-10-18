@@ -238,8 +238,12 @@ class _GenesisConversationPageState extends State<GenesisConversationPage> {
 
   Future<void> refresh({bool silent = false}) async {
     final me = AgcBackend.user?.id;
-    if (me == null) return;
-    if (!silent && mounted) setState(() { loading = true; error = null; });
+    if (me == null) {
+      return;
+    }
+    if (!silent && mounted) {
+      setState(() { loading = true; error = null; });
+    }
     try {
       final rows = await AgcBackend.client.from('agc_direct_messages')
         .select('id,sender_id,recipient_id,body,created_at')
