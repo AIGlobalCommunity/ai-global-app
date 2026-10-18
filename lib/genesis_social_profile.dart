@@ -10,8 +10,9 @@ String socialText(String pl, String en) => GenesisLanguage.copy(pl, en);
 
 /// Account identity settings. Nickname uniqueness is checked server-side.
 class GenesisAccountEditor extends StatefulWidget {
-  const GenesisAccountEditor({super.key, this.onSaved});
+  const GenesisAccountEditor({super.key, this.onSaved, this.embedded = false});
   final VoidCallback? onSaved;
+  final bool embedded;
 
   @override
   State<GenesisAccountEditor> createState() => _GenesisAccountEditorState();
@@ -186,19 +187,16 @@ class _GenesisAccountEditorState extends State<GenesisAccountEditor> {
   }
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
+  Widget build(BuildContext context) {
+    final editor = Padding(
       padding: const EdgeInsets.all(14),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(socialText('EDYTUJ DANE KONTA', 'EDIT ACCOUNT DETAILS'),
-          style: const TextStyle(color: AgcLuxury.champagne,
-            fontWeight: FontWeight.bold, fontSize: 17)),
-        const SizedBox(height: 8),
-        Text(socialText('Zmień pseudonim, kraj i widoczność nicku. '
-          'Numer członka i kod polecenia pozostają bez zmian.',
-          'Change your nickname, country and nickname visibility. '
-          'Your member number and referral code stay the same.')),
-        const SizedBox(height: 12),
+        if (!widget.embedded) ...[
+          Text(socialText('USTAWIENIA PSEUDONIMU', 'NICKNAME SETTINGS'),
+            style: const TextStyle(color: AgcLuxury.champagne,
+              fontWeight: FontWeight.bold, fontSize: 17)),
+          const SizedBox(height: 12),
+        ],
         if (loading)
           const LinearProgressIndicator()
         else ...[
@@ -270,8 +268,9 @@ class _GenesisAccountEditorState extends State<GenesisAccountEditor> {
             child: Text(error!,
               style: const TextStyle(color: Colors.redAccent))),
       ]),
-    ),
-  );
+    );
+    return widget.embedded ? editor : Card(child: editor);
+  }
 }
 
 /// A Genesis identity card, deliberately distinct from social-network timelines.
