@@ -134,10 +134,32 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       ? <Map<String, dynamic>>[]
       : List<Map<String, dynamic>>.from(
           await AgcBackend.client.from('agc_post_comments')
-            .select('post_id,body,author_label,created_at')
+            .select('id,post_id,body,author_label,created_at')
             .inFilter('post_id', postIds)
             .order('created_at', ascending: false)
             .limit(1000));
+    final commentIds = comments.map((c) => c['id'] as String).toList();
+    final commentLikes = commentIds.isEmpty
+      ? <Map<String, dynamic>>[]
+      : List<Map<String, dynamic>>.from(
+          await AgcBackend.client.from('agc_comment_likes')
+            .select('comment_id,member_id')
+            .inFilter('comment_id', commentIds)
+            .limit(1000));
+    final commentLikeCounts = <String, int>{};
+    final myCommentLikes = <String>{};
+    for (final like in commentLikes) {
+      final id = like['comment_id'] as String;
+      commentLikeCounts[id] = (commentLikeCounts[id] ?? 0) + 1;
+      if (like['member_id'] == userId) {
+        myCommentLikes.add(id);
+      }
+    }
+    for (final comment in comments) {
+      final id = comment['id'] as String;
+      comment['likes'] = commentLikeCounts[id] ?? 0;
+      comment['liked'] = myCommentLikes.contains(id);
+    }
     final likes = postIds.isEmpty
       ? <Map<String, dynamic>>[]
       : List<Map<String, dynamic>>.from(
@@ -1083,6 +1105,58 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     if (mounted) refresh();
   }
 
+  Future<void> toggleCommentLike(Map<String, dynamic> comment) async {
+    final userId = AgcBackend.user?.id;
+    if (userId == null) return;
+    try {
+      if (comment['liked'] == true) {
+        await AgcBackend.client.from('agc_comment_likes')
+          .delete().eq('comment_id', comment['id'])
+          .eq('member_id', userId);
+      } else {
+        await AgcBackend.client.from('agc_comment_likes').insert({
+          'comment_id': comment['id'], 'member_id': userId,
+        });
+      }
+      refresh();
+    } catch (e) {
+      message(tr('Nie udało się zapisać polubienia.',
+        'Could not save the like.'));
+    }
+  }
+
+  Widget groupCommentActions(Map<String, dynamic> item) {
+    final comment = item['latest_comment'] as Map<String, dynamic>?;
+    if (comment == null) return const SizedBox.shrink();
+    final post = <String, dynamic>{
+      'id': comment['post_id'],
+    };
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Wrap(spacing: 2, children: [
+        TextButton.icon(
+          onPressed: () => toggleCommentLike(comment),
+          icon: Icon(comment['liked'] == true
+            ? Icons.favorite : Icons.favorite_border,
+            size: 16, color: comment['liked'] == true
+              ? Colors.redAccent : null),
+          label: Text("${tr('Polub', 'Like')} · ${comment['likes']}"),
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 8)),
+        ),
+        TextButton.icon(
+          onPressed: () => openPreviewComments(post),
+          icon: const Icon(Icons.reply_outlined, size: 16),
+          label: Text(tr('Odpowiedz', 'Reply')),
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 8)),
+        ),
+      ]),
+    );
+  }
+
   Widget groupPreviewActions(Map<String, dynamic> item) {
     final post = item['latest_post'] as Map<String, dynamic>?;
     if (post == null) return const SizedBox.shrink();
@@ -1192,6 +1266,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                 icon: Icons.mode_comment_outlined,
                 heading: tr('Ostatni komentarz', 'Latest comment'),
                 entry: item['latest_comment'] as Map<String, dynamic>?),
+              groupCommentActions(item),
               if (item['latest_post'] == null)
                 Padding(
                   padding: const EdgeInsets.only(top: 9),
