@@ -167,7 +167,7 @@ void main() {
   test('Referral links use the registered website and encode the invite code', () {
     final link = Uri.parse(genesisInviteLink('ABC123DEF0'));
     expect(link.scheme, 'https');
-    expect(link.host, 'aiglobalcommunity.github.io');
+    expect(link.host, 'thegenesisera.com');
     expect(link.queryParameters['ref'], 'ABC123DEF0');
   });
   testWidgets('Invite panel displays a personal link and sharing controls', (tester) async {
@@ -199,6 +199,13 @@ void main() {
       expect(find.text('UTWÓRZ KONTO GENESIS'), findsOneWidget);
       expect(find.byKey(const Key('signup_nick')), findsOneWidget);
       expect(find.byKey(const Key('signup_show_nick_publicly')), findsOneWidget);
+      final checkbox = tester.widget<CheckboxListTile>(
+        find.byKey(const Key('signup_show_nick_publicly')));
+      expect(checkbox.value, isTrue);
+      await tester.tap(find.byKey(const Key('signup_show_nick_publicly')));
+      await tester.pump();
+      expect(tester.widget<CheckboxListTile>(
+        find.byKey(const Key('signup_show_nick_publicly'))).value, isFalse);
       expect(find.byKey(const Key('signup_email')), findsOneWidget);
       expect(find.byKey(const Key('signup_password')), findsOneWidget);
       // ListView builds only visible children. Scroll to the final field
