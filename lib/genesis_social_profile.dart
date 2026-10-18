@@ -5,6 +5,7 @@ import 'agc_registration.dart';
 import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
+import 'genesis_chat.dart';
 
 String socialText(String pl, String en) => GenesisLanguage.copy(pl, en);
 
@@ -508,6 +509,19 @@ class _GenesisMemberProfilePageState extends State<GenesisMemberProfilePage> {
               avatar: visible ? (row?['avatar_url'] as String?) : null,
               cover: visible ? (row?['cover_url'] as String?) : null),
             const SizedBox(height: 10),
+            if (widget.memberId != AgcBackend.user?.id) ...[
+              FilledButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) =>
+                    GenesisConversationPage(
+                      memberId: widget.memberId,
+                      memberName: widget.authorLabel))),
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: Text(socialText(
+                  'Napisz do użytkownika', 'Message member')),
+              ),
+              const SizedBox(height: 10),
+            ],
             if (!visible)
               Text(socialText(
                 'Ten członek nie udostępnia swojej karty publicznie.',
