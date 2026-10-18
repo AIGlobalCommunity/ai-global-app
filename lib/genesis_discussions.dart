@@ -140,38 +140,130 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   }
 
   Future<void> createGroup() async {
-    final name = await compose(tr('Nazwa grupy', 'Group name'),
-      tr('Np. Pytania do przyszłej AI', 'E.g. Questions for future AI'), 64);
-    if (name == null) return;
-    final description = await compose(tr('Opis grupy', 'Group description'),
-      tr('Jaki jest temat rozmów?', 'What is the discussion about?'), 500);
-    if (description == null) return;
-    if (name.length < 4 || description.length < 10) {
-      message(tr('Nazwa min. 4 znaki, opis min. 10.', 'Name min. 4, description min. 10 characters.'));
-      return;
-    }
-    if (!mounted) return;
-    final visibility = await showDialog<String>(
-      context: context, builder: (ctx) => AlertDialog(
-        title: Text(tr('Prywatność grupy', 'Group privacy')),
-        content: Text(tr('Publiczne posty trafiają do feedu i można je udostępniać. '
-          'Posty prywatne widzą tylko członkowie.',
-          'Public posts appear in the feed and can be shared. '
-          'Private posts are only visible to members.')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, 'private'),
-            child: Text(tr('Prywatna 🔒', 'Private 🔒'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, 'public'),
-            child: Text(tr('Publiczna 🌐', 'Public 🌐'))),
-        ]));
-    if (visibility == null) return;
+    final nameController = TextEditingController();
+    final descriptionController = TextEditingController();
+    String visibility = 'public';
+    String? validation;
+    final draft = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(tr('Nowa grupa', 'New group')),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    key: const Key('new_group_name'),
+                    controller: nameController,
+                    maxLength: 64,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      labelText: tr('Nazwa grupy', 'Group name'),
+                      hintText: tr('Np. Pytania do przyszłej AI',
+                        'E.g. Questions for future AI'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    key: const Key('new_group_description'),
+                    controller: descriptionController,
+                    maxLength: 500,
+                    minLines: 3,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      labelText: tr('Opis grupy', 'Group description'),
+                      hintText: tr('Jaki jest temat rozmów?',
+                        'What is the discussion about?'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(tr('Widoczność grupy', 'Group visibility'),
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Wrap(spacing: 10, runSpacing: 8, children: [
+                    ChoiceChip(
+                      key: const Key('new_group_public'),
+                      label: Text(tr('🌐 Publiczna', '🌐 Public')),
+                      selected: visibility == 'public',
+                      onSelected: (_) =>
+                        setDialogState(() => visibility = 'public'),
+                    ),
+                    ChoiceChip(
+                      key: const Key('new_group_private'),
+                      label: Text(tr('🔒 Prywatna', '🔒 Private')),
+                      selected: visibility == 'private',
+                      onSelected: (_) =>
+                        setDialogState(() => visibility = 'private'),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  Text(
+                    visibility == 'public'
+                      ? tr('Posty są widoczne dla społeczności i można je udostępniać.',
+                          'Posts are visible to the community and can be shared.')
+                      : tr('Posty widzą tylko członkowie. Dołączenie wymaga zaproszenia; '
+                           'udostępnianie publiczne jest wyłączone.',
+                          'Only members can see posts. Joining requires an invitation; '
+                           'public sharing is disabled.'),
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                  if (validation != null) ...[
+                    const SizedBox(height: 10),
+                    Text(validation!,
+                      style: const TextStyle(color: Colors.redAccent)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(tr('Anuluj', 'Cancel')),
+            ),
+            FilledButton.icon(
+              key: const Key('new_group_submit'),
+              icon: const Icon(Icons.group_add_outlined),
+              label: Text(tr('Utwórz grupę', 'Create group')),
+              onPressed: () {
+                final name = nameController.text.trim();
+                final description = descriptionController.text.trim();
+                if (name.length < 4 || description.length < 10) {
+                  setDialogState(() => validation = tr(
+                    'Nazwa musi mieć min. 4 znaki, a opis min. 10.',
+                    'Name must have at least 4 characters and description at least 10.'));
+                  return;
+                }
+                Navigator.pop(ctx, {
+                  'name': name,
+                  'description': description,
+                  'visibility': visibility,
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+    nameController.dispose();
+    descriptionController.dispose();
+    if (draft == null || !mounted) return;
     try {
       await AgcBackend.client.from('agc_groups').insert({
-        'owner_id': AgcBackend.user!.id, 'name': name, 'description': description,
-        'visibility': visibility,
+        'owner_id': AgcBackend.user!.id,
+        'name': draft['name'],
+        'description': draft['description'],
+        'visibility': draft['visibility'],
       });
       refresh();
-    } catch (e) { message('$e'); }
+      message(tr('Grupa została utworzona.', 'Group created.'));
+    } catch (e) {
+      message('${tr('Nie udało się utworzyć grupy', 'Could not create group')}: $e');
+    }
   }
 
   Future<Map<String, dynamic>?> myMembership() async {
