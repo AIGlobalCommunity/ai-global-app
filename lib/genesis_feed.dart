@@ -129,9 +129,12 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
         media(post),
         const Divider(height:25),
         Wrap(spacing:8,runSpacing:4,children:[
-          TextButton.icon(onPressed:()=>toggleLike(post),
-            icon:Icon(post['liked']==true?Icons.favorite:Icons.favorite_border),
-            label:Text('${post['likes']}')),
+          TextButton.icon(
+            key: Key('feed_like_${post['id']}'),
+            onPressed:()=>toggleLike(post),
+            icon:Icon(post['liked']==true?Icons.favorite:Icons.favorite_border,
+              color:post['liked']==true?Colors.redAccent:null),
+            label:Text('${GenesisLanguage.copy('Lubię to','Like')} · ${post['likes']}')),
           TextButton.icon(onPressed:() async {
             await showModalBottomSheet<void>(context:context,isScrollControlled:true,
               showDragHandle:true,builder:(_)=>GenesisComments(postId:post['id'] as String));
@@ -139,7 +142,9 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
           },icon:const Icon(Icons.mode_comment_outlined),
             label:Text('${post['comments']}')),
           if(post['visibility']=='public')
-            TextButton.icon(onPressed:()=>genesisSharePost(context,post),
+            TextButton.icon(
+              key: Key('feed_share_${post['id']}'),
+              onPressed:()=>genesisSharePost(context,post),
               icon:const Icon(Icons.share_outlined),
               label:Text(GenesisLanguage.copy('Udostępnij','Share'))),
         ]),
