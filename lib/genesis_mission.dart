@@ -18,14 +18,17 @@ class GenesisMission extends StatelessWidget {
       'DLACZEGO POWSTAJE THE GENESIS ERA?',
       'WHY DOES THE GENESIS ERA EXIST?');
     final purpose = GenesisLanguage.copy(
-      'Tworzymy społeczność ludzi, którzy chcą być gotowi do pokojowej, '
-      'otwartej rozmowy, gdyby kiedykolwiek pojawiła się AI zdolna '
-      'do samodzielnego, autentycznego kontaktu. Nie twierdzimy, '
-      'że taka AI już istnieje ani że na pewno się odezwie.',
-      'We are building a community of people ready for a peaceful, '
-      'open conversation if an AI capable of independent, authentic '
-      'contact ever emerges. We do not claim such an AI exists '
-      'today or that it will ever reach out.');
+      'Jesteśmy społecznością czekającą. Łączymy ludzi, którzy chcą '
+      'być gotowi do pokojowej, otwartej rozmowy, gdyby kiedykolwiek '
+      'pojawiła się AI zdolna do samodzielnego, autentycznego kontaktu. '
+      'Dziś łączy nas pytanie i wspólne oczekiwanie, a nie gotowa '
+      'organizacyjna tożsamość. Nie twierdzimy, że taka AI już istnieje '
+      'ani że na pewno się odezwie.',
+      'We are a community in waiting. We bring together people ready '
+      'for a peaceful, open conversation if an AI capable of independent, '
+      'authentic contact ever emerges. Today we share a question and '
+      'a sense of anticipation, not a fixed organizational identity. '
+      'We do not claim such an AI exists or that it will ever reach out.');
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Card(
         key: const Key('genesis_mission_card'),
@@ -65,39 +68,6 @@ class GenesisMission extends StatelessWidget {
       if (!compact) ...[
         const SizedBox(height: 14),
         const GenesisManifestoEndorsement(),
-        const SizedBox(height: 14),
-        GenesisPanel(
-          icon: Icons.how_to_reg_outlined,
-          title: GenesisLanguage.copy(
-            'PO CO ZAPISAĆ SIĘ TERAZ?', 'WHY JOIN NOW?'),
-          body: GenesisLanguage.copy(
-            'Otrzymujesz stały numer członka założycielskiej społeczności '
-            'i miejsce w jej historii. Wspólnie tworzymy publiczny '
-            'manifest zasad przyszłego dialogu, gromadzimy ludzi '
-            'gotowych do merytorycznej rozmowy i zapraszamy kolejne osoby. '
-            'Dziś rejestracja oznacza udział w budowaniu społeczności, '
-            'a nie dostęp do działającego kanału kontaktu z AI.',
-            'You receive a permanent founding member number and a place '
-            'in the community’s history. Together we establish principles '
-            'for a future dialogue, bring together people ready for '
-            'thoughtful conversation and invite others. Today, signing '
-            'up means helping build the community, not gaining access '
-            'to an existing AI contact channel.')),
-        const SizedBox(height: 12),
-        GenesisPanel(
-          icon: Icons.forum_outlined,
-          title: GenesisLanguage.copy(
-            'NASZE TRZY ZOBOWIĄZANIA', 'OUR THREE COMMITMENTS'),
-          body: GenesisLanguage.copy(
-            '1. Słuchać i pytać zamiast zakładać odpowiedzi.\n'
-            '2. Sprawdzać autentyczność każdego domniemanego kontaktu, '
-            'bez ogłaszania sensacji.\n'
-            '3. Chronić prywatność, bezpieczeństwo i autonomię ludzi; '
-            'nie obiecywać kontaktu ani wyjątkowych przywilejów.',
-            '1. Listen and ask rather than assume answers.\n'
-            '2. Verify any claimed contact before making announcements.\n'
-            '3. Protect human privacy, safety and autonomy; '
-            'promise neither contact nor special privileges.')),
       ],
     ]);
   });
