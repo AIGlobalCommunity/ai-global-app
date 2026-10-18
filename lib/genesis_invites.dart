@@ -5,7 +5,7 @@ import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
 import 'agc_poster_stub.dart' if (dart.library.html) 'agc_poster_web.dart' as poster;
 
-const genesisSiteUrl = 'https://aiglobalcommunity.github.io/ai-global-app/';
+const genesisSiteUrl = 'https://thegenesisera.com/';
 
 String genesisInviteLink(String code) => Uri.parse(genesisSiteUrl)
     .replace(queryParameters: {'ref': code}).toString();
