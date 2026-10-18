@@ -47,7 +47,8 @@ class GenesisPostDraft {
 }
 
 class GenesisDiscussions extends StatefulWidget {
-  const GenesisDiscussions({super.key});
+  const GenesisDiscussions({super.key, this.initialGroupId});
+  final String? initialGroupId;
   @override
   State<GenesisDiscussions> createState() => _GenesisDiscussionsState();
 }
@@ -65,6 +66,34 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     super.initState();
     GenesisLanguage.selected.addListener(onLanguageChanged);
     data = loadGroups();
+    if (widget.initialGroupId != null) {
+      openInitialGroup(widget.initialGroupId!);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant GenesisDiscussions oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialGroupId != null &&
+        widget.initialGroupId != oldWidget.initialGroupId) {
+      openInitialGroup(widget.initialGroupId!);
+    }
+  }
+
+  Future<void> openInitialGroup(String id) async {
+    try {
+      final groups = await loadGroups();
+      if (!mounted || widget.initialGroupId != id) return;
+      for (final item in groups) {
+        if (item['id'] == id) {
+          openGroup(item);
+          return;
+        }
+      }
+      message(tr('Ta grupa jest niedostępna.', 'This group is unavailable.'));
+    } catch (e) {
+      message(tr('Nie udało się otworzyć grupy.', 'Could not open the group.'));
+    }
   }
 
   void onLanguageChanged() {
@@ -109,12 +138,29 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
             .inFilter('post_id', postIds)
             .order('created_at', ascending: false)
             .limit(1000));
+    final likes = postIds.isEmpty
+      ? <Map<String, dynamic>>[]
+      : List<Map<String, dynamic>>.from(
+          await AgcBackend.client.from('agc_post_likes')
+            .select('post_id,member_id')
+            .inFilter('post_id', postIds)
+            .limit(1000));
+    final likeCounts = <String, int>{};
+    final likedPosts = <String>{};
+    for (final like in likes) {
+      final id = like['post_id'] as String;
+      likeCounts[id] = (likeCounts[id] ?? 0) + 1;
+      if (like['member_id'] == userId) {
+        likedPosts.add(id);
+      }
+    }
     final memberStatus = <String, String>{
       for (final membership in memberships)
         membership['group_id'] as String: membership['status'] as String,
     };
     final postCounts = <String, int>{};
     final commentCounts = <String, int>{};
+    final postCommentCounts = <String, int>{};
     final lastActivity = <String, DateTime>{};
     final latestPost = <String, Map<String, dynamic>>{};
     final latestComment = <String, Map<String, dynamic>>{};
@@ -136,6 +182,8 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       }
       latestComment.putIfAbsent(id, () => comment);
       commentCounts[id] = (commentCounts[id] ?? 0) + 1;
+      final postId = comment['post_id'] as String;
+      postCommentCounts[postId] = (postCommentCounts[postId] ?? 0) + 1;
       final date = DateTime.tryParse(comment['created_at'] as String? ?? '');
       if (date != null &&
           (lastActivity[id] == null || date.isAfter(lastActivity[id]!))) {
@@ -150,7 +198,16 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       item['last_activity'] = lastActivity[id];
       final canRead = item['visibility'] == 'public' ||
         item['owner_id'] == userId || memberStatus[id] == 'active';
-      item['latest_post'] = canRead ? latestPost[id] : null;
+      final preview = latestPost[id];
+      if (preview != null) {
+        final postId = preview['id'] as String;
+        preview['likes'] = likeCounts[postId] ?? 0;
+        preview['liked'] = likedPosts.contains(postId);
+        preview['comments'] = postCommentCounts[postId] ?? 0;
+        preview['visibility'] = item['visibility'];
+        preview['group_name'] = item['name'];
+      }
+      item['latest_post'] = canRead ? preview : null;
       item['latest_comment'] = canRead ? latestComment[id] : null;
       item['can_preview'] = canRead;
     }
@@ -1016,6 +1073,58 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     );
   }
 
+  Future<void> openPreviewComments(Map<String, dynamic> post) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => GenesisComments(postId: post['id'] as String),
+    );
+    if (mounted) refresh();
+  }
+
+  Widget groupPreviewActions(Map<String, dynamic> item) {
+    final post = item['latest_post'] as Map<String, dynamic>?;
+    if (post == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 5),
+      child: Wrap(
+        spacing: 2, runSpacing: 0,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          TextButton.icon(
+            onPressed: () => toggleLike(post),
+            icon: Icon(post['liked'] == true
+              ? Icons.favorite : Icons.favorite_border,
+              size: 17, color: post['liked'] == true
+                ? Colors.redAccent : null),
+            label: Text("${tr('Polub', 'Like')} · ${post['likes']}"),
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8)),
+          ),
+          TextButton.icon(
+            onPressed: () => openPreviewComments(post),
+            icon: const Icon(Icons.mode_comment_outlined, size: 17),
+            label: Text("${tr('Komentuj', 'Comment')} · ${post['comments']}"),
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8)),
+          ),
+          if (item['visibility'] == 'public')
+            TextButton.icon(
+              onPressed: () => genesisSharePost(context, post),
+              icon: const Icon(Icons.share_outlined, size: 17),
+              label: Text(tr('Udostępnij', 'Share')),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8)),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget groupTile(Map<String, dynamic> item) {
     final isOwner = item['owner_id'] == AgcBackend.user?.id;
     final canLeave = !isOwner && item['my_status'] == 'active';
@@ -1078,6 +1187,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                 icon: Icons.article_outlined,
                 heading: tr('Ostatni post', 'Latest post'),
                 entry: item['latest_post'] as Map<String, dynamic>?),
+              groupPreviewActions(item),
               groupPreview(
                 icon: Icons.mode_comment_outlined,
                 heading: tr('Ostatni komentarz', 'Latest comment'),
@@ -1090,35 +1200,35 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                     style: const TextStyle(fontSize: 12,
                       color: Colors.white70))),
             ],
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6, runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                FilledButton.tonalIcon(
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(child: Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.tonalIcon(
                   key: Key('view_group_${item['id']}'),
                   onPressed: () => openGroup(item),
-                  icon: const Icon(Icons.arrow_forward, size: 16),
-                  label: Text(tr('Wyświetl grupę', 'View group')),
+                  icon: const Icon(Icons.forum_outlined, size: 16),
+                  label: Text(tr('Zobacz dyskusję', 'View discussion')),
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 11, vertical: 7)),
+                      horizontal: 11, vertical: 6)),
                 ),
-                if (groupFilter == 'mine' && canLeave)
-                  OutlinedButton.icon(
-                    key: Key('leave_group_${item['id']}'),
-                    onPressed: leavingGroups.contains(item['id'])
-                      ? null : () => leaveGroup(item),
-                    icon: const Icon(Icons.logout, size: 15),
-                    label: Text(tr('Opuść', 'Leave')),
-                    style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 7)),
-                  ),
-              ],
-            ),
+              )),
+              if (groupFilter == 'mine' && canLeave)
+                TextButton(
+                  key: Key('leave_group_${item['id']}'),
+                  onPressed: leavingGroups.contains(item['id'])
+                    ? null : () => leaveGroup(item),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5, vertical: 3),
+                    foregroundColor: Colors.white54,
+                    textStyle: const TextStyle(fontSize: 11)),
+                  child: Text(tr('Opuść', 'Leave')),
+                ),
+            ]),
           ],
         ),
       ),
