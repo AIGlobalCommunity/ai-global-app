@@ -5,6 +5,7 @@ import 'agc_luxury_theme.dart';
 import 'genesis_discussions.dart';
 import 'genesis_language.dart';
 import 'genesis_social.dart';
+import 'genesis_social_profile.dart';
 
 class GenesisCommunityFeed extends StatefulWidget {
   const GenesisCommunityFeed({super.key, this.onOpenDiscussions,
@@ -117,11 +118,25 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
     child:Padding(padding:const EdgeInsets.all(14),
       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Row(children:[
-          const CircleAvatar(radius:17,child:Icon(Icons.person_outline,size:19)),
+          InkWell(
+            onTap:()=>genesisOpenMemberProfile(context,
+              post['author_id'] as String?,
+              post['author_label'] as String? ?? ''),
+            child:const CircleAvatar(radius:17,
+              child:Icon(Icons.person_outline,size:19))),
           const SizedBox(width:9),
           Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text(post['author_label'] as String,
-              style:const TextStyle(fontSize:13,fontWeight:FontWeight.w600)),
+            InkWell(
+              onTap:()=>genesisOpenMemberProfile(context,
+                post['author_id'] as String?,
+                post['author_label'] as String? ?? ''),
+              child:Row(children:[
+                Flexible(child:Text(post['author_label'] as String,
+                  style:const TextStyle(fontSize:13,fontWeight:FontWeight.w600,
+                    color:AgcLuxury.champagne))),
+                const Icon(Icons.chevron_right,size:16,
+                  color:AgcLuxury.champagne),
+              ])),
             const SizedBox(height:3),
             Row(children:[
               Icon(post['visibility']=='private'?Icons.lock_outline:Icons.groups_outlined,
