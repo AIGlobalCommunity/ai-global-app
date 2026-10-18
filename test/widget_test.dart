@@ -206,9 +206,19 @@ void main() {
       await tester.pump();
       expect(tester.widget<CheckboxListTile>(
         find.byKey(const Key('signup_show_nick_publicly'))).value, isFalse);
-      expect(find.byKey(const Key('signup_email')), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('signup_email_verification_info')),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.byKey(const Key('signup_email_verification_info')), findsOneWidget);
       expect(find.textContaining('Masz już konto? Użyj logowania'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('signup_password')),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.byKey(const Key('signup_email')), findsOneWidget);
       expect(find.byKey(const Key('signup_password')), findsOneWidget);
       // ListView builds only visible children. Scroll to the final field
       // rather than assuming every form element is mounted at once.
