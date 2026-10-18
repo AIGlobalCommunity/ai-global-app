@@ -179,6 +179,6 @@ Future<void> genesisShareDialog(BuildContext context, {
                 if (ctx.mounted) Navigator.pop(ctx);
               }),
           ]))),
-    ))),
+    )),
   );
 }
