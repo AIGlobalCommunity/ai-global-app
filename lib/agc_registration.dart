@@ -48,7 +48,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
   final email = TextEditingController();
   final password = TextEditingController();
   final confirmation = TextEditingController();
-  bool showNickPublicly = false;
+  bool showNickPublicly = true;
   bool showPassword = false;
   bool showConfirmation = false;
   bool submitting = false;
@@ -165,7 +165,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
               style: TextStyle(color: _gold, fontSize: 22,
                 fontWeight: FontWeight.bold, letterSpacing: 1.4)),
             const SizedBox(height: 6),
-            Text(GenesisLanguage.copy('Wypełnij dane konta. Widoczność nicku wybierasz samodzielnie.', 'Enter your account details. You control the visibility of your nickname.'),
+            Text(GenesisLanguage.copy('Wypełnij dane konta. Nick jest domyślnie publiczny, ale możesz go ukryć.', 'Enter your account details. Your nickname is public by default, but you can hide it.'),
               textAlign: TextAlign.center),
             if (Uri.base.queryParameters['ref'] != null) ...[
               const Text('✦ Rejestrujesz się z linku polecającego. '
@@ -174,6 +174,8 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 style: TextStyle(color: _gold)),
               const SizedBox(height: 12),
             ],
+            if (widget.onSocialSignIn != null)
+              AgcSocialButtons(onSignIn: widget.onSocialSignIn!),
             const SizedBox(height: 24),
             TextFormField(
               key: const Key('signup_nick'),
@@ -269,8 +271,6 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 : const Icon(Icons.person_add),
               label: Text(submitting ? 'Tworzenie konta...' : GenesisLanguage.t('signup')),
             ),
-            if (widget.onSocialSignIn != null)
-              AgcSocialButtons(onSignIn: widget.onSocialSignIn!),
             const SizedBox(height: 14),
             const Text('Po rejestracji potwierdź adres e-mail. '
               'Nie udostępniaj nikomu swojego hasła.',
