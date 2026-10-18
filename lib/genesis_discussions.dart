@@ -55,7 +55,9 @@ class GenesisDiscussions extends StatefulWidget {
 class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   Map<String, dynamic>? group;
   String groupQuery = '';
+  String groupFilter = 'all';
   bool showMemberSearch = false;
+  final Set<String> leavingGroups = <String>{};
   late Future<List<Map<String, dynamic>>> data;
 
   @override
@@ -79,7 +81,44 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     final rows = await AgcBackend.client.from('agc_groups')
         .select('id,name,description,owner_id,owner_label,visibility,official,created_at')
         .order('created_at', ascending: false).limit(100);
-    return List<Map<String, dynamic>>.from(rows);
+    final groups = List<Map<String, dynamic>>.from(rows);
+    if (groups.isEmpty) return groups;
+    final ids = groups.map((g) => g['id'] as String).toList();
+    final userId = AgcBackend.user?.id;
+    final memberships = userId == null
+        ? <Map<String, dynamic>>[]
+        : List<Map<String, dynamic>>.from(
+            await AgcBackend.client.from('agc_group_members')
+              .select('group_id,status')
+              .eq('member_id', userId)
+              .inFilter('group_id', ids));
+    final posts = List<Map<String, dynamic>>.from(
+      await AgcBackend.client.from('agc_group_posts')
+        .select('group_id,created_at')
+        .inFilter('group_id', ids)
+        .order('created_at', ascending: false)
+        .limit(1000));
+    final memberStatus = <String, String>{
+      for (final membership in memberships)
+        membership['group_id'] as String: membership['status'] as String,
+    };
+    final postCounts = <String, int>{};
+    final lastActivity = <String, DateTime>{};
+    for (final post in posts) {
+      final id = post['group_id'] as String;
+      postCounts[id] = (postCounts[id] ?? 0) + 1;
+      final date = DateTime.tryParse(post['created_at'] as String? ?? '');
+      if (date != null && !lastActivity.containsKey(id)) {
+        lastActivity[id] = date;
+      }
+    }
+    for (final item in groups) {
+      final id = item['id'] as String;
+      item['my_status'] = memberStatus[id];
+      item['post_count'] = postCounts[id] ?? 0;
+      item['last_activity'] = lastActivity[id];
+    }
+    return groups;
   }
 
   Future<List<Map<String, dynamic>>> loadPrompts(String id) async {
@@ -292,12 +331,53 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     } catch (e) { message('$e'); }
   }
 
-  Future<void> leaveGroup() async {
+  Future<void> leaveGroup(Map<String, dynamic> target) async {
+    final id = target['id'] as String;
+    if (leavingGroups.contains(id) ||
+        target['owner_id'] == AgcBackend.user?.id ||
+        target['my_status'] != 'active') {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Opuścić grupę?', 'Leave this group?')),
+        content: Text(tr(
+          'Czy chcesz opuścić grupę „${target['name']}”? '
+          'Aby ponownie dołączyć do prywatnej grupy, potrzebujesz zaproszenia.',
+          'Leave “${target['name']}”? '
+          'You will need an invitation to rejoin a private group.')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('Anuluj', 'Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('Opuść grupę', 'Leave group'))),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => leavingGroups.add(id));
     try {
-      await AgcBackend.client.from('agc_group_members').delete()
-        .eq('group_id', group!['id']).eq('member_id', AgcBackend.user!.id);
-      setState(() { group = null; data = loadGroups(); });
-    } catch (e) { message('$e'); }
+      final removed = await AgcBackend.client.from('agc_group_members')
+        .delete().eq('group_id', id)
+        .eq('member_id', AgcBackend.user!.id)
+        .select('group_id');
+      if (removed.isEmpty) {
+        message(tr('Nie udało się opuścić grupy.',
+          'Could not leave the group.'));
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        if (group?['id'] == id) group = null;
+        data = loadGroups();
+      });
+      message(tr('Opuszczono grupę.', 'You left the group.'));
+    } catch (e) {
+      message('${tr('Nie udało się opuścić grupy', 'Could not leave group')}: $e');
+    } finally {
+      if (mounted) setState(() => leavingGroups.remove(id));
+    }
   }
 
   bool deletingGroup = false;
@@ -454,14 +534,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
           );
         }
         if (status == 'active') {
-          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            threadComposer(),
-            TextButton.icon(
-              onPressed: leaveGroup,
-              icon: const Icon(Icons.logout),
-              label: Text(tr('Opuść grupę', 'Leave group')),
-            ),
-          ]);
+          return threadComposer();
         }
         if (group!['visibility'] == 'public') {
           return FilledButton.icon(
