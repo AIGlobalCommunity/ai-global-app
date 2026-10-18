@@ -81,7 +81,7 @@ class AgcBackend {
         if (Uri.base.queryParameters['ref'] != null)
           'referral_code': Uri.base.queryParameters['ref']!.trim().toUpperCase(),
       },
-      emailRedirectTo: kIsWeb ? 'https://aiglobalcommunity.github.io/ai-global-app/' : null,
+      emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null,
     );
   }
 
@@ -94,7 +94,7 @@ class AgcBackend {
     await client.auth.resend(
       type: OtpType.signup,
       email: address,
-      emailRedirectTo: 'https://aiglobalcommunity.github.io/ai-global-app/',
+      emailRedirectTo: 'https://thegenesisera.com/',
     );
   }
 
@@ -114,7 +114,7 @@ class AgcBackend {
     }
     await client.auth.signInWithOAuth(
       provider,
-      redirectTo: 'https://aiglobalcommunity.github.io/ai-global-app/',
+      redirectTo: 'https://thegenesisera.com/',
     );
   }
 
