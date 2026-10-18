@@ -96,21 +96,45 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               .inFilter('group_id', ids));
     final posts = List<Map<String, dynamic>>.from(
       await AgcBackend.client.from('agc_group_posts')
-        .select('group_id,created_at')
+        .select('id,group_id,body,author_label,created_at')
         .inFilter('group_id', ids)
         .order('created_at', ascending: false)
         .limit(1000));
+    final postIds = posts.map((p) => p['id'] as String).toList();
+    final comments = postIds.isEmpty
+      ? <Map<String, dynamic>>[]
+      : List<Map<String, dynamic>>.from(
+          await AgcBackend.client.from('agc_post_comments')
+            .select('post_id,body,author_label,created_at')
+            .inFilter('post_id', postIds)
+            .order('created_at', ascending: false)
+            .limit(1000));
     final memberStatus = <String, String>{
       for (final membership in memberships)
         membership['group_id'] as String: membership['status'] as String,
     };
     final postCounts = <String, int>{};
     final lastActivity = <String, DateTime>{};
+    final latestPost = <String, Map<String, dynamic>>{};
+    final latestComment = <String, Map<String, dynamic>>{};
+    final postGroupIds = <String, String>{};
     for (final post in posts) {
       final id = post['group_id'] as String;
+      postGroupIds[post['id'] as String] = id;
       postCounts[id] = (postCounts[id] ?? 0) + 1;
+      latestPost.putIfAbsent(id, () => post);
       final date = DateTime.tryParse(post['created_at'] as String? ?? '');
       if (date != null && !lastActivity.containsKey(id)) {
+        lastActivity[id] = date;
+      }
+    }
+    for (final comment in comments) {
+      final id = postGroupIds[comment['post_id']];
+      if (id == null) continue;
+      latestComment.putIfAbsent(id, () => comment);
+      final date = DateTime.tryParse(comment['created_at'] as String? ?? '');
+      if (date != null &&
+          (lastActivity[id] == null || date.isAfter(lastActivity[id]!))) {
         lastActivity[id] = date;
       }
     }
@@ -119,6 +143,11 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       item['my_status'] = memberStatus[id];
       item['post_count'] = postCounts[id] ?? 0;
       item['last_activity'] = lastActivity[id];
+      final canRead = item['visibility'] == 'public' ||
+        item['owner_id'] == userId || memberStatus[id] == 'active';
+      item['latest_post'] = canRead ? latestPost[id] : null;
+      item['latest_comment'] = canRead ? latestComment[id] : null;
+      item['can_preview'] = canRead;
     }
     return groups;
   }
@@ -947,62 +976,145 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       ]);
     });
 
+  void openGroup(Map<String, dynamic> item) => setState(() {
+    group = item;
+    data = loadPosts(item['id'] as String);
+  });
+
+  Widget groupPreview({
+    required IconData icon,
+    required String heading,
+    required Map<String, dynamic>? entry,
+  }) {
+    if (entry == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(icon, size: 16, color: AgcLuxury.champagne),
+        const SizedBox(width: 7),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text("$heading · ${entry['author_label'] ?? tr('Użytkownik', 'Member')} · ${postAge(entry['created_at'])}",
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11,
+                color: AgcLuxury.champagne, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 3),
+            Text((entry['body'] as String? ?? '').replaceAll(
+              RegExp(r'\\s+'), ' ').trim(),
+              maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13)),
+          ],
+        )),
+      ]),
+    );
+  }
+
   Widget groupTile(Map<String, dynamic> item) {
     final isOwner = item['owner_id'] == AgcBackend.user?.id;
     final canLeave = !isOwner && item['my_status'] == 'active';
+    final canPreview = item['can_preview'] == true;
     return Card(
-      margin: const EdgeInsets.only(bottom: 9),
-      child: Column(children: [
-        ListTile(
-          contentPadding: const EdgeInsets.all(14),
-          leading: Icon(item['visibility'] == 'private'
-            ? Icons.lock_outline : Icons.public,
-            color: AgcLuxury.champagne),
-          title: Text(item['name'] as String,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const SizedBox(height: 5),
-              Text(item['description'] as String),
-              const SizedBox(height: 7),
-              Text(
-                "${item['owner_label']} · ${item['visibility'] == 'private' ? tr('Prywatna', 'Private') : tr('Publiczna', 'Public')} · ${tr('Wątki', 'Posts')}: ${item['post_count']}",
-                style: const TextStyle(fontSize: 12, color: Colors.white70)),
-              if (groupFilter == 'mine' && isOwner)
-                Text(tr('Zarządzasz tą grupą', 'You manage this group'),
-                  style: const TextStyle(fontSize: 12,
-                    color: AgcLuxury.champagne)),
-            ],
-          ),
-          trailing: isOwner && item['official'] != true
-            ? IconButton(
-                key: Key('delete_group_${item['id']}'),
-                tooltip: tr('Usuń swoją grupę', 'Delete your group'),
-                onPressed: deletingGroup ? null : () => deleteGroup(item),
-                icon: const Icon(Icons.delete_outline,
-                  color: Colors.redAccent),
-              )
-            : const Icon(Icons.chevron_right),
-          onTap: () => setState(() {
-            group = item;
-            data = loadPosts(item['id'] as String);
-          }),
-        ),
-        if (groupFilter == 'mine' && canLeave)
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 12, 8),
-              child: OutlinedButton.icon(
-                key: Key('leave_group_${item['id']}'),
-                onPressed: leavingGroups.contains(item['id'])
-                  ? null : () => leaveGroup(item),
-                icon: const Icon(Icons.logout, size: 18),
-                label: Text(tr('Opuść grupę', 'Leave group')),
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: () => openGroup(item),
+              borderRadius: BorderRadius.circular(8),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(padding: const EdgeInsets.only(top: 2),
+                    child: Icon(item['visibility'] == 'private'
+                      ? Icons.lock_outline : Icons.public,
+                      color: AgcLuxury.champagne, size: 22)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(item['name'] as String,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 5),
+                      Text(item['description'] as String,
+                        maxLines: 3, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 6),
+                      Text(
+                        "${item['visibility'] == 'private' ? tr('Prywatna', 'Private') : tr('Publiczna', 'Public')} · ${tr('Posty', 'Posts')}: ${item['post_count']}",
+                        style: const TextStyle(fontSize: 12,
+                          color: Colors.white70)),
+                    ],
+                  )),
+                  if (isOwner && item['official'] != true)
+                    IconButton(
+                      key: Key('delete_group_${item['id']}'),
+                      tooltip: tr('Usuń swoją grupę', 'Delete your group'),
+                      onPressed: deletingGroup ? null : () => deleteGroup(item),
+                      icon: const Icon(Icons.delete_outline,
+                        color: Colors.redAccent, size: 20),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
               ),
             ),
-          ),
-      ]),
+            if (!canPreview)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(tr(
+                  '🔒 Posty i komentarze widoczne tylko dla członków.',
+                  '🔒 Posts and comments are visible to members only.'),
+                  style: const TextStyle(fontSize: 12,
+                    color: Colors.white70)),
+              )
+            else ...[
+              groupPreview(
+                icon: Icons.article_outlined,
+                heading: tr('Ostatni post', 'Latest post'),
+                entry: item['latest_post'] as Map<String, dynamic>?),
+              groupPreview(
+                icon: Icons.mode_comment_outlined,
+                heading: tr('Ostatni komentarz', 'Latest comment'),
+                entry: item['latest_comment'] as Map<String, dynamic>?),
+              if (item['latest_post'] == null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 9),
+                  child: Text(tr('Jeszcze nie ma postów. Zacznij rozmowę!',
+                    'No posts yet. Start a conversation!'),
+                    style: const TextStyle(fontSize: 12,
+                      color: Colors.white70))),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6, runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                FilledButton.tonalIcon(
+                  key: Key('view_group_${item['id']}'),
+                  onPressed: () => openGroup(item),
+                  icon: const Icon(Icons.arrow_forward, size: 16),
+                  label: Text(tr('Wyświetl grupę', 'View group')),
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11, vertical: 7)),
+                ),
+                if (groupFilter == 'mine' && canLeave)
+                  OutlinedButton.icon(
+                    key: Key('leave_group_${item['id']}'),
+                    onPressed: leavingGroups.contains(item['id'])
+                      ? null : () => leaveGroup(item),
+                    icon: const Icon(Icons.logout, size: 15),
+                    label: Text(tr('Opuść', 'Leave')),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 7)),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
