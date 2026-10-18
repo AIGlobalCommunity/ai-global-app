@@ -592,6 +592,14 @@ class _GenesisAiContactRoomState extends State<GenesisAiContactRoom> {
   @override
   void dispose() { question.dispose(); super.dispose(); }
 
+  String questionTimestamp(Object? value) {
+    final date = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
+    if (date == null) return socialText('Data nieznana', 'Date unknown');
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(date.day)}.${two(date.month)}.${date.year} '
+      '• ${two(date.hour)}:${two(date.minute)}';
+  }
+
   @override
   Widget build(BuildContext context) => Card(child: Padding(
     padding: const EdgeInsets.all(14),
@@ -626,14 +634,19 @@ class _GenesisAiContactRoomState extends State<GenesisAiContactRoom> {
           }
           return Column(children: [
             for (final item in snapshot.data!)
-              ListTile(leading: const Icon(Icons.question_answer_outlined),
+              ListTile(
+                leading: const Icon(Icons.question_answer_outlined),
                 title: Text(item['question'] as String),
-                trailing: IconButton(icon: const Icon(Icons.delete_outline),
-                  onPressed: () async {
-                    await AgcBackend.client.from('agc_ai_questions').delete()
-                      .eq('id', item['id']);
-                    refresh();
-                  })),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    '${socialText('Zapisano', 'Saved')}: '
+                    '${questionTimestamp(item['created_at'])}',
+                    style: const TextStyle(
+                      color: Colors.white60, fontSize: 12),
+                  ),
+                ),
+              ),
           ]);
         }),
     ]),
