@@ -594,7 +594,9 @@ class _GenesisAiContactRoomState extends State<GenesisAiContactRoom> {
 
   String questionTimestamp(Object? value) {
     final date = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
-    if (date == null) return socialText('Data nieznana', 'Date unknown');
+    if (date == null) {
+      return socialText('Data nieznana', 'Date unknown');
+    }
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(date.day)}.${two(date.month)}.${date.year} '
       '• ${two(date.hour)}:${two(date.minute)}';
