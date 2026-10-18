@@ -70,6 +70,20 @@ jobs:
           PY
           test -s build/web/favicon.svg
           grep -q 'THE GENESIS ERA | AI Global Community' build/web/index.html
+      - name: Verify bundled HTML5 Genesis Signal game
+        run: |
+          test -s build/web/genesis-game.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          page = Path('build/web/genesis-game.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', page, re.DOTALL)
+          if len(scripts) != 1:
+              raise SystemExit('Expected one self-contained Genesis Signal game script')
+          Path('/tmp/genesis-signal-check.js').write_text(scripts[0], encoding='utf-8')
+          PY
+          node --check /tmp/genesis-signal-check.js
+          echo "Genesis Signal HTML5 game bundled and JavaScript syntax verified"
       - name: Verify bundled AGC artwork
         run: |
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
