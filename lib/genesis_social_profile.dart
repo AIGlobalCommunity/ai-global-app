@@ -172,7 +172,9 @@ class _GenesisAccountEditorState extends State<GenesisAccountEditor> {
           'Could not save account details. Please try again.'));
       }
     } finally {
-      if (mounted) setState(() => saving = false);
+      if (mounted) {
+        setState(() => saving = false);
+      }
     }
   }
 
@@ -439,11 +441,13 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
         loading = false;
       });
     } catch (_) {
-      if (mounted) setState(() {
-        notice = socialText('Nie udało się pobrać profilu.',
-          'Could not load your profile.');
-        loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          notice = socialText('Nie udało się pobrać profilu.',
+            'Could not load your profile.');
+          loading = false;
+        });
+      }
     }
   }
 
@@ -471,14 +475,18 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
         'is_public': isPublic,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
-      if (mounted) setState(() {
-        editing = false;
-        notice = socialText('Karta Genesis zapisana.', 'Genesis card saved.');
-      });
+      if (mounted) {
+        setState(() {
+          editing = false;
+          notice = socialText('Karta Genesis zapisana.', 'Genesis card saved.');
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() => notice = socialText(
-        'Nie udało się zapisać karty. Spróbuj ponownie.',
-        'Could not save your card. Please try again.'));
+      if (mounted) {
+        setState(() => notice = socialText(
+          'Nie udało się zapisać karty. Spróbuj ponownie.',
+          'Could not save your card. Please try again.'));
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -626,12 +634,12 @@ class _GenesisMemberProfilePageState extends State<GenesisMemberProfilePage> {
             GenesisIdentityCard(
               name: visible && (row?['display_name'] as String? ?? '').trim().isNotEmpty
                 ? row!['display_name'] as String : widget.authorLabel,
-              description: visible ? row?['bio'] as String? : null,
-              interests: visible ? row?['interests'] as String? : null,
-              website: visible ? row?['website'] as String? : null,
-              location: visible ? row?['location_text'] as String? : null,
-              avatar: visible ? row?['avatar_url'] as String? : null,
-              cover: visible ? row?['cover_url'] as String? : null),
+              description: visible ? (row?['bio'] as String?) : null,
+              interests: visible ? (row?['interests'] as String?) : null,
+              website: visible ? (row?['website'] as String?) : null,
+              location: visible ? (row?['location_text'] as String?) : null,
+              avatar: visible ? (row?['avatar_url'] as String?) : null,
+              cover: visible ? (row?['cover_url'] as String?) : null),
             const SizedBox(height: 10),
             if (!visible)
               Text(socialText(
