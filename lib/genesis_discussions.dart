@@ -108,7 +108,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
 
   Future<List<Map<String, dynamic>>> loadGroups() async {
     final rows = await AgcBackend.client.from('agc_groups')
-        .select('id,name,description,owner_id,owner_label,visibility,official,created_at')
+        .select('id,name,description,owner_id,owner_label,visibility,official,created_at,cover_url')
         .order('created_at', ascending: false).limit(100);
     final groups = List<Map<String, dynamic>>.from(rows);
     if (groups.isEmpty) {
