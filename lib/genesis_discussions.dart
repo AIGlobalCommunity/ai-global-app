@@ -350,7 +350,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       }
       if (!mounted) return;
       setState(() {
-        if (group?['id'] == target['id']) group = null;
+        if (group?['id'] == target['id']) {
+          group = null;
+        }
         data = loadGroups();
       });
       message(tr('Grupa została usunięta.', 'Group deleted.'));
