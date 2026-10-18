@@ -300,6 +300,67 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     } catch (e) { message('$e'); }
   }
 
+  bool deletingGroup = false;
+
+  Future<void> deleteGroup(Map<String, dynamic> target) async {
+    if (deletingGroup ||
+        target['owner_id'] != AgcBackend.user?.id ||
+        target['official'] == true) return;
+    final name = target['name'] as String;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('Usunąć grupę?', 'Delete group?')),
+        content: Text(tr(
+          'Czy na pewno chcesz trwale usunąć grupę „$name”? '
+          'Wszystkie posty, komentarze, polubienia i członkostwa '
+          'tej grupy zostaną usunięte. Tej operacji nie można cofnąć.',
+          'Are you sure you want to permanently delete “$name”? '
+          'All posts, comments, likes and memberships in this group '
+          'will be deleted. This action cannot be undone.',
+        )),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('Anuluj', 'Cancel')),
+          ),
+          FilledButton.icon(
+            key: const Key('confirm_delete_group'),
+            onPressed: () => Navigator.pop(ctx, true),
+            icon: const Icon(Icons.delete_forever_outlined),
+            label: Text(tr('Usuń na zawsze', 'Delete permanently')),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade800),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => deletingGroup = true);
+    try {
+      final deleted = await AgcBackend.client.from('agc_groups')
+        .delete()
+        .eq('id', target['id'])
+        .eq('owner_id', AgcBackend.user!.id)
+        .eq('official', false)
+        .select('id');
+      if (deleted.isEmpty) {
+        message(tr('Nie udało się usunąć grupy. Sprawdź uprawnienia.',
+          'Could not delete the group. Check your permissions.'));
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        if (group?['id'] == target['id']) group = null;
+        data = loadGroups();
+      });
+      message(tr('Grupa została usunięta.', 'Group deleted.'));
+    } catch (e) {
+      message('${tr('Błąd usuwania grupy', 'Could not delete group')}: $e');
+    } finally {
+      if (mounted) setState(() => deletingGroup = false);
+    }
+  }
+
   Future<void> inviteMember() async {
     final handle = await compose(
       tr('Zaproś użytkownika', 'Invite a member'),
@@ -326,6 +387,13 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         OutlinedButton.icon(onPressed: inviteMember,
           icon: const Icon(Icons.person_add_alt_1),
           label: Text(tr('Zaproś po nicku', 'Invite by nickname'))),
+        if (group!['official'] != true)
+          OutlinedButton.icon(
+            key: const Key('delete_owned_group'),
+            onPressed: deletingGroup ? null : () => deleteGroup(group!),
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            label: Text(tr('Usuń grupę', 'Delete group')),
+          ),
       ]);
     }
     return FutureBuilder<Map<String, dynamic>?>(
@@ -669,7 +737,14 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         Text('${item['owner_label']} · ${item['visibility'] == 'private' ? tr('Prywatna', 'Private') : tr('Publiczna', 'Public')}',
            style: const TextStyle(fontSize: 12, color: Colors.white70)),
       ]),
-      trailing: const Icon(Icons.chevron_right),
+      trailing: item['owner_id'] == AgcBackend.user?.id && item['official'] != true
+        ? IconButton(
+            key: Key('delete_group_${item['id']}'),
+            tooltip: tr('Usuń swoją grupę', 'Delete your group'),
+            onPressed: deletingGroup ? null : () => deleteGroup(item),
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+          )
+        : const Icon(Icons.chevron_right),
       onTap: () => setState(() {
         group = item;
         data = loadPosts(item['id'] as String);
