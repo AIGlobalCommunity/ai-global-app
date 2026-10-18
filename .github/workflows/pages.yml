@@ -38,6 +38,38 @@ jobs:
           flutter test
       - name: Build production site at thegenesisera.com
         run: flutter build web --release --base-href /
+      - name: Set browser tab title and Genesis favicon
+        run: |
+          cp assets/agc_genesis_ai_vector.svg build/web/favicon.svg
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          page = Path('build/web/index.html')
+          html = page.read_text(encoding='utf-8')
+          html, titles = re.subn(
+              r'<title>.*?</title>',
+              '<title>THE GENESIS ERA | AI Global Community</title>',
+              html, count=1, flags=re.DOTALL | re.IGNORECASE,
+          )
+          if titles != 1:
+              raise SystemExit('Expected a title tag in Flutter web/index.html')
+          html = re.sub(
+              r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]*>\\s*',
+              '', html, flags=re.IGNORECASE,
+          )
+          head = (
+              '  <link rel="icon" type="image/svg+xml" href="favicon.svg">\\n'
+              '  <meta name="application-name" content="THE GENESIS ERA">\\n'
+              '  <meta name="apple-mobile-web-app-title" content="THE GENESIS ERA">\\n'
+              '  <meta name="theme-color" content="#071322">\\n'
+          )
+          if '</head>' not in html:
+              raise SystemExit('Missing HTML head')
+          page.write_text(html.replace('</head>', head + '</head>', 1), encoding='utf-8')
+          PY
+          test -s build/web/favicon.svg
+          grep -q 'THE GENESIS ERA | AI Global Community' build/web/index.html
       - name: Verify bundled AGC artwork
         run: |
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
