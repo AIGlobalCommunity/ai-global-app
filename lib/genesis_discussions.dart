@@ -125,7 +125,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               .inFilter('group_id', ids));
     final posts = List<Map<String, dynamic>>.from(
       await AgcBackend.client.from('agc_group_posts')
-        .select('id,group_id,body,author_label,created_at')
+        .select('id,group_id,body,author_label,created_at,image_path,video_url,link_url')
         .inFilter('group_id', ids)
         .order('created_at', ascending: false)
         .limit(1000));
@@ -1069,28 +1069,49 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     required IconData icon,
     required String heading,
     required Map<String, dynamic>? entry,
+    bool isComment = false,
   }) {
-    if (entry == null) {
-      return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, size: 16, color: AgcLuxury.champagne),
-        const SizedBox(width: 7),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("$heading · ${entry['author_label'] ?? tr('Użytkownik', 'Member')} · ${postAge(entry['created_at'])}",
-              maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11,
-                color: AgcLuxury.champagne, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 3),
-            Text((entry['body'] as String? ?? '').replaceAll(
-              RegExp(r'\s+'), ' ').trim(),
-              maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13)),
-          ],
-        )),
+    if (entry == null) return const SizedBox.shrink();
+    final body = (entry['body'] as String? ?? '').replaceAll(
+      RegExp(r'\\s+'), ' ').trim();
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: isComment
+          ? Colors.white.withValues(alpha: 0.035)
+          : AgcLuxury.champagne.withValues(alpha: 0.065),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: isComment
+          ? Colors.white.withValues(alpha: 0.12)
+          : AgcLuxury.champagne.withValues(alpha: 0.25)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(icon, size: 15, color: isComment
+            ? Colors.white70 : AgcLuxury.champagne),
+          const SizedBox(width: 7),
+          Text(heading.toUpperCase(),
+            style: TextStyle(fontSize: 10,
+              color: isComment ? Colors.white70 : AgcLuxury.champagne,
+              letterSpacing: 0.8, fontWeight: FontWeight.bold)),
+          const Spacer(),
+          Flexible(child: Text(postAge(entry['created_at']),
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 10, color: Colors.white54))),
+        ]),
+        const SizedBox(height: 7),
+        Text(entry['author_label'] as String? ??
+          tr('Użytkownik', 'Member'),
+          style: const TextStyle(fontSize: 12,
+            color: AgcLuxury.champagne, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 5),
+        Text(body, maxLines: isComment ? 3 : 4,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: isComment ? 12.5 : 14,
+            fontWeight: isComment ? FontWeight.normal : FontWeight.w500,
+            height: 1.35)),
       ]),
     );
   }
@@ -1222,13 +1243,22 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                   const SizedBox(width: 10),
                   Expanded(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(tr('GRUPA DYSKUSYJNA', 'DISCUSSION GROUP'),
+                        style: const TextStyle(
+                          color: AgcLuxury.champagne, fontSize: 10,
+                          letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
                       Text(item['name'] as String,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 5),
+                          color: AgcLuxury.champagne,
+                          fontWeight: FontWeight.bold, fontSize: 20,
+                          height: 1.2)),
+                      const SizedBox(height: 7),
                       Text(item['description'] as String,
-                        maxLines: 3, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 6),
+                        maxLines: 3, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13, color: Colors.white70, height: 1.35)),
+                      const SizedBox(height: 8),
                       Text(
                         "${item['visibility'] == 'private' ? tr('Prywatna', 'Private') : tr('Publiczna', 'Public')} · ${tr('Posty', 'Posts')}: ${item['post_count']}",
                         style: const TextStyle(fontSize: 12,
@@ -1265,7 +1295,8 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               groupPreview(
                 icon: Icons.mode_comment_outlined,
                 heading: tr('Ostatni komentarz', 'Latest comment'),
-                entry: item['latest_comment'] as Map<String, dynamic>?),
+                entry: item['latest_comment'] as Map<String, dynamic>?,
+                isComment: true),
               groupCommentActions(item),
               if (item['latest_post'] == null)
                 Padding(
@@ -1290,6 +1321,13 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
                       horizontal: 11, vertical: 6)),
                 ),
               )),
+              if (item['visibility'] == 'public')
+                IconButton(
+                  tooltip: tr('Udostępnij grupę', 'Share group'),
+                  onPressed: () => genesisShareGroup(context, item),
+                  icon: const Icon(Icons.share_outlined, size: 18),
+                  visualDensity: VisualDensity.compact,
+                ),
               if (groupFilter == 'mine' && canLeave)
                 TextButton(
                   key: Key('leave_group_${item['id']}'),
@@ -1346,7 +1384,12 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
             ),
         ]),
         const SizedBox(height: 12),
-        SelectableText(item['body'] as String),
+        Text(tr('POST W DYSKUSJI', 'DISCUSSION POST'),
+          style: const TextStyle(color: AgcLuxury.champagne,
+            fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const SizedBox(height: 6),
+        SelectableText(item['body'] as String,
+          style: const TextStyle(fontSize: 15, height: 1.45)),
         postMedia(item),
         const Divider(height: 24),
         Wrap(spacing: 8, runSpacing: 4, children: [
@@ -1433,6 +1476,12 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
           }),
       ],
       if (group != null) ...[
+        if (group!['visibility'] == 'public')
+          Align(alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => genesisShareGroup(context, group!),
+              icon: const Icon(Icons.share_outlined, size: 17),
+              label: Text(tr('Udostępnij grupę', 'Share group')))),
         const SizedBox(height: 10),
         Text(group!['visibility'] == 'private'
           ? tr('🔒 Tylko członkowie widzą wypowiedzi i mogą je polubić lub komentować. Udostępnianie publiczne jest wyłączone.',
