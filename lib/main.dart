@@ -98,9 +98,10 @@ class AgcHome extends StatefulWidget {
 }
 
 class _AgcHomeState extends State<AgcHome> {
-  // Keep shared post links opening the news feed after sign-in.
-  int selected = Uri.base.queryParameters.containsKey('post') ? 1 : 0;
-  String? targetGroupId;
+  // Shared post and group links open the matching destination after sign-in.
+  int selected = Uri.base.queryParameters.containsKey('group') ? 2
+    : Uri.base.queryParameters.containsKey('post') ? 1 : 0;
+  String? targetGroupId = Uri.base.queryParameters['group'];
   int groupNavigationSerial = 0;
 
   void openGroupFromFeed(String id) => setState(() {
