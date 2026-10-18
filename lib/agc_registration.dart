@@ -84,7 +84,9 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
       final code = e.code;
       String message;
       if (code == 'user_already_exists' || code == 'email_exists') {
-        message = 'Ten e-mail ma już konto. Wróć do logowania.';
+        message = GenesisLanguage.copy(
+          'Nie można utworzyć nowego konta dla tego adresu. Jeśli masz już konto, przejdź do logowania lub odzyskaj dostęp.',
+          'A new account cannot be created with this address. If you already have an account, sign in or recover access.');
       } else if (code == 'weak_password') {
         message = 'Hasło jest za słabe. Użyj dłuższego, trudniejszego hasła.';
       } else if (code == 'email_address_invalid') {
@@ -126,8 +128,21 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 textAlign: TextAlign.center, style: TextStyle(
                   fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              Text('Wysłaliśmy prośbę o potwierdzenie adresu ${email.text.trim()}. '
-                'Kliknij link z wiadomości, a następnie zaloguj się do THE GENESIS ERA.',
+              Text(GenesisLanguage.copy(
+                'Jeżeli to nowy adres, otrzymasz wiadomość z linkiem do potwierdzenia e-maila. '
+                'Sprawdź skrzynkę ${email.text.trim()} i kliknij link, aby aktywować konto.',
+                'If this is a new email address, you will receive a confirmation link. '
+                'Check ${email.text.trim()} and follow the link to activate your account.'),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              Text(GenesisLanguage.copy(
+                'Jeśli masz już konto z tym adresem, nowa rejestracja nie jest potrzebna. '
+                'Wróć do logowania przez e-mail, Google lub Facebook. '
+                'Ze względów bezpieczeństwa nie ujawniamy, czy adres znajduje się w bazie.',
+                'If you already have an account with this email, you do not need to register again. '
+                'Sign in with email, Google, or Facebook. '
+                'For security, we do not reveal whether an email is registered.'),
+                key: const Key('signup_existing_email_notice'),
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text(GenesisLanguage.copy('Jeżeli wiadomości nie ma, sprawdź folder SPAM.', 'If you cannot find the message, check your spam folder.'),
@@ -204,6 +219,17 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 : 'Twój nick pozostanie prywatny. W rankingu pojawi się anonimowy identyfikator.'),
             ),
             const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(GenesisLanguage.copy(
+                'Masz już konto? Użyj logowania zamiast ponownej rejestracji. '
+                'Ten sam zweryfikowany e-mail w Google lub Facebook może zostać powiązany z istniejącym kontem.',
+                'Already registered? Sign in instead of creating another account. '
+                'The same verified email from Google or Facebook can be linked to your existing account.'),
+                key: const Key('signup_email_verification_info'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            ),
             TextFormField(
               key: const Key('signup_email'),
               controller: email, textInputAction: TextInputAction.next,
