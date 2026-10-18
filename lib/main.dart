@@ -3,7 +3,6 @@ import 'genesis_language.dart';
 import 'genesis_rank_simulator.dart';
 import 'genesis_discussions.dart';
 import 'genesis_feed.dart';
-import 'genesis_social_profile.dart';
 import 'genesis_artwork.dart';
 import 'genesis_mission.dart';
 import 'agc_countdown.dart';
