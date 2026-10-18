@@ -45,11 +45,13 @@ class _GenesisAccountEditorState extends State<GenesisAccountEditor> {
         loading = false;
       });
     } catch (e) {
-      if (mounted) setState(() {
-        loading = false;
-        error = socialText('Nie udało się wczytać danych konta.',
-          'Could not load account details.');
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+          error = socialText('Nie udało się wczytać danych konta.',
+            'Could not load account details.');
+        });
+      }
     }
   }
 
@@ -103,10 +105,12 @@ class _GenesisAccountEditorState extends State<GenesisAccountEditor> {
       });
       return sameInput && result == true;
     } catch (e) {
-      if (mounted) setState(() {
-        error = socialText('Nie udało się sprawdzić pseudonimu. Spróbuj ponownie.',
-          'Could not check the nickname. Please try again.');
-      });
+      if (mounted) {
+        setState(() {
+          error = socialText('Nie udało się sprawdzić pseudonimu. Spróbuj ponownie.',
+            'Could not check the nickname. Please try again.');
+        });
+      }
       return false;
     } finally {
       if (mounted) setState(() => checking = false);
@@ -161,9 +165,11 @@ class _GenesisAccountEditorState extends State<GenesisAccountEditor> {
         : socialText('Nie udało się zapisać danych. Spróbuj ponownie.',
             'Could not save account details. Please try again.'));
     } catch (e) {
-      if (mounted) setState(() => error = socialText(
-        'Nie udało się zapisać danych. Spróbuj ponownie.',
-        'Could not save account details. Please try again.'));
+      if (mounted) {
+        setState(() => error = socialText(
+          'Nie udało się zapisać danych. Spróbuj ponownie.',
+          'Could not save account details. Please try again.'));
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
