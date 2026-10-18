@@ -8,6 +8,8 @@ import 'agc_social_buttons.dart';
 import 'genesis_invites.dart';
 import 'genesis_language.dart';
 import 'genesis_social_profile.dart';
+import 'genesis_status_guide.dart';
+import 'genesis_support.dart';
 import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -468,6 +470,74 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           }),
           const SizedBox(height: 16),
           const GenesisSocialProfile(),
+          const SizedBox(height: 16),
+          Card(
+            child: ExpansionTile(
+              key: const Key('account_rules_and_points'),
+              leading: const Icon(Icons.menu_book_outlined,
+                color: AgcLuxury.champagne),
+              title: Text(GenesisLanguage.copy(
+                'Zasady, punkty GP i rangi', 'Rules, GP points and tiers'),
+                style: const TextStyle(
+                  color: AgcLuxury.champagne,
+                  fontWeight: FontWeight.bold)),
+              subtitle: Text(GenesisLanguage.copy(
+                'Jak działa społeczność, ranking i harmonogram',
+                'How the community, ranking and timeline work')),
+              childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+              children: [
+                const GenesisStatusGuide(),
+                const SizedBox(height: 10),
+                GenesisPanel(
+                  icon: Icons.auto_awesome_outlined,
+                  title: GenesisLanguage.copy(
+                    'HARMONOGRAM I MANIFEST', 'TIMELINE AND MANIFESTO'),
+                  body: GenesisLanguage.copy(
+                    'Oficjalny start: 1 listopada 2026 r. o 00:00 UTC. '
+                    'Rozwinięcie manifestu planowane jest na 1 sierpnia 2027 r. '
+                    'Era założycielska trwa do 1 listopada 2029 r. '
+                    'To okres budowania społeczności i zdobywania GP.',
+                    'Official launch: 1 November 2026 at 00:00 UTC. '
+                    'The expanded manifesto is planned for 1 August 2027. '
+                    'The founding era lasts until 1 November 2029. '
+                    'This is a period for building the community and earning GP.')),
+                const SizedBox(height: 10),
+                GenesisPanel(
+                  icon: Icons.lock_outline,
+                  title: GenesisLanguage.copy(
+                    'DOSTĘP I PRYWATNOŚĆ', 'ACCESS AND PRIVACY'),
+                  body: GenesisLanguage.copy(
+                    'Dostęp wymaga logowania. Publiczny ranking pokazuje '
+                    'pseudonimy lub anonimowe identyfikatory i punkty, '
+                    'nie adresy e-mail. Punkty i rangi są symboliczne, '
+                    'nie stanowią inwestycji ani obietnicy wynagrodzenia.',
+                    'Sign-in is required. Public rankings show nicknames '
+                    'or anonymous identifiers and points, not email addresses. '
+                    'Points and tiers are symbolic, not investments '
+                    'or promises of compensation.')),
+                const SizedBox(height: 10),
+                const GenesisSupport(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Card(
+            child: ExpansionTile(
+              key: const Key('account_future_questions'),
+              leading: const Icon(Icons.question_answer_outlined,
+                color: AgcLuxury.champagne),
+              title: Text(GenesisLanguage.copy(
+                'Moje pytania na przyszłość', 'My questions for the future'),
+                style: const TextStyle(
+                  color: AgcLuxury.champagne,
+                  fontWeight: FontWeight.bold)),
+              subtitle: Text(GenesisLanguage.copy(
+                'Zapisuj pytania — to nie jest czat z AI',
+                'Save questions — this is not an AI chat')),
+              childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              children: const [GenesisAiContactRoom()],
+            ),
+          ),
           const SizedBox(height: 16),
           TextField(controller: invite, textCapitalization: TextCapitalization.characters,
             decoration: InputDecoration(labelText: GenesisLanguage.copy('Kod polecającego', 'Referral code'))),
