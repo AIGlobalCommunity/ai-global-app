@@ -8,6 +8,7 @@ import 'agc_social_buttons.dart';
 import 'genesis_invites.dart';
 import 'genesis_language.dart';
 import 'genesis_social_profile.dart';
+import 'genesis_password_change.dart';
 import 'genesis_rank_simulator.dart';
 import 'genesis_status_guide.dart';
 import 'genesis_support.dart';
@@ -465,6 +466,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                   '${GenesisLanguage.copy('Adres e-mail konta', 'Account email')}: '
                   '${AgcBackend.user!.email ?? '—'}',
                   style: const TextStyle(color: Colors.white70))),
+              const GenesisPasswordChange(),
             ],
           )),
           const SizedBox(height: 16),
