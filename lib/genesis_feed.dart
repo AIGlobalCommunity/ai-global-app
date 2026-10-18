@@ -50,7 +50,7 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
 
   Future<List<Map<String, dynamic>>> starterTopics() async {
     final rows = await AgcBackend.client.from('agc_group_prompts')
-      .select('body,agc_groups!inner(name,visibility)')
+      .select('body,group_id,agc_groups!inner(name,visibility)')
       .limit(6);
     return List<Map<String, dynamic>>.from(rows);
   }
@@ -207,7 +207,8 @@ class _GenesisCommunityFeedState extends State<GenesisCommunityFeed> {
                     title: Text((item['agc_groups'] as Map<String,dynamic>)['name'] as String),
                     subtitle: Text(item['body'] as String),
                     onTap: widget.onOpenGroup == null
-                      ? widget.onOpenDiscussions : () => widget.onOpenDiscussions?.call(),
+                      ? widget.onOpenDiscussions
+                      : () => widget.onOpenGroup!(item['group_id'] as String),
                     trailing: const Icon(Icons.chevron_right))),
               ]);
             });
