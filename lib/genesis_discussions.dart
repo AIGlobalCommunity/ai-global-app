@@ -823,11 +823,10 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
     if (created == null) return '';
     final age = DateTime.now().difference(created);
     if (age.isNegative || age.inMinutes < 1) return tr('Teraz', 'Now');
-    if (age.inHours < 1) return age.inMinutes.toString() + ' min';
-    if (age.inDays < 1) return age.inHours.toString() + ' h';
-    if (age.inDays < 7) return age.inDays.toString() + ' d';
-    return created.day.toString() + '.' + created.month.toString() +
-      '.' + created.year.toString();
+    if (age.inHours < 1) return '${age.inMinutes} min';
+    if (age.inDays < 1) return '${age.inHours} h';
+    if (age.inDays < 7) return '${age.inDays} d';
+    return '${created.day}.${created.month}.${created.year}';
   }
 
   Widget postTile(Map<String, dynamic> item) => Card(
@@ -864,7 +863,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
             icon: Icon(item['liked'] == true
               ? Icons.favorite : Icons.favorite_border,
               color: item['liked'] == true ? Colors.redAccent : null),
-            label: Text(tr('Lubię to', 'Like') + ' · ' + item['likes'].toString()),
+            label: Text("${tr('Lubię to', 'Like')} · ${item['likes']}"),
           ),
           TextButton.icon(
             onPressed: () async {
@@ -876,8 +875,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
               refresh();
             },
             icon: const Icon(Icons.mode_comment_outlined),
-            label: Text(tr('Komentarze', 'Comments') + ' · ' +
-              item['comments'].toString()),
+            label: Text("${tr('Komentarze', 'Comments')} · ${item['comments']}"),
           ),
           if (item['visibility'] == 'public')
             TextButton.icon(
@@ -1013,18 +1011,17 @@ class _GenesisCommentsState extends State<GenesisComments> {
     if (date == null) return '';
     final age = DateTime.now().difference(date);
     if (age.isNegative || age.inMinutes < 1) return tr('Teraz', 'Now');
-    if (age.inHours < 1) return age.inMinutes.toString() + ' min';
-    if (age.inDays < 1) return age.inHours.toString() + ' h';
-    if (age.inDays < 7) return age.inDays.toString() + ' d';
-    return date.day.toString() + '.' + date.month.toString() +
-      '.' + date.year.toString();
+    if (age.inHours < 1) return '${age.inMinutes} min';
+    if (age.inDays < 1) return '${age.inHours} h';
+    if (age.inDays < 7) return '${age.inDays} d';
+    return '${date.day}.${date.month}.${date.year}';
   }
 
   void replyTo(Map<String, dynamic> comment) {
     final label = comment['author_label'] as String;
     setState(() {
       replyingTo = label;
-      input.text = '@' + label + ' ';
+      input.text = '@$label ';
       input.selection = TextSelection.collapsed(offset: input.text.length);
     });
     inputFocus.requestFocus();
@@ -1040,7 +1037,7 @@ class _GenesisCommentsState extends State<GenesisComments> {
   bool get canSend {
     final text = input.text.trim();
     if (replyingTo == null) return text.length >= 2;
-    return text.replaceFirst('@' + replyingTo!, '').trim().length >= 2;
+    return text.replaceFirst('@${replyingTo!}', '').trim().length >= 2;
   }
 
   Future<void> send() async {
@@ -1059,8 +1056,7 @@ class _GenesisCommentsState extends State<GenesisComments> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(tr('Nie udało się dodać komentarza: ',
-            'Could not add comment: ') + e.toString()),
+          content: Text("${tr('Nie udało się dodać komentarza: ', 'Could not add comment: ')}$e"),
         ));
       }
     } finally {
@@ -1161,7 +1157,7 @@ class _GenesisCommentsState extends State<GenesisComments> {
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14, vertical: 12),
                 itemCount: comments.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
                   final comment = comments[i];
                   final isMine = comment['author_id'] == AgcBackend.user?.id;
@@ -1224,7 +1220,7 @@ class _GenesisCommentsState extends State<GenesisComments> {
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
               child: Row(children: [
                 Expanded(child: Text(
-                  tr('Odpowiadasz: ', 'Replying to: ') + replyingTo!,
+                  "${tr('Odpowiadasz: ', 'Replying to: ')}$replyingTo",
                   style: const TextStyle(
                     fontSize: 12, color: AgcLuxury.champagne))),
                 IconButton(
