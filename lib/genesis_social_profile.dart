@@ -154,6 +154,9 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
   final avatar = TextEditingController();
   final cover = TextEditingController();
   bool isPublic = true;
+  bool nicknamePublic = true;
+  bool checkingNickname = false;
+  String? nicknameAvailability;
   bool loading = true;
   bool saving = false;
   bool editing = false;
