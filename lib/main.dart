@@ -100,6 +100,14 @@ class AgcHome extends StatefulWidget {
 class _AgcHomeState extends State<AgcHome> {
   // Keep shared post links opening the news feed after sign-in.
   int selected = Uri.base.queryParameters.containsKey('post') ? 1 : 0;
+  String? targetGroupId;
+  int groupNavigationSerial = 0;
+
+  void openGroupFromFeed(String id) => setState(() {
+    targetGroupId = id;
+    groupNavigationSerial++;
+    selected = 2;
+  });
 
   void _onLanguageChanged() { if (mounted) setState(() {}); }
 
@@ -136,7 +144,10 @@ class _AgcHomeState extends State<AgcHome> {
                   child: _overview(),
                 ),
                 _news(),
-                const GenesisDiscussions(),
+                GenesisDiscussions(
+                  key: ValueKey('discussions-$groupNavigationSerial'),
+                  initialGroupId: targetGroupId,
+                ),
                 _tabContent(const AgcDatabaseRanking()),
                 const AgcAccountPage(),
                 _tabContent(_profile()),
@@ -188,6 +199,7 @@ class _AgcHomeState extends State<AgcHome> {
         const SizedBox(height: 18),
         GenesisCommunityFeed(
           onOpenDiscussions: () => setState(() => selected = 2),
+          onOpenGroup: openGroupFromFeed,
         ),
       ],
     ),
