@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'agc_luxury_theme.dart';
-import 'genesis_artwork.dart';
 import 'genesis_language.dart';
 
 /// Public founding statement. A declaration of intent, not a claim that
