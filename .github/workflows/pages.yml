@@ -55,14 +55,14 @@ jobs:
           if titles != 1:
               raise SystemExit('Expected a title tag in Flutter web/index.html')
           html = re.sub(
-              r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]*>\\s*',
+              r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]*>\s*',
               '', html, flags=re.IGNORECASE,
           )
           head = (
-              '  <link rel="icon" type="image/svg+xml" href="favicon.svg">\\n'
-              '  <meta name="application-name" content="THE GENESIS ERA">\\n'
-              '  <meta name="apple-mobile-web-app-title" content="THE GENESIS ERA">\\n'
-              '  <meta name="theme-color" content="#071322">\\n'
+              '  <link rel="icon" type="image/svg+xml" href="favicon.svg">\n'
+              '  <meta name="application-name" content="THE GENESIS ERA">\n'
+              '  <meta name="apple-mobile-web-app-title" content="THE GENESIS ERA">\n'
+              '  <meta name="theme-color" content="#071322">\n'
           )
           if '</head>' not in html:
               raise SystemExit('Missing HTML head')
