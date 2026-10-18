@@ -305,7 +305,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   Future<void> deleteGroup(Map<String, dynamic> target) async {
     if (deletingGroup ||
         target['owner_id'] != AgcBackend.user?.id ||
-        target['official'] == true) return;
+        target['official'] == true) {
+      return;
+    }
     final name = target['name'] as String;
     final confirmed = await showDialog<bool>(
       context: context,
