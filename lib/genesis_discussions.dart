@@ -1495,7 +1495,42 @@ class _GenesisCommentsState extends State<GenesisComments> {
       .eq('post_id', widget.postId)
       .order('created_at')
       .limit(100);
-    return List<Map<String, dynamic>>.from(result);
+    final comments = List<Map<String, dynamic>>.from(result);
+    if (comments.isEmpty) return comments;
+    final ids = comments.map((c) => c['id'] as String).toList();
+    final likes = await AgcBackend.client.from('agc_comment_likes')
+      .select('comment_id,member_id').inFilter('comment_id', ids);
+    for (final comment in comments) {
+      comment['likes'] = likes.where(
+        (like) => like['comment_id'] == comment['id']).length;
+      comment['liked'] = likes.any((like) =>
+        like['comment_id'] == comment['id'] &&
+        like['member_id'] == AgcBackend.user?.id);
+    }
+    return comments;
+  }
+
+  Future<void> toggleCommentLike(Map<String, dynamic> comment) async {
+    final userId = AgcBackend.user?.id;
+    if (userId == null) return;
+    try {
+      if (comment['liked'] == true) {
+        await AgcBackend.client.from('agc_comment_likes')
+          .delete().eq('comment_id', comment['id'])
+          .eq('member_id', userId);
+      } else {
+        await AgcBackend.client.from('agc_comment_likes').insert({
+          'comment_id': comment['id'], 'member_id': userId,
+        });
+      }
+      refresh();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(tr('Nie udało się zapisać polubienia.',
+            'Could not save the like.'))));
+      }
+    }
   }
 
   String commentAge(dynamic value) {
@@ -1681,6 +1716,19 @@ class _GenesisCommentsState extends State<GenesisComments> {
                               style: const TextStyle(
                                 fontSize: 11, color: Colors.white70)),
                             const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: () => toggleCommentLike(comment),
+                              icon: Icon(comment['liked'] == true
+                                ? Icons.favorite : Icons.favorite_border,
+                                size: 15,
+                                color: comment['liked'] == true
+                                  ? Colors.redAccent : null),
+                              label: Text("${tr('Polub', 'Like')} · ${comment['likes']}"),
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5)),
+                            ),
                             TextButton(
                               onPressed: () => replyTo(comment),
                               child: Text(tr('Odpowiedz', 'Reply')),
