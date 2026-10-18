@@ -82,7 +82,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         .select('id,name,description,owner_id,owner_label,visibility,official,created_at')
         .order('created_at', ascending: false).limit(100);
     final groups = List<Map<String, dynamic>>.from(rows);
-    if (groups.isEmpty) return groups;
+    if (groups.isEmpty) {
+      return groups;
+    }
     final ids = groups.map((g) => g['id'] as String).toList();
     final userId = AgcBackend.user?.id;
     final memberships = userId == null
@@ -355,7 +357,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted) {
+      return;
+    }
     setState(() => leavingGroups.add(id));
     try {
       final removed = await AgcBackend.client.from('agc_group_members')
@@ -369,7 +373,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       }
       if (!mounted) return;
       setState(() {
-        if (group?['id'] == id) group = null;
+        if (group?['id'] == id) {
+          group = null;
+        }
         data = loadGroups();
       });
       message(tr('Opuszczono grupę.', 'You left the group.'));
@@ -843,7 +849,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       final matchesSearch = groupQuery.isEmpty ||
         (item['name'] as String).toLowerCase().contains(groupQuery) ||
         (item['description'] as String).toLowerCase().contains(groupQuery);
-      if (!matchesSearch) return false;
+      if (!matchesSearch) {
+        return false;
+      }
       return switch (groupFilter) {
         'public' => item['visibility'] == 'public',
         'private' => item['visibility'] == 'private',
@@ -856,7 +864,9 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
       items.sort((a, b) {
         final byPosts = (b['post_count'] as int)
           .compareTo(a['post_count'] as int);
-        if (byPosts != 0) return byPosts;
+        if (byPosts != 0) {
+          return byPosts;
+        }
         final aDate = a['last_activity'] as DateTime? ??
           DateTime.tryParse(a['created_at'] as String? ?? '');
         final bDate = b['last_activity'] as DateTime? ??
