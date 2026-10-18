@@ -796,9 +796,14 @@ class _GenesisMemberSearchState extends State<GenesisMemberSearch> {
           }
           return Column(children: [
             for (final item in snapshot.data!)
-              ListTile(leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+              ListTile(
+                onTap: () => genesisOpenMemberProfile(context,
+                  item['member_id'] as String?,
+                  item['handle'] as String? ?? ''),
+                leading: const CircleAvatar(child: Icon(Icons.person_outline)),
                 title: Text(item['handle'] as String),
-                subtitle: Text('#${item['member_number']}${item['bio'] == null ? '' : ' · ${item['bio']}'}')),
+                subtitle: Text('#${item['member_number']}${item['bio'] == null ? '' : ' · ${item['bio']}'}'),
+                trailing: const Icon(Icons.chevron_right)),
           ]);
         }),
     ]);
