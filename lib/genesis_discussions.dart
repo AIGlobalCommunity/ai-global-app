@@ -1073,7 +1073,7 @@ class _GenesisDiscussionsState extends State<GenesisDiscussions> {
   }) {
     if (entry == null) return const SizedBox.shrink();
     final body = (entry['body'] as String? ?? '').replaceAll(
-      RegExp(r'\\s+'), ' ').trim();
+      RegExp(r'\s+'), ' ').trim();
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 10),
