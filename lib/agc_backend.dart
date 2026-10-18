@@ -463,6 +463,10 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             },
           ),
           const SizedBox(height: 16),
+          GenesisAccountEditor(onSaved: () {
+            if (mounted) setState(() {});
+          }),
+          const SizedBox(height: 16),
           const GenesisSocialProfile(),
           const SizedBox(height: 16),
           TextField(controller: invite, textCapitalization: TextCapitalization.characters,
