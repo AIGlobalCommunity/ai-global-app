@@ -129,7 +129,15 @@ class _AgcHomeState extends State<AgcHome> {
             fit: BoxFit.scaleDown,
             child: Text('✦  THE GENESIS ERA  ✦')),
           centerTitle: true,
-          actions: const [GenesisLanguagePicker()],
+          actions: [
+            TextButton.icon(
+              onPressed: () => setState(() => selected = 5),
+              icon: const Icon(Icons.sports_esports_outlined, size: 20),
+              label: Text(GenesisLanguage.copy('GRA', 'GAME')),
+              style: TextButton.styleFrom(foregroundColor: gold),
+            ),
+            const GenesisLanguagePicker(),
+          ],
           backgroundColor: background,
           foregroundColor: gold,
         ),
@@ -224,6 +232,33 @@ class _AgcHomeState extends State<AgcHome> {
           const SizedBox(height: 18),
           Center(child: Container(width: 85, height: 1,
             color: AgcLuxury.champagne.withValues(alpha: .65))),
+          const SizedBox(height: 24),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(children: [
+                const Icon(Icons.sports_esports_outlined,
+                  size: 35, color: AgcLuxury.champagne),
+                const SizedBox(height: 8),
+                Text('GENESIS SIGNAL',
+                  style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold,
+                    color: AgcLuxury.champagne, letterSpacing: 1.4)),
+                const SizedBox(height: 6),
+                Text(GenesisLanguage.copy(
+                  'Nasza pierwsza gra HTML5. Połącz sygnał i zdobywaj punkty!',
+                  'Our first HTML5 game. Connect the signal and score points!'),
+                  textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => setState(() => selected = 5),
+                  icon: const Icon(Icons.play_arrow),
+                  label: Text(GenesisLanguage.copy(
+                    'ZAGRAJ TERAZ', 'PLAY NOW')),
+                ),
+              ]),
+            ),
+          ),
           const SizedBox(height: 24),
           const GenesisMission(),
           const SizedBox(height: 14),
