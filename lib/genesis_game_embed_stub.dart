@@ -41,6 +41,7 @@ class GenesisGameTab extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _card(
+            context: context,
             icon: Icons.rocket_launch_outlined,
             title: 'GENESIS DEFENDER',
             description: 'Strzelanka: broń stacji przed falami dronów.',
