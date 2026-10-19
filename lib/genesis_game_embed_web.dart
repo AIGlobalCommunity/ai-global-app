@@ -423,31 +423,77 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                     ],
                   ));
                 }
-                return ListView.builder(
-                  itemCount: rows.length,
-                  itemBuilder: (context, index) {
-                    final row = rows[index];
-                    final mine = row['member_id'] == AgcBackend.user?.id;
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: mine
-                          ? const Color(0xFFD8B66A)
-                          : const Color(0xFF19344A),
-                        foregroundColor: mine ? Colors.black : Colors.white,
-                        child: Text('${index + 1}')),
-                      title: Text(
-                        '${row['handle']}${mine ? ' ★' : ''}',
-                        maxLines: 1, overflow: TextOverflow.ellipsis),
-                      subtitle: Text(GenesisLanguage.copy(
-                        'Poziom / fala: ${row['best_level']}',
-                        'Level / wave: ${row['best_level']}')),
-                      trailing: Text('${row['best_score']}',
-                        style: const TextStyle(
-                          color: Color(0xFFD8B66A),
-                          fontWeight: FontWeight.bold, fontSize: 17)),
-                    );
-                  },
+                String dateLabel(dynamic value) {
+                  final parsed = DateTime.tryParse(value?.toString() ?? '');
+                  if (parsed == null) return '—';
+                  final date = parsed.toLocal();
+                  String two(int n) => n.toString().padLeft(2, '0');
+                  return '${two(date.day)}.${two(date.month)}.${date.year}';
+                }
+                Widget cell(String value, double width, {
+                  bool emphasize = false, TextAlign align = TextAlign.left,
+                }) => SizedBox(
+                  width: width,
+                  child: Text(value,
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    textAlign: align,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: emphasize ? FontWeight.w800 : FontWeight.w500,
+                      color: emphasize ? gold : Colors.white,
+                    )),
                 );
+                return LayoutBuilder(builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 540;
+                  final nameWidth = wide ? 190.0 : 115.0;
+                  final pointsWidth = wide ? 105.0 : 75.0;
+                  final dateWidth = wide ? 105.0 : 85.0;
+                  const levelWidth = 55.0;
+                  Widget rankingRow(List<Widget> children, {bool header = false,
+                    bool mine = false}) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: mine ? gold.withValues(alpha: .16)
+                        : header ? const Color(0xFF19344A)
+                        : Colors.transparent,
+                      border: const Border(bottom: BorderSide(
+                        color: Color(0xFF29445A), width: .5)),
+                    ),
+                    child: Row(children: children),
+                  );
+                  return ListView.builder(
+                    itemCount: rows.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return rankingRow([
+                          cell('#', 35),
+                          cell(GenesisLanguage.copy('Gracz', 'Player'), nameWidth),
+                          cell(GenesisLanguage.copy('Punkty', 'Points'), pointsWidth,
+                            align: TextAlign.right),
+                          cell(GenesisLanguage.copy('Data', 'Date'), dateWidth,
+                            align: TextAlign.center),
+                          cell('Level', levelWidth, align: TextAlign.right),
+                        ], header: true);
+                      }
+                      final row = rows[index - 1];
+                      final mine = row['member_id'] == AgcBackend.user?.id;
+                      final place = index <= 3
+                        ? ['🥇', '🥈', '🥉'][index - 1] : '$index';
+                      return rankingRow([
+                        cell(place, 35, emphasize: index <= 3),
+                        cell("${row['handle']}${mine ? ' ★' : ''}",
+                          nameWidth, emphasize: mine),
+                        cell('${row['best_score']}', pointsWidth,
+                          emphasize: true, align: TextAlign.right),
+                        cell(dateLabel(row['updated_at']), dateWidth,
+                          align: TextAlign.center),
+                        cell('${row['best_level'] ?? '—'}', levelWidth,
+                          align: TextAlign.right),
+                      ], mine: mine);
+                    },
+                  );
+                });
               },
             )),
         Container(
@@ -478,7 +524,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Widget _versionLabel() => Center(
     child: SelectableText(
-      'GENESIS ARCADE · v2026.10.19 · BUILD $buildVersion · $buildDate UTC',
+      'GENESIS ARCADE · v2026.10.19-R100 · BUILD $buildVersion · $buildDate UTC',
       textAlign: TextAlign.center,
       style: const TextStyle(
         color: Color(0xFF90B2C8), fontSize: 10, letterSpacing: .4),
