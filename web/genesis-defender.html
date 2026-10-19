@@ -40,7 +40,7 @@ kbd{border:1px solid #536979;border-radius:3px;padding:1px 4px;color:#e5d4ad}
 <button id="start" type="button">ROZPOCZNIJ MISJĘ →</button>
 </div></div></div>
 <div class="controls"><button id="pause" class="alt" type="button">Ⅱ Pauza</button><button id="restart" class="alt" type="button">↺ Nowa gra</button></div>
-<p class="tip">📱 Telefon: przesuń palcem po planszy. 🖥️ Komputer: <kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd>, <kbd>Spacja</kbd> — pauza. Strzelanie automatyczne. Rekord zapisuje się tylko na tym urządzeniu; punkty gry nie są punktami GP.</p>
+<p class="tip">📱 Telefon: przesuń palcem po planszy. 🖥️ Komputer: <kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd>, <kbd>Spacja</kbd> — pauza. Strzelanie automatyczne. Rekord zapisuje się na urządzeniu i w rankingu graczy, gdy grasz w zakładce GRA. Ranking otworzysz przyciskiem 🏆 nad grą. Punkty gry nie są punktami GP.</p>
 </main>
 <script>
 (function(){
@@ -65,7 +65,7 @@ function reset(){
  elapsed=0;spawnTimer=.7;fireTimer=0;invincible=1.5;mode='playing';overlay.hidden=true;last=performance.now();hud();canvas.focus({preventScroll:true});
 }
 function end(){
- mode='over';if(score>best){best=score;try{localStorage.setItem('genesis-defender-best',String(best));}catch(_){}}
+ mode='over';if(score>0){try{if(window.parent!==window)window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'defender',score:score,level:wave}),window.location.origin);}catch(_){}}if(score>best){best=score;try{localStorage.setItem('genesis-defender-best',String(best));}catch(_){}}
  hud();panel('KONIEC MISJI','Wynik: '+score+' punktów. Dotarłeś do fali '+wave+'. Spróbuj ponownie i pobij swój rekord!','ZAGRAJ PONOWNIE →',reset);
 }
 function pause(){
