@@ -25,6 +25,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const defenderView = 'genesis-defender-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
+  Timer? scoreRetryTimer;
+  static const scoreStoragePrefix = 'agc-game-pending-';
   int? game;
   int? rankingGame;
   Future<List<Map<String, dynamic>>>? rankingFuture;
@@ -43,11 +45,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
+    scoreRetryTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _recoverPendingScores();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recoverPendingScores());
   }
 
   @override
   void dispose() {
     messages?.cancel();
+    scoreRetryTimer?.cancel();
     super.dispose();
   }
 
@@ -112,17 +119,69 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
   }
 
+  void _recoverPendingScores() {
+    if (!mounted || AgcBackend.user == null) return;
+    for (final key in ['signal', 'defender']) {
+      try {
+        final raw = html.window.localStorage['$scoreStoragePrefix$key'];
+        if (raw == null) continue;
+        final decoded = jsonDecode(raw);
+        if (decoded is! Map<String, dynamic> ||
+            decoded['game'] != key ||
+            decoded['score'] is! int ||
+            decoded['level'] is! int ||
+            decoded['at'] is! int) continue;
+        final points = decoded['score'] as int;
+        final stage = decoded['level'] as int;
+        final age = DateTime.now().millisecondsSinceEpoch -
+          (decoded['at'] as int);
+        if (points < 1 || points > 10000000 ||
+            stage < 1 || stage > 1000 ||
+            age < -60000 || age > 86400000) continue;
+        final owner = html.window.localStorage['agc-game-owner-$key'];
+        if (owner != AgcBackend.user!.id) continue;
+        final current = pendingScores[key];
+        if (current == null || points > current.$1) {
+          pendingScores[key] = (points, stage);
+        }
+      } catch (_) {
+        // Storage can be disabled by privacy settings.
+      }
+    }
+    if (!saving && pendingScores.isNotEmpty) {
+      _savePendingScores();
+    }
+  }
+
+  void _clearConfirmedScore(String key, int confirmedScore) {
+    try {
+      final storageKey = '$scoreStoragePrefix$key';
+      final raw = html.window.localStorage[storageKey];
+      if (raw == null) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic> &&
+          decoded['score'] is int &&
+          (decoded['score'] as int) <= confirmedScore) {
+        html.window.localStorage.remove(storageKey);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _savePendingScores() async {
-    if (saving || !mounted || pendingScores.isEmpty) return;
+    if (saving || !mounted || pendingScores.isEmpty ||
+        AgcBackend.user == null) return;
     setState(() {
       saving = true;
       scoreNotice = GenesisLanguage.copy(
         'Zapisuję wynik w rankingu…', 'Saving score to leaderboard…');
     });
     try {
-      while (pendingScores.isNotEmpty && mounted) {
-        final key = pendingScores.keys.first;
-        final (points, stage) = pendingScores.remove(key)!;
+      final keys = pendingScores.keys.toList();
+      for (final key in keys) {
+        if (!mounted || AgcBackend.user == null) break;
+        final pending = pendingScores.remove(key);
+        if (pending == null) continue;
+        final (points, stage) = pending;
         try {
           final updated = await AgcBackend.client.rpc(
             'agc_submit_game_score',
@@ -133,23 +192,42 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             },
           );
           if (!mounted) return;
-          setState(() => scoreNotice = updated == true
-            ? GenesisLanguage.copy(
-                '✓ Wynik zapisany! Sprawdź RANKING 🏆',
-                '✓ Score saved! Check the LEADERBOARD 🏆')
-            : GenesisLanguage.copy(
-                'Wynik przyjęty. Rekord bez zmian.',
-                'Score received. Personal best unchanged.'));
+          var confirmed = updated == true;
+          if (!confirmed) {
+            // A duplicate best is already saved; a rate-limited update
+            // must remain queued for the next retry.
+            final existing = await AgcBackend.client
+              .from('agc_game_scores')
+              .select('best_score')
+              .eq('game_key', key)
+              .eq('member_id', AgcBackend.user!.id)
+              .maybeSingle();
+            confirmed = existing != null &&
+              (existing['best_score'] as int) >= points;
+          }
+          if (confirmed) {
+            _clearConfirmedScore(key, points);
+            setState(() => scoreNotice = GenesisLanguage.copy(
+              '✓ Wynik zapisany w rankingu! 🏆',
+              '✓ Score saved to leaderboard! 🏆'));
+          } else {
+            pendingScores[key] = pending;
+            setState(() => scoreNotice = GenesisLanguage.copy(
+              'Wynik oczekuje na zapis. Ponowię automatycznie.',
+              'Score pending. I will retry automatically.'));
+          }
         } on PostgrestException catch (error) {
+          pendingScores[key] = pending;
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
-            'Nie zapisano wyniku: ${error.message}',
-            'Score not saved: ${error.message}'));
+            'Błąd zapisu: ${error.message}. Ponowię automatycznie.',
+            'Save error: ${error.message}. Retrying automatically.'));
         } catch (_) {
+          pendingScores[key] = pending;
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
-            'Nie udało się zapisać wyniku. Spróbuj ponownie.',
-            'Could not save score. Please try again.'));
+            'Błąd połączenia. Wynik zachowany, ponowię zapis.',
+            'Connection error. Score kept for retry.'));
         }
       }
     } finally {
@@ -417,10 +495,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           (Icons.shield_outlined,
             GenesisLanguage.copy('Tarcze i naprawy', 'Shields and repairs')),
         ];
-    void openGame() => setState(() {
-      game = index;
-      scoreNotice = null;
-    });
+    void openGame() {
+      try {
+        html.window.localStorage['agc-game-owner-${signal ? 'signal' : 'defender'}'] =
+          AgcBackend.user?.id ?? '';
+      } catch (_) {}
+      setState(() {
+        game = index;
+        scoreNotice = null;
+      });
+    }
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF071525),
