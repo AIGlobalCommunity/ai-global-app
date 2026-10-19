@@ -77,7 +77,7 @@ function reportScore(force=false){
  lastReportedScore=score;lastReportedAt=elapsed;
  try{
    const result={type:'genesis-game-score',game:'defender',score:score,level:wave,at:Date.now()};
-   localStorage.setItem('agc-game-pending-defender',JSON.stringify(result));
+   try{localStorage.setItem('agc-game-pending-defender',JSON.stringify(result));}catch(_){}
    if(window.parent!==window)window.parent.postMessage(JSON.stringify(result),window.location.origin);
  }catch(_){}
 }
