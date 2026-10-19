@@ -250,6 +250,80 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const gold = Color(0xFFD8B66A);
   static const navy = Color(0xFF10283C);
 
+  Widget _arcadeButton({
+    required VoidCallback onPressed,
+    required bool primary,
+    required Color accent,
+    required IconData icon,
+    required String label,
+  }) => Expanded(
+    flex: primary ? 5 : 4,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        gradient: primary
+          ? LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: accent == const Color(0xFF39CBFF)
+                ? [const Color(0xFF20D8FF), const Color(0xFF0079DB),
+                   const Color(0xFF003A89)]
+                : [const Color(0xFFFFDC79), const Color(0xFFFF9B29),
+                   const Color(0xFFB44709)],
+            )
+          : const LinearGradient(colors: [
+              Color(0xFF142B41), Color(0xFF071526),
+            ]),
+        border: Border.all(
+          color: primary ? accent : const Color(0xFF4C7696),
+          width: primary ? 1.6 : 1),
+        boxShadow: primary ? [
+          BoxShadow(
+            color: accent.withValues(alpha: .45),
+            blurRadius: 17, spreadRadius: 1),
+          const BoxShadow(
+            color: Color(0x66000000), blurRadius: 12, offset: Offset(0, 4)),
+        ] : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(15),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 56),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 21,
+                    color: primary ? Colors.white
+                      : const Color(0xFF9DDCFF)),
+                  const SizedBox(width: 6),
+                  Flexible(child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: primary ? Colors.white
+                        : const Color(0xFF9DDCFF),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      letterSpacing: .35,
+                    ))),
+                  const SizedBox(width: 2),
+                  Icon(Icons.chevron_right_rounded, size: 18,
+                    color: primary ? Colors.white
+                      : const Color(0xFF9DDCFF)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
   Widget _gameCard({
     required int index,
     required IconData icon,
@@ -257,105 +331,147 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     required String category,
     required String description,
   }) {
-    final accent = index == 0
-      ? const Color(0xFF69DFFF) : const Color(0xFFFFB76C);
-    final image = index == 0
+    final signal = index == 0;
+    final accent = signal
+      ? const Color(0xFF39CBFF) : const Color(0xFFFFB05A);
+    final image = signal
       ? 'assets/genesis_signal_card.svg'
       : 'assets/genesis_defender_card.svg';
+    final features = signal
+      ? <(IconData, String)>[
+          (Icons.extension_outlined,
+            GenesisLanguage.copy('Kolejne poziomy', 'Progressive levels')),
+          (Icons.leaderboard_outlined,
+            GenesisLanguage.copy('Ranking graczy', 'Player leaderboard')),
+          (Icons.lightbulb_outline,
+            GenesisLanguage.copy('Wskazówki', 'Hints')),
+          (Icons.emoji_events_outlined,
+            GenesisLanguage.copy('Pobij swój rekord', 'Beat your high score')),
+        ]
+      : <(IconData, String)>[
+          (Icons.rocket_launch_outlined,
+            GenesisLanguage.copy(
+              'Lot w czterech kierunkach', 'Full directional flight')),
+          (Icons.my_location_outlined,
+            GenesisLanguage.copy('Kolejne fale dronów', 'Enemy drone waves')),
+          (Icons.leaderboard_outlined,
+            GenesisLanguage.copy('Ranking graczy', 'Player leaderboard')),
+          (Icons.shield_outlined,
+            GenesisLanguage.copy('Tarcze i naprawy', 'Shields and repairs')),
+        ];
     void openGame() => setState(() {
       game = index;
       scoreNotice = null;
     });
-    return Card(
-      color: navy,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: accent.withValues(alpha: .55)),
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF071525),
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(color: accent.withValues(alpha: .9), width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: .18),
+            blurRadius: 20, spreadRadius: -2),
+          const BoxShadow(
+            color: Color(0x99000000), blurRadius: 24,
+            offset: Offset(0, 10)),
+        ],
       ),
-      child: InkWell(
-        onTap: openGame,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Stack(children: [
-              SizedBox(
-                width: double.infinity,
-                height: 188,
-                child: SvgPicture.asset(image, fit: BoxFit.cover),
-              ),
-              Positioned.fill(child: IgnorePointer(
-                child: DecoratedBox(decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFF061322).withValues(alpha: .06),
-                      const Color(0xFF061322).withValues(alpha: .15),
-                      const Color(0xFF061322).withValues(alpha: .85),
-                    ],
-                  ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: openGame,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(children: [
+                SizedBox(
+                  height: 235, width: double.infinity,
+                  child: SvgPicture.asset(image, fit: BoxFit.cover),
+                ),
+                Positioned.fill(child: IgnorePointer(
+                  child: DecoratedBox(decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      stops: const [0, .44, 1],
+                      colors: [
+                        const Color(0xFF041020).withValues(alpha: .15),
+                        const Color(0xFF041020).withValues(alpha: .10),
+                        const Color(0xFF041020),
+                      ],
+                    ),
+                  )),
                 )),
-              )),
-              Positioned(
-                top: 12, left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF071A2B).withValues(alpha: .86),
-                    borderRadius: BorderRadius.circular(9),
-                    border: Border.all(
-                      color: accent.withValues(alpha: .6)),
+                Positioned(
+                  top: 18, left: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF071525)
+                        .withValues(alpha: .84),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: accent.withValues(alpha: .8)),
+                    ),
+                    child: Text(category, style: TextStyle(
+                      color: accent, fontSize: 11,
+                      fontWeight: FontWeight.w700, letterSpacing: 1.1)),
                   ),
-                  child: Text(category, style: TextStyle(
-                    color: accent, fontSize: 10,
-                    fontWeight: FontWeight.w700, letterSpacing: 1.3)),
+                ),
+                Positioned(
+                  bottom: 10, left: 16, right: 16,
+                  child: Text(title, textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white, fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.8,
+                      shadows: [Shadow(
+                        blurRadius: 14, color: Colors.black)],
+                    )),
+                ),
+              ]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(17, 5, 17, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final (featureIcon, featureText) in features)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(children: [
+                          Icon(featureIcon, color: accent, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(featureText,
+                            style: const TextStyle(
+                              color: Color(0xFFD5E5F1), fontSize: 13))),
+                        ]),
+                      ),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      _arcadeButton(
+                        onPressed: openGame,
+                        primary: true,
+                        accent: accent,
+                        icon: Icons.play_arrow_rounded,
+                        label: GenesisLanguage.copy('ZAGRAJ', 'PLAY'),
+                      ),
+                      const SizedBox(width: 10),
+                      _arcadeButton(
+                        onPressed: () => _showRanking(index),
+                        primary: false,
+                        accent: accent,
+                        icon: Icons.emoji_events_outlined,
+                        label: GenesisLanguage.copy('RANKING', 'RANKING'),
+                      ),
+                    ]),
+                  ],
                 ),
               ),
-              Positioned(
-                top: 12, right: 12,
-                child: Icon(icon, color: accent, size: 30),
-              ),
-              Positioned(
-                bottom: 14, left: 16, right: 12,
-                child: Text(title, style: const TextStyle(
-                  color: Color(0xFFF6F0E5),
-                  fontSize: 22, fontWeight: FontWeight.w800,
-                  letterSpacing: 1.3,
-                  shadows: [Shadow(
-                    blurRadius: 12, color: Colors.black)],
-                )),
-              ),
-            ]),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 13, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(description, style: const TextStyle(
-                    color: Color(0xFFCEDBE3), height: 1.45)),
-                  const SizedBox(height: 15),
-                  Row(children: [
-                    Expanded(child: FilledButton.icon(
-                      onPressed: openGame,
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      label: Text(GenesisLanguage.copy(
-                        'ZAGRAJ', 'PLAY')),
-                    )),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () => _showRanking(index),
-                      icon: const Icon(
-                        Icons.emoji_events_outlined, size: 18),
-                      label: Text(GenesisLanguage.copy(
-                        'Ranking', 'Leaderboard')),
-                    ),
-                  ]),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -363,9 +479,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Widget _gameLibrary() => Center(
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 840),
+      constraints: const BoxConstraints(maxWidth: 1050),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
         children: [
           const Center(child: Icon(
             Icons.sports_esports_outlined, size: 42, color: gold)),
@@ -403,7 +519,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   'Defend the Genesis station, survive waves and beat the high score.'),
               ),
             ];
-            if (constraints.maxWidth < 620) {
+            if (constraints.maxWidth < 700) {
               return Column(children: [
                 cards[0],
                 const SizedBox(height: 12),
