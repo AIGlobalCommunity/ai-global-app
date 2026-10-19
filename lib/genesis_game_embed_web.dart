@@ -492,8 +492,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Future<void> _checkDatabase() async {
     if (AgcBackend.user == null) {
-      if (mounted) setState(() =>
-        lastDatabaseStatus = 'Brak logowania — zaloguj się w KONTO');
+      if (mounted) {
+        setState(() => lastDatabaseStatus = 'Brak logowania — zaloguj się w KONTO');
+      }
       return;
     }
     try {
@@ -501,14 +502,17 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         .from('agc_game_scores')
         .select('game_key,best_score')
         .limit(1);
-      if (mounted) setState(() =>
-        lastDatabaseStatus = 'POŁĄCZENIE OK — odczyt rankingu działa');
+      if (mounted) {
+        setState(() => lastDatabaseStatus = 'POŁĄCZENIE OK — odczyt rankingu działa');
+      }
     } on PostgrestException catch (error) {
-      if (mounted) setState(() =>
-        lastDatabaseStatus = 'BŁĄD: ${error.message}');
+      if (mounted) {
+        setState(() => lastDatabaseStatus = 'BŁĄD: ${error.message}');
+      }
     } catch (error) {
-      if (mounted) setState(() =>
-        lastDatabaseStatus = 'BŁĄD: $error');
+      if (mounted) {
+        setState(() => lastDatabaseStatus = 'BŁĄD: $error');
+      }
     }
   }
 
