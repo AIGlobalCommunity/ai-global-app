@@ -137,14 +137,18 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             decoded['game'] != key ||
             decoded['score'] is! int ||
             decoded['level'] is! int ||
-            decoded['at'] is! int) continue;
+            decoded['at'] is! int) {
+          continue;
+        }
         final points = decoded['score'] as int;
         final stage = decoded['level'] as int;
         final age = DateTime.now().millisecondsSinceEpoch -
           (decoded['at'] as int);
         if (points < 1 || points > 10000000 ||
             stage < 1 || stage > 1000 ||
-            age < -60000 || age > 86400000) continue;
+            age < -60000 || age > 86400000) {
+          continue;
+        }
         final owner = html.window.localStorage['agc-game-owner-$key'];
         if (owner != AgcBackend.user!.id) continue;
         final current = pendingScores[key];
@@ -176,7 +180,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Future<void> _savePendingScores() async {
     if (saving || !mounted || pendingScores.isEmpty ||
-        AgcBackend.user == null) return;
+        AgcBackend.user == null) {
+      return;
+    }
     setState(() {
       saving = true;
       scoreNotice = GenesisLanguage.copy(
