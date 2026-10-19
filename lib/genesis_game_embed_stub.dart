@@ -180,7 +180,7 @@ class GenesisGameTab extends StatelessWidget {
         .eq('game_key', key)
         .order('best_score', ascending: false)
         .order('updated_at', ascending: true)
-        .limit(50);
+        .limit(100);
       final scores = List<Map<String, dynamic>>.from(raw);
       if (scores.isEmpty) {
         return scores;
