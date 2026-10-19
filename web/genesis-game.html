@@ -200,7 +200,7 @@ function win(){
  score+=gain;
  try{
    const result={type:'genesis-game-score',game:'signal',score:score,level:level,at:Date.now()};
-   localStorage.setItem('agc-game-pending-signal',JSON.stringify(result));
+   try{localStorage.setItem('agc-game-pending-signal',JSON.stringify(result));}catch(_){}
    if(window.parent!==window)window.parent.postMessage(JSON.stringify(result),window.location.origin);
  }catch(_){}
  if(score>best){best=score;try{localStorage.setItem("genesis-signal-best",String(best));}catch(e){}}
