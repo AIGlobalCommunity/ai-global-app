@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Native fallback: game cards open the HTML5 games in the browser.
@@ -29,6 +30,7 @@ class GenesisGameTab extends StatelessWidget {
             title: 'GENESIS SIGNAL',
             description: 'Łamigłówka: połącz źródło sygnału z celem.',
             file: 'genesis-game.html',
+            artwork: 'assets/genesis_signal_card.svg',
           ),
           const SizedBox(height: 12),
           _card(
@@ -36,6 +38,7 @@ class GenesisGameTab extends StatelessWidget {
             title: 'GENESIS DEFENDER',
             description: 'Strzelanka: broń stacji przed falami dronów.',
             file: 'genesis-defender.html',
+            artwork: 'assets/genesis_defender_card.svg',
           ),
         ],
       ),
@@ -47,6 +50,7 @@ class GenesisGameTab extends StatelessWidget {
     required String title,
     required String description,
     required String file,
+    required String artwork,
   }) => Card(
     color: const Color(0xFF10283C),
     clipBehavior: Clip.antiAlias,
@@ -57,10 +61,21 @@ class GenesisGameTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 40, color: gold),
-            const SizedBox(height: 14),
-            Text(title, style: const TextStyle(
-              fontSize: 21, fontWeight: FontWeight.bold, color: gold)),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 175,
+                child: SvgPicture.asset(artwork, fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(children: [
+              Icon(icon, size: 24, color: gold),
+              const SizedBox(width: 10),
+              Expanded(child: Text(title, style: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: gold))),
+            ]),
             const SizedBox(height: 8),
             Text(description),
             const SizedBox(height: 16),
