@@ -82,7 +82,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     final activeFrame = frames[game == 0 ? signalView : defenderView];
-    if (activeFrame == null) {
+    if (activeFrame == null || event.source != activeFrame.contentWindow) {
       return;
     }
     dynamic decoded;
