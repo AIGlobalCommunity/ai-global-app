@@ -485,14 +485,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           const Center(child: Icon(
             Icons.sports_esports_outlined, size: 42, color: gold)),
           const SizedBox(height: 8),
-          const Center(child: Text('GENESIS ARCADE',
+          const Center(child: Text('GRA',
             style: TextStyle(
               fontSize: 25, color: gold,
               fontWeight: FontWeight.w700, letterSpacing: 1.5))),
           const SizedBox(height: 8),
           Text(GenesisLanguage.copy(
-            'Wybierz grę i rozpocznij misję. Każda gra ma osobny ranking.',
-            'Choose a game and start your mission. Each game has its own leaderboard.'),
+            'WYBIERZ GRĘ I ODKRYWAJ NOWE WYZWANIA',
+            'CHOOSE A GAME AND DISCOVER NEW CHALLENGES'),
             textAlign: TextAlign.center),
           const SizedBox(height: 20),
           LayoutBuilder(builder: (context, constraints) {
