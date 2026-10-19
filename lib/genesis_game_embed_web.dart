@@ -5,6 +5,7 @@ import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'agc_backend.dart';
@@ -256,65 +257,105 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     required String category,
     required String description,
   }) {
+    final accent = index == 0
+      ? const Color(0xFF69DFFF) : const Color(0xFFFFB76C);
+    final image = index == 0
+      ? 'assets/genesis_signal_card.svg'
+      : 'assets/genesis_defender_card.svg';
+    void openGame() => setState(() {
+      game = index;
+      scoreNotice = null;
+    });
     return Card(
       color: navy,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: Color(0xFF516B7A)),
+        side: BorderSide(color: accent.withValues(alpha: .55)),
       ),
       child: InkWell(
-        onTap: () => setState(() {
-          game = index;
-          scoreNotice = null;
-        }),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Container(
-                  padding: const EdgeInsets.all(13),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B4052),
-                    borderRadius: BorderRadius.circular(14),
+        onTap: openGame,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Stack(children: [
+              SizedBox(
+                width: double.infinity,
+                height: 188,
+                child: SvgPicture.asset(image, fit: BoxFit.cover),
+              ),
+              Positioned.fill(child: IgnorePointer(
+                child: DecoratedBox(decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF061322).withValues(alpha: .06),
+                      const Color(0xFF061322).withValues(alpha: .15),
+                      const Color(0xFF061322).withValues(alpha: .85),
+                    ],
                   ),
-                  child: Icon(icon, color: gold, size: 35),
-                ),
-                const Spacer(),
-                Text(category, style: const TextStyle(
-                  color: gold, fontSize: 11, letterSpacing: 1.4)),
-              ]),
-              const SizedBox(height: 18),
-              Text(title, style: const TextStyle(
-                color: Color(0xFFF3DEB1),
-                fontSize: 22, fontWeight: FontWeight.w700,
-                letterSpacing: 1)),
-              const SizedBox(height: 8),
-              Text(description, style: const TextStyle(
-                color: Color(0xFFCEDBE3), height: 1.45)),
-              const SizedBox(height: 18),
-              Row(children: [
-                Expanded(child: FilledButton.icon(
-                  onPressed: () => setState(() {
-                    game = index;
-                    scoreNotice = null;
-                  }),
-                  icon: const Icon(Icons.play_arrow_rounded),
-                  label: Text(GenesisLanguage.copy(
-                    'ZAGRAJ', 'PLAY')),
                 )),
-                const SizedBox(width: 10),
-                OutlinedButton.icon(
-                  onPressed: () => _showRanking(index),
-                  icon: const Icon(Icons.emoji_events_outlined, size: 19),
-                  label: Text(GenesisLanguage.copy(
-                    'Ranking', 'Leaderboard')),
+              )),
+              Positioned(
+                top: 12, left: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF071A2B).withValues(alpha: .86),
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(
+                      color: accent.withValues(alpha: .6)),
+                  ),
+                  child: Text(category, style: TextStyle(
+                    color: accent, fontSize: 10,
+                    fontWeight: FontWeight.w700, letterSpacing: 1.3)),
                 ),
-              ]),
-            ],
-          ),
+              ),
+              Positioned(
+                top: 12, right: 12,
+                child: Icon(icon, color: accent, size: 30),
+              ),
+              Positioned(
+                bottom: 14, left: 16, right: 12,
+                child: Text(title, style: const TextStyle(
+                  color: Color(0xFFF6F0E5),
+                  fontSize: 22, fontWeight: FontWeight.w800,
+                  letterSpacing: 1.3,
+                  shadows: [Shadow(
+                    blurRadius: 12, color: Colors.black)],
+                )),
+              ),
+            ]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 13, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(description, style: const TextStyle(
+                    color: Color(0xFFCEDBE3), height: 1.45)),
+                  const SizedBox(height: 15),
+                  Row(children: [
+                    Expanded(child: FilledButton.icon(
+                      onPressed: openGame,
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: Text(GenesisLanguage.copy(
+                        'ZAGRAJ', 'PLAY')),
+                    )),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () => _showRanking(index),
+                      icon: const Icon(
+                        Icons.emoji_events_outlined, size: 18),
+                      label: Text(GenesisLanguage.copy(
+                        'Ranking', 'Leaderboard')),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
