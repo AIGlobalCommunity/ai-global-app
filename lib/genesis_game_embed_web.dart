@@ -4,7 +4,7 @@ import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/material.dart';
 
-/// Trusted, bundled HTML5 game embedded as a responsive iframe on Flutter Web.
+/// Both self-contained HTML5 games are served from the same origin.
 class GenesisGameTab extends StatefulWidget {
   const GenesisGameTab({super.key});
 
@@ -13,30 +13,63 @@ class GenesisGameTab extends StatefulWidget {
 }
 
 class _GenesisGameTabState extends State<GenesisGameTab> {
-  static const viewType = 'genesis-signal-html5-iframe';
   static bool registered = false;
+  static const signalView = 'genesis-signal-html5-iframe';
+  static const defenderView = 'genesis-defender-html5-iframe';
+  int game = 0;
 
   @override
   void initState() {
     super.initState();
     if (!registered) {
-      ui_web.platformViewRegistry.registerViewFactory(
-        viewType,
-        (int viewId) => html.IFrameElement()
-          ..src = 'genesis-game.html'
-          ..title = 'GENESIS SIGNAL — gra THE GENESIS ERA'
-          ..style.border = '0'
-          ..style.width = '100%'
-          ..style.height = '100%'
-          ..setAttribute('loading', 'lazy')
-          ..setAttribute('allow', 'fullscreen'),
-      );
+      _register(signalView, 'genesis-game.html', 'GENESIS SIGNAL');
+      _register(defenderView, 'genesis-defender.html', 'GENESIS DEFENDER');
       registered = true;
     }
   }
 
+  static void _register(String type, String src, String title) {
+    ui_web.platformViewRegistry.registerViewFactory(
+      type,
+      (int viewId) => html.IFrameElement()
+        ..src = src
+        ..title = title
+        ..style.border = '0'
+        ..style.width = '100%'
+        ..style.height = '100%'
+        ..setAttribute('loading', 'lazy')
+        ..setAttribute('allow', 'fullscreen'),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) => const SizedBox.expand(
-    child: HtmlElementView(viewType: viewType),
-  );
+  Widget build(BuildContext context) => Column(children: [
+    Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+      child: Row(children: [
+        Expanded(child: _choice(0, Icons.hub_outlined, 'SIGNAL')),
+        const SizedBox(width: 8),
+        Expanded(child: _choice(1, Icons.rocket_launch_outlined, 'DEFENDER')),
+      ]),
+    ),
+    Expanded(child: HtmlElementView(
+      key: ValueKey(game),
+      viewType: game == 0 ? signalView : defenderView,
+    )),
+  ]);
+
+  Widget _choice(int index, IconData icon, String label) {
+    final active = game == index;
+    return active
+      ? FilledButton.icon(
+          onPressed: () {},
+          icon: Icon(icon, size: 18),
+          label: Text(label),
+        )
+      : OutlinedButton.icon(
+          onPressed: () => setState(() => game = index),
+          icon: Icon(icon, size: 18),
+          label: Text(label),
+        );
+  }
 }
