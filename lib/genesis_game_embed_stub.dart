@@ -33,8 +33,10 @@ class GenesisGameTab extends StatelessWidget {
     ),
   );
 
-  Future<void> _open(String game) => launchUrl(
-    Uri.parse('https://thegenesisera.com/$game'),
-    mode: LaunchMode.externalApplication,
-  ).then((_) {});
+  Future<void> _open(String game) async {
+    await launchUrl(
+      Uri.parse('https://thegenesisera.com/$game'),
+      mode: LaunchMode.externalApplication,
+    );
+  }
 }
