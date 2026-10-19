@@ -248,17 +248,21 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return rows;
     }
     final ids = rows.map((r) => r['member_id'] as String).toList();
-    final members = await AgcBackend.client
-      .from('agc_public_scores')
-      .select('id,handle')
-      .inFilter('id', ids);
-    final handles = <String, String>{
-      for (final member in members)
-        member['id'] as String: member['handle'] as String? ?? 'Genesis',
-    };
+    // Scores remain visible even if public nickname lookup is unavailable.
+    final handles = <String, String>{};
+    try {
+      final members = await AgcBackend.client
+        .from('agc_public_scores')
+        .select('id,handle')
+        .inFilter('id', ids);
+      for (final member in members) {
+        handles[member['id'] as String] =
+          member['handle'] as String? ?? 'Genesis';
+      }
+    } catch (_) {}
     return rows.map((r) => {
       ...r,
-      'handle': handles[r['member_id']] ?? 'Genesis',
+      'handle': handles[r['member_id']] ?? 'Gracz Genesis',
     }).toList();
   }
 
@@ -297,10 +301,15 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 Text(title, style: const TextStyle(color: Color(0xFFD8B66A))),
               ],
             )),
-            TextButton.icon(
+            IconButton(
+              onPressed: () => _showRanking(selectedGame),
+              tooltip: GenesisLanguage.copy('Odśwież ranking', 'Refresh leaderboard'),
+              icon: const Icon(Icons.refresh),
+            ),
+            IconButton.filled(
               onPressed: _closeRanking,
+              tooltip: GenesisLanguage.copy('Zamknij ranking', 'Close leaderboard'),
               icon: const Icon(Icons.close),
-              label: Text(GenesisLanguage.copy('ZAMKNIJ', 'CLOSE')),
             ),
           ]),
         ),
@@ -321,16 +330,50 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 if (snapshot.hasError) {
                   return Center(child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Text(GenesisLanguage.copy(
-                      'Nie udało się pobrać rankingu. Spróbuj ponownie.',
-                      'Could not load leaderboard. Please try again.'),
-                      textAlign: TextAlign.center)));
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, size: 32),
+                        const SizedBox(height: 8),
+                        Text(GenesisLanguage.copy(
+                          'Nie udało się pobrać rankingu.',
+                          'Could not load leaderboard.'),
+                          textAlign: TextAlign.center),
+                        const SizedBox(height: 8),
+                        Text('${snapshot.error}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 11)),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: () => _showRanking(selectedGame),
+                          icon: const Icon(Icons.refresh),
+                          label: Text(GenesisLanguage.copy(
+                            'SPRÓBUJ PONOWNIE', 'RETRY')),
+                        ),
+                      ],
+                    )));
                 }
                 final rows = snapshot.data ?? [];
                 if (rows.isEmpty) {
-                  return Center(child: Text(GenesisLanguage.copy(
-                    'Brak wyników. Zostań pierwszym graczem!',
-                    'No scores yet. Be the first player!')));
+                  return Center(child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.emoji_events_outlined,
+                        color: Color(0xFFD8B66A), size: 40),
+                      const SizedBox(height: 10),
+                      Text(GenesisLanguage.copy(
+                        'Jeszcze nie ma zapisanych wyników.',
+                        'No saved scores yet.'),
+                        textAlign: TextAlign.center),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => _showRanking(selectedGame),
+                        icon: const Icon(Icons.refresh),
+                        label: Text(GenesisLanguage.copy(
+                          'ODŚWIEŻ RANKING', 'REFRESH LEADERBOARD')),
+                      ),
+                    ],
+                  ));
                 }
                 return ListView.builder(
                   itemCount: rows.length,
