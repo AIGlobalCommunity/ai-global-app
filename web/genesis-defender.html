@@ -75,7 +75,11 @@ function reportScore(force=false){
  if(score<1||score<=lastReportedScore)return;
  if(!force&&elapsed-lastReportedAt<6)return;
  lastReportedScore=score;lastReportedAt=elapsed;
- try{if(window.parent!==window)window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'defender',score:score,level:wave}),window.location.origin);}catch(_){}
+ try{
+   const result={type:'genesis-game-score',game:'defender',score:score,level:wave,at:Date.now()};
+   localStorage.setItem('agc-game-pending-defender',JSON.stringify(result));
+   if(window.parent!==window)window.parent.postMessage(JSON.stringify(result),window.location.origin);
+ }catch(_){}
 }
 for(let i=0;i<85;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:.5+Math.random()*1.4,v:12+Math.random()*26});
 const rand=(a,b)=>a+Math.random()*(b-a);
