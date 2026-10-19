@@ -789,10 +789,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             textAlign: TextAlign.center,
             style: const TextStyle(color: gold, fontSize: 11)),
         ),
-      Expanded(child: HtmlElementView(
+      Expanded(child: SizedBox.expand(child: HtmlElementView(
         key: ValueKey(selectedGame),
         viewType: selectedGame == 0 ? signalView : defenderView,
-      )),
+      ))),
     ]);
   }
 }
