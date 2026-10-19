@@ -281,7 +281,27 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 );
               },
             )),
-        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(14, 9, 14, 12),
+          decoration: const BoxDecoration(
+            color: Color(0xFF071525),
+            border: Border(top: BorderSide(color: Color(0xFF46647C))),
+          ),
+          child: FilledButton.icon(
+            onPressed: _closeRanking,
+            icon: const Icon(Icons.close_rounded, size: 22),
+            label: Text(GenesisLanguage.copy(
+              'ZAMKNIJ RANKING · WRÓĆ DO GRY',
+              'CLOSE LEADERBOARD · BACK TO GAME')),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+              backgroundColor: const Color(0xFFD8B66A),
+              foregroundColor: const Color(0xFF071525),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
       ]),
     );
   }
