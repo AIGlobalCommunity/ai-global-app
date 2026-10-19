@@ -25,7 +25,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const defenderView = 'genesis-defender-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
-  int game = 0;
+  int? game;
   String? scoreNotice;
   bool saving = false;
 
@@ -66,7 +66,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   Future<void> _onMessage(html.MessageEvent event) async {
-    if (!mounted || event.origin != html.window.location.origin ||
+    if (!mounted || game == null ||
+        event.origin != html.window.location.origin ||
         event.data is! String || saving) {
       return;
     }
@@ -161,9 +162,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }).toList();
   }
 
-  void _showRanking() {
-    final key = gameKey;
-    final title = game == 0 ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER';
+  void _showRanking(int selectedGame) {
+    final key = selectedGame == 0 ? 'signal' : 'defender';
+    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER';
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -245,52 +246,188 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) => Column(children: [
-    Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 5),
-      child: Row(children: [
-        Expanded(child: _choice(0, Icons.hub_outlined, 'SIGNAL')),
-        const SizedBox(width: 6),
-        Expanded(child: _choice(1, Icons.rocket_launch_outlined, 'DEFENDER')),
-        const SizedBox(width: 6),
-        IconButton.filledTonal(
-          onPressed: _showRanking,
-          tooltip: GenesisLanguage.copy(
-            'Ranking tej gry', 'This game leaderboard'),
-          icon: const Icon(Icons.emoji_events_outlined),
-        ),
-      ]),
-    ),
-    if (scoreNotice != null)
-      Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Text(scoreNotice!,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFFD8B66A), fontSize: 11)),
-      ),
-    Expanded(child: HtmlElementView(
-      key: ValueKey(game),
-      viewType: game == 0 ? signalView : defenderView,
-    )),
-  ]);
+  static const gold = Color(0xFFD8B66A);
+  static const navy = Color(0xFF10283C);
 
-  Widget _choice(int index, IconData icon, String label) {
-    final active = game == index;
-    return active
-      ? FilledButton.icon(
-          onPressed: null,
-          icon: Icon(icon, size: 17),
-          label: Text(label),
-        )
-      : OutlinedButton.icon(
-          onPressed: () => setState(() {
-            game = index;
-            scoreNotice = null;
+  Widget _gameCard({
+    required int index,
+    required IconData icon,
+    required String title,
+    required String category,
+    required String description,
+  }) {
+    return Card(
+      color: navy,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFF516B7A)),
+      ),
+      child: InkWell(
+        onTap: () => setState(() {
+          game = index;
+          scoreNotice = null;
+        }),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(13),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B4052),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: gold, size: 35),
+                ),
+                const Spacer(),
+                Text(category, style: const TextStyle(
+                  color: gold, fontSize: 11, letterSpacing: 1.4)),
+              ]),
+              const SizedBox(height: 18),
+              Text(title, style: const TextStyle(
+                color: Color(0xFFF3DEB1),
+                fontSize: 22, fontWeight: FontWeight.w700,
+                letterSpacing: 1)),
+              const SizedBox(height: 8),
+              Text(description, style: const TextStyle(
+                color: Color(0xFFCEDBE3), height: 1.45)),
+              const SizedBox(height: 18),
+              Row(children: [
+                Expanded(child: FilledButton.icon(
+                  onPressed: () => setState(() {
+                    game = index;
+                    scoreNotice = null;
+                  }),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text(GenesisLanguage.copy(
+                    'ZAGRAJ', 'PLAY')),
+                )),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: () => _showRanking(index),
+                  icon: const Icon(Icons.emoji_events_outlined, size: 19),
+                  label: Text(GenesisLanguage.copy(
+                    'Ranking', 'Leaderboard')),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _gameLibrary() => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 840),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+        children: [
+          const Center(child: Icon(
+            Icons.sports_esports_outlined, size: 42, color: gold)),
+          const SizedBox(height: 8),
+          const Center(child: Text('GENESIS ARCADE',
+            style: TextStyle(
+              fontSize: 25, color: gold,
+              fontWeight: FontWeight.w700, letterSpacing: 1.5))),
+          const SizedBox(height: 8),
+          Text(GenesisLanguage.copy(
+            'Wybierz grę i rozpocznij misję. Każda gra ma osobny ranking.',
+            'Choose a game and start your mission. Each game has its own leaderboard.'),
+            textAlign: TextAlign.center),
+          const SizedBox(height: 20),
+          LayoutBuilder(builder: (context, constraints) {
+            final cards = [
+              _gameCard(
+                index: 0,
+                icon: Icons.hub_outlined,
+                title: 'GENESIS SIGNAL',
+                category: GenesisLanguage.copy(
+                  'ŁAMIGŁÓWKA', 'PUZZLE'),
+                description: GenesisLanguage.copy(
+                  'Obracaj segmenty sieci, połącz sygnał i rozwiązuj coraz trudniejsze plansze.',
+                  'Rotate network segments, connect the signal and solve harder puzzles.'),
+              ),
+              _gameCard(
+                index: 1,
+                icon: Icons.rocket_launch_outlined,
+                title: 'GENESIS DEFENDER',
+                category: GenesisLanguage.copy(
+                  'STRZELANKA', 'SHOOTER'),
+                description: GenesisLanguage.copy(
+                  'Broń stacji Genesis przed dronami, przetrwaj fale i pobij rekord.',
+                  'Defend the Genesis station, survive waves and beat the high score.'),
+              ),
+            ];
+            if (constraints.maxWidth < 620) {
+              return Column(children: [
+                cards[0],
+                const SizedBox(height: 12),
+                cards[1],
+              ]);
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: cards[0]),
+                const SizedBox(width: 12),
+                Expanded(child: cards[1]),
+              ],
+            );
           }),
-          icon: Icon(icon, size: 17),
-          label: Text(label),
-        );
+        ],
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    if (game == null) {
+      return _gameLibrary();
+    }
+    final selectedGame = game!;
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(8, 7, 8, 5),
+        child: Row(children: [
+          IconButton.filledTonal(
+            onPressed: () => setState(() {
+              game = null;
+              scoreNotice = null;
+            }),
+            tooltip: GenesisLanguage.copy(
+              'Wróć do gier', 'Back to games'),
+            icon: const Icon(Icons.arrow_back),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(
+            selectedGame == 0 ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER',
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold, color: gold, fontSize: 16),
+          )),
+          IconButton.filledTonal(
+            onPressed: () => _showRanking(selectedGame),
+            tooltip: GenesisLanguage.copy(
+              'Ranking tej gry', 'This game leaderboard'),
+            icon: const Icon(Icons.emoji_events_outlined),
+          ),
+        ]),
+      ),
+      if (scoreNotice != null)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Text(scoreNotice!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: gold, fontSize: 11)),
+        ),
+      Expanded(child: HtmlElementView(
+        key: ValueKey(selectedGame),
+        viewType: selectedGame == 0 ? signalView : defenderView,
+      )),
+    ]);
   }
 }
