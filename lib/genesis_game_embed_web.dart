@@ -29,6 +29,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   int? game;
   String? scoreNotice;
   bool saving = false;
+  final Map<String, (int, int)> pendingScores = {};
 
   String get gameKey => game == 0 ? 'signal' : 'defender';
 
@@ -69,7 +70,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   Future<void> _onMessage(html.MessageEvent event) async {
     if (!mounted || game == null ||
         event.origin != html.window.location.origin ||
-        event.data is! String || saving) {
+        event.data is! String) {
       return;
     }
     final activeFrame = frames[game == 0 ? signalView : defenderView];
@@ -95,44 +96,63 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     if (AgcBackend.user == null) {
+      setState(() => scoreNotice = GenesisLanguage.copy(
+        'Wynik jest na urządzeniu. Zaloguj się w KONTO, aby trafić do rankingu.',
+        'Score saved locally. Sign in under ACCOUNT to join the leaderboard.'));
       return;
     }
+    final key = decoded['game'] as String;
+    final current = pendingScores[key];
+    if (current == null || points > current.$1) {
+      pendingScores[key] = (points, stage);
+    }
+    if (!saving) {
+      await _savePendingScores();
+    }
+  }
+
+  Future<void> _savePendingScores() async {
+    if (saving || !mounted || pendingScores.isEmpty) return;
     setState(() {
       saving = true;
       scoreNotice = GenesisLanguage.copy(
-        'Zapisuję wynik w rankingu…', 'Saving your score…');
+        'Zapisuję wynik w rankingu…', 'Saving score to leaderboard…');
     });
     try {
-      final updated = await AgcBackend.client.rpc(
-        'agc_submit_game_score',
-        params: {'p_game_key': gameKey, 'p_score': points, 'p_level': stage},
-      );
-      if (!mounted) {
-        return;
+      while (pendingScores.isNotEmpty && mounted) {
+        final key = pendingScores.keys.first;
+        final (points, stage) = pendingScores.remove(key)!;
+        try {
+          final updated = await AgcBackend.client.rpc(
+            'agc_submit_game_score',
+            params: {
+              'p_game_key': key,
+              'p_score': points,
+              'p_level': stage,
+            },
+          );
+          if (!mounted) return;
+          setState(() => scoreNotice = updated == true
+            ? GenesisLanguage.copy(
+                '✓ Wynik zapisany! Sprawdź RANKING 🏆',
+                '✓ Score saved! Check the LEADERBOARD 🏆')
+            : GenesisLanguage.copy(
+                'Wynik przyjęty. Rekord bez zmian.',
+                'Score received. Personal best unchanged.'));
+        } on PostgrestException catch (error) {
+          if (!mounted) return;
+          setState(() => scoreNotice = GenesisLanguage.copy(
+            'Nie zapisano wyniku: ${error.message}',
+            'Score not saved: ${error.message}'));
+        } catch (_) {
+          if (!mounted) return;
+          setState(() => scoreNotice = GenesisLanguage.copy(
+            'Nie udało się zapisać wyniku. Spróbuj ponownie.',
+            'Could not save score. Please try again.'));
+        }
       }
-      setState(() => scoreNotice = updated == true
-        ? GenesisLanguage.copy(
-            'Nowy rekord zapisany w rankingu!', 'New personal best saved!')
-        : GenesisLanguage.copy(
-            'Wynik zapisany wcześniej lub bez poprawy rekordu.',
-            'Your previous personal best still stands.'));
-    } on PostgrestException catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() => scoreNotice = GenesisLanguage.copy(
-        'Nie udało się zapisać wyniku. Sprawdź połączenie.',
-        'Could not save score. Check your connection.'));
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() => scoreNotice = GenesisLanguage.copy(
-        'Nie udało się zapisać wyniku.', 'Could not save score.'));
     } finally {
-      if (mounted) {
-        setState(() => saving = false);
-      }
+      if (mounted) setState(() => saving = false);
     }
   }
 
@@ -573,6 +593,15 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ),
         ]),
       ),
+      if (AgcBackend.user == null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 5),
+          child: Text(GenesisLanguage.copy(
+            '⚠ Zaloguj się w KONTO, aby zapisywać punkty w rankingu.',
+            '⚠ Sign in under ACCOUNT to save scores to the leaderboard.'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFFFFC777), fontSize: 12)),
+        ),
       if (scoreNotice != null)
         Padding(
           padding: const EdgeInsets.only(bottom: 4),
