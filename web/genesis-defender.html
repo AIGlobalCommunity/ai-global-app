@@ -25,6 +25,24 @@ button.alt{background:#173147;color:#f0dfba;border-color:#506e7f}button:focus-vi
 .tip{font-size:11px;line-height:1.65;color:#a6b7c5;text-align:center;max-width:540px;margin:9px auto}
 kbd{border:1px solid #536979;border-radius:3px;padding:1px 4px;color:#e5d4ad}
 @media(max-width:450px){main{padding:6px 5px 10px}.hud strong{font-size:16px}.hud span{font-size:9px}}
+
+/* Embedded arcade: scale arena to the actual available iframe height. */
+body.embedded main{padding:5px 7px 8px}
+body.embedded .tag,body.embedded .sub,body.embedded .tip{display:none}
+body.embedded h1{font-size:23px;margin:0 0 5px}
+body.embedded .hud{margin-bottom:5px}
+body.embedded .hud>div{padding:4px 2px}
+body.embedded .hud strong{font-size:16px}
+body.embedded .hud span{font-size:9px}
+body.embedded .arena{width:min(100%,350px,max(115px,calc(70dvh - 125px)))}
+body.embedded .controls{margin:6px auto;gap:6px}
+body.embedded .controls button{min-height:34px;padding:6px 12px}
+body.embedded .modal{padding:12px 9px}
+body.embedded .modal .emblem{font-size:23px}
+body.embedded .modal h2{font-size:21px;margin:4px 0}
+body.embedded .modal p{font-size:11px;line-height:1.35;margin:5px 0}
+body.embedded .modal button{font-size:11px;min-height:35px;padding:7px}
+@media(max-height:500px){body.embedded .modal .emblem{display:none}body.embedded .modal p{font-size:10px}}
 </style></head><body><main>
 <div class="tag">THE GENESIS ERA · ARCADE HTML5</div><h1>GENESIS DEFENDER</h1>
 <p class="sub">Broń stacji Genesis przed falami dronów. Przetrwaj jak najdłużej.</p>
@@ -45,6 +63,7 @@ kbd{border:1px solid #536979;border-radius:3px;padding:1px 4px;color:#e5d4ad}
 <script>
 (function(){
 'use strict';
+if(new URLSearchParams(window.location.search).has('embed'))document.body.classList.add('embedded');
 const canvas=document.getElementById('field'),ctx=canvas.getContext('2d');
 const W=420,H=600,overlay=document.getElementById('overlay'),start=document.getElementById('start');
 const scoreEl=document.getElementById('score'),waveEl=document.getElementById('wave'),livesEl=document.getElementById('lives'),bestEl=document.getElementById('best');
