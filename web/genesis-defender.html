@@ -33,14 +33,14 @@ kbd{border:1px solid #536979;border-radius:3px;padding:1px 4px;color:#e5d4ad}
 <div><strong id="lives">♥ ♥ ♥</strong><span>Życia</span></div><div><strong id="best">0</strong><span>Rekord</span></div>
 </div>
 <div class="arena">
-<canvas id="field" width="420" height="600" tabindex="0" aria-label="Gra strzelanka. Steruj strzałkami, WASD albo przesuwaj palcem. Strzelanie automatyczne."></canvas>
+<canvas id="field" width="420" height="600" tabindex="0" aria-label="Gra strzelanka. Lataj we wszystkich kierunkach: strzałki, WASD lub przeciągaj palcem. Strzelanie automatyczne."></canvas>
 <div class="overlay" id="overlay"><div class="modal">
 <div class="emblem" id="emblem">✦</div><h2 id="headline">GENESIS DEFENDER</h2>
-<p id="description">Steruj statkiem palcem, myszką lub klawiszami ← → / A D. Działo strzela automatycznie. Unikaj wrogich pocisków, zbieraj tarcze i naprawy.</p>
+<p id="description">Steruj statkiem we wszystkich kierunkach: palcem, myszką lub klawiszami strzałek / W A S D. Działo strzela automatycznie. Unikaj wrogich pocisków, zbieraj tarcze i naprawy.</p>
 <button id="start" type="button">ROZPOCZNIJ MISJĘ →</button>
 </div></div></div>
 <div class="controls"><button id="pause" class="alt" type="button">Ⅱ Pauza</button><button id="restart" class="alt" type="button">↺ Nowa gra</button></div>
-<p class="tip">📱 Telefon: przesuń palcem po planszy. 🖥️ Komputer: <kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd>, <kbd>Spacja</kbd> — pauza. Strzelanie automatyczne. Rekord zapisuje się na urządzeniu i w rankingu graczy, gdy grasz w zakładce GRA. Ranking otworzysz przyciskiem 🏆 nad grą. Punkty gry nie są punktami GP.</p>
+<p class="tip">📱 Telefon: przeciągaj statek palcem w dowolnym kierunku (także do przodu). 🖥️ Komputer: <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> lub <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> — lot w czterech kierunkach, <kbd>Spacja</kbd> — pauza. Strzelanie automatyczne. Rekord zapisuje się na urządzeniu i w rankingu graczy, gdy grasz w zakładce GRA. Ranking otworzysz przyciskiem 🏆 nad grą. Punkty gry nie są punktami GP.</p>
 </main>
 <script>
 (function(){
@@ -61,7 +61,7 @@ function panel(title,description,label,action){
  start.textContent=label;start.onclick=action;overlay.hidden=false;
 }
 function reset(){
- score=0;wave=1;lives=3;shield=0;ship.x=210;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
+ score=0;wave=1;lives=3;shield=0;ship.x=210;ship.y=536;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
  elapsed=0;spawnTimer=.7;fireTimer=0;invincible=1.5;mode='playing';overlay.hidden=true;last=performance.now();hud();canvas.focus({preventScroll:true});
 }
 function end(){
@@ -89,8 +89,11 @@ function hit(){
 function update(dt){
  elapsed+=dt;wave=1+Math.floor(elapsed/24);invincible=Math.max(0,invincible-dt);
  for(const s of stars){s.y+=s.v*dt*(1+wave*.06);if(s.y>H){s.y=0;s.x=Math.random()*W;}}
- let direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
- ship.x=clamp(ship.x+direction*280*dt,22,W-22);
+ const dx=Number(!!(keys.ArrowRight||keys.KeyD))-Number(!!(keys.ArrowLeft||keys.KeyA));
+ const dy=Number(!!(keys.ArrowDown||keys.KeyS))-Number(!!(keys.ArrowUp||keys.KeyW));
+ const distance=Math.hypot(dx,dy)||1;
+ ship.x=clamp(ship.x+dx/distance*280*dt,22,W-22);
+ ship.y=clamp(ship.y+dy/distance*280*dt,80,H-32);
  fireTimer-=dt;if(fireTimer<=0){bullets.push({x:ship.x,y:ship.y-20,vy:-480});fireTimer=.19;}
  spawnTimer-=dt;if(spawnTimer<=0){spawn();spawnTimer=Math.max(.28,1.0-wave*.065)*rand(.7,1.35);}
  for(const b of bullets)b.y+=b.vy*dt;
@@ -152,17 +155,21 @@ function frame(t){
  if(mode==='playing')update(dt);
  render();raf=requestAnimationFrame(frame);
 }
-function setPointer(event){const r=canvas.getBoundingClientRect();ship.x=clamp((event.clientX-r.left)/r.width*W,22,W-22);}
+function setPointer(event){
+ const r=canvas.getBoundingClientRect();
+ ship.x=clamp((event.clientX-r.left)/r.width*W,22,W-22);
+ ship.y=clamp((event.clientY-r.top)/r.height*H,80,H-32);
+}
 canvas.addEventListener('pointerdown',e=>{if(mode!=='playing')return;dragging=true;canvas.setPointerCapture(e.pointerId);setPointer(e);});
 canvas.addEventListener('pointermove',e=>{if(dragging&&mode==='playing')setPointer(e);});
 canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
-window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Space','KeyA','KeyD'].includes(e.code)&&e.target===canvas)e.preventDefault();keys[e.code]=true;if(e.code==='Space'&&!e.repeat&&e.target===canvas)pause();});
+window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','KeyA','KeyD','KeyW','KeyS'].includes(e.code)&&e.target===canvas)e.preventDefault();keys[e.code]=true;if(e.code==='Space'&&!e.repeat&&e.target===canvas)pause();});
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 window.addEventListener('blur',()=>{keys={};if(mode==='playing')pause();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='playing')pause();});
 document.getElementById('pause').onclick=pause;
 document.getElementById('restart').onclick=()=>{mode='menu';panel('NOWA MISJA','Rozpocznij nową rozgrywkę. Poprzedni wynik zostanie wyzerowany.','ROZPOCZNIJ →',reset);};
-panel('GENESIS DEFENDER','Strzelanka arcade. Steruj palcem, myszką albo klawiszami ← → / A D. Statek strzela automatycznie. Zbieraj tarcze i naprawy, unikaj dronów!','ROZPOCZNIJ MISJĘ →',reset);
+panel('GENESIS DEFENDER','Strzelanka arcade. Lataj do przodu, do tyłu i na boki: przeciągaj palcem lub użyj strzałek / W A S D. Statek strzela automatycznie. Zbieraj tarcze i naprawy, unikaj dronów!','ROZPOCZNIJ MISJĘ →',reset);
 last=performance.now();raf=requestAnimationFrame(frame);
 })();
 </script></body></html>
