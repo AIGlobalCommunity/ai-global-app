@@ -8,6 +8,10 @@ class GenesisGameTab extends StatelessWidget {
   const GenesisGameTab({super.key});
 
   static const gold = Color(0xFFD8B66A);
+  static const buildVersion = String.fromEnvironment(
+    'AGC_BUILD_VERSION', defaultValue: 'DEV');
+  static const buildDate = String.fromEnvironment(
+    'AGC_BUILD_DATE', defaultValue: 'LOCAL');
 
   @override
   Widget build(BuildContext context) => Center(
@@ -29,6 +33,11 @@ class GenesisGameTab extends StatelessWidget {
           const Center(child: Text(
             'Gry otwierają się w przeglądarce.',
             style: TextStyle(fontSize: 11))),
+          const SizedBox(height: 6),
+          Center(child: SelectableText(
+            'GENESIS ARCADE · v2026.10.19 · BUILD $buildVersion · $buildDate UTC',
+            style: const TextStyle(fontSize: 10, color: Color(0xFF90B2C8)),
+            textAlign: TextAlign.center)),
           const SizedBox(height: 20),
           _card(
             context: context,
