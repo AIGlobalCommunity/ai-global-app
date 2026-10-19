@@ -135,7 +135,7 @@ class _AgcHomeState extends State<AgcHome> {
         ),
         body: SafeArea(
           child: AgcLuxuryBackdrop(child: Column(children: [
-            const AgcCountdownBanner(compact: true),
+            if (selected != 5) const AgcCountdownBanner(compact: true),
             Expanded(child: IndexedStack(
               index: selected,
               children: [
