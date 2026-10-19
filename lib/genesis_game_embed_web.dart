@@ -207,9 +207,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           }
           if (confirmed) {
             _clearConfirmedScore(key, points);
-            setState(() => scoreNotice = GenesisLanguage.copy(
-              '✓ Wynik zapisany w rankingu! 🏆',
-              '✓ Score saved to leaderboard! 🏆'));
+            setState(() {
+              scoreNotice = GenesisLanguage.copy(
+                '✓ Wynik zapisany w rankingu! 🏆',
+                '✓ Score saved to leaderboard! 🏆');
+              if (rankingGame == (key == 'signal' ? 0 : 1)) {
+                rankingFuture = _leaders(key);
+              }
+            });
           } else {
             pendingScores[key] = pending;
             setState(() => scoreNotice = GenesisLanguage.copy(
@@ -267,10 +272,20 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   void _showRanking(int selectedGame) {
+    _recoverPendingScores();
     setState(() {
       rankingGame = selectedGame;
-      rankingFuture = _leaders(selectedGame == 0 ? 'signal' : 'defender');
+      rankingFuture = _loadRanking(selectedGame == 0 ? 'signal' : 'defender');
     });
+  }
+
+  Future<List<Map<String, dynamic>>> _loadRanking(String key) async {
+    // Avoid showing a stale empty leaderboard while the player's
+    // score is still being submitted.
+    for (var i = 0; i < 25 && saving; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    }
+    return _leaders(key);
   }
 
   void _closeRanking() {
