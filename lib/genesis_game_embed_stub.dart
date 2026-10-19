@@ -79,21 +79,11 @@ class GenesisGameTab extends StatelessWidget {
         children: [
           InkWell(
             onTap: () => _open(file),
-            child: Stack(children: [
-              SizedBox(
-                width: double.infinity, height: 215,
-                child: Image.asset(artwork, fit: BoxFit.cover, filterQuality: FilterQuality.high),
-              ),
-              Positioned(
-                bottom: 12, left: 12, right: 12,
-                child: Text(title, textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 23, fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2, color: Colors.white,
-                    shadows: [Shadow(
-                      color: Colors.black, blurRadius: 15)])),
-              ),
-            ]),
+            child: SizedBox(
+              width: double.infinity, height: 215,
+              child: Image.asset(artwork, fit: BoxFit.cover,
+                filterQuality: FilterQuality.high, semanticLabel: title),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(16),
