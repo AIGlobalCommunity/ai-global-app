@@ -198,7 +198,11 @@ function win(){
  locked=true;clearInterval(tick);elapsed=Math.floor((Date.now()-startedAt)/1000);
  var gain=Math.max(100,1200-moves*22-elapsed*4)+hints*75;
  score+=gain;
- try{if(window.parent!==window)window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'signal',score:score,level:level}),window.location.origin);}catch(_){}
+ try{
+   const result={type:'genesis-game-score',game:'signal',score:score,level:level,at:Date.now()};
+   localStorage.setItem('agc-game-pending-signal',JSON.stringify(result));
+   if(window.parent!==window)window.parent.postMessage(JSON.stringify(result),window.location.origin);
+ }catch(_){}
  if(score>best){best=score;try{localStorage.setItem("genesis-signal-best",String(best));}catch(e){}}
  document.getElementById("best").textContent="Najlepszy wynik: "+best;
  updateStats();document.getElementById("status").textContent="Transmisja przywrócona! +"+gain+" punktów.";
