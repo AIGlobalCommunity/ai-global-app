@@ -5,7 +5,6 @@ import 'dart:html' as html;
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'agc_backend.dart';
@@ -374,8 +373,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final accent = signal
       ? const Color(0xFF39CBFF) : const Color(0xFFFFB05A);
     final image = signal
-      ? 'assets/genesis_signal_card.svg'
-      : 'assets/genesis_defender_card.svg';
+      ? 'assets/genesis_signal_cinematic.jpg'
+      : 'assets/genesis_defender_cinematic.jpg';
     final features = signal
       ? <(IconData, String)>[
           (Icons.extension_outlined,
@@ -427,7 +426,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               Stack(children: [
                 SizedBox(
                   height: 235, width: double.infinity,
-                  child: SvgPicture.asset(image, fit: BoxFit.cover),
+                  child: Image.asset(image, fit: BoxFit.cover, filterQuality: FilterQuality.high),
                 ),
                 Positioned.fill(child: IgnorePointer(
                   child: DecoratedBox(decoration: BoxDecoration(
