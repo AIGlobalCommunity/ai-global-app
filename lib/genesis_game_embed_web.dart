@@ -27,6 +27,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   int? game;
+  int? rankingGame;
+  Future<List<Map<String, dynamic>>>? rankingFuture;
   String? scoreNotice;
   bool saving = false;
   final Map<String, (int, int)> pendingScores = {};
@@ -37,8 +39,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   void initState() {
     super.initState();
     if (!registered) {
-      _register(signalView, 'genesis-game.html', 'GENESIS SIGNAL');
-      _register(defenderView, 'genesis-defender.html', 'GENESIS DEFENDER');
+      _register(signalView, 'genesis-game.html?embed=1', 'GENESIS SIGNAL');
+      _register(defenderView, 'genesis-defender.html?embed=1', 'GENESIS DEFENDER');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
@@ -184,37 +186,57 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   void _showRanking(int selectedGame) {
-    final key = selectedGame == 0 ? 'signal' : 'defender';
+    setState(() {
+      rankingGame = selectedGame;
+      rankingFuture = _leaders(selectedGame == 0 ? 'signal' : 'defender');
+    });
+  }
+
+  void _closeRanking() {
+    setState(() {
+      rankingGame = null;
+      rankingFuture = null;
+    });
+  }
+
+  Widget _rankingPage(int selectedGame) {
     final title = selectedGame == 0 ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER';
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * .76,
-          child: Column(children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-              child: Column(children: [
-                const Icon(Icons.emoji_events_outlined, size: 34,
-                  color: Color(0xFFD8B66A)),
-                Text(GenesisLanguage.copy(
-                  'RANKING GRACZY', 'PLAYER LEADERBOARD'),
-                  style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold)),
-                Text(title, style: const TextStyle(
-                  color: Color(0xFFD8B66A))),
-                const SizedBox(height: 6),
-                Text(GenesisLanguage.copy(
-                  'Najlepszy wynik każdego gracza · niezależnie od GP',
-                  'Each player’s best score · separate from GP'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12)),
-              ]),
+    return SafeArea(
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Row(children: [
+            IconButton.filledTonal(
+              onPressed: _closeRanking,
+              tooltip: GenesisLanguage.copy('Zamknij ranking', 'Close leaderboard'),
+              icon: const Icon(Icons.arrow_back),
             ),
+            const SizedBox(width: 10),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(GenesisLanguage.copy('RANKING GRACZY', 'PLAYER LEADERBOARD'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(title, style: const TextStyle(color: Color(0xFFD8B66A))),
+              ],
+            )),
+            TextButton.icon(
+              onPressed: _closeRanking,
+              icon: const Icon(Icons.close),
+              label: Text(GenesisLanguage.copy('ZAMKNIJ', 'CLOSE')),
+            ),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+          child: Text(GenesisLanguage.copy(
+            'Najlepszy wynik każdego gracza · niezależnie od GP',
+            'Each player’s best score · separate from GP'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12)),
+        ),
             Expanded(child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _leaders(key),
+              future: rankingFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const Center(child: CircularProgressIndicator());
@@ -260,10 +282,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 );
               },
             )),
-            const SizedBox(height: 12),
-          ]),
-        ),
-      ),
+        const SizedBox(height: 8),
+      ]),
     );
   }
 
@@ -561,6 +581,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (rankingGame != null) {
+      return _rankingPage(rankingGame!);
+    }
     if (game == null) {
       return _gameLibrary();
     }
