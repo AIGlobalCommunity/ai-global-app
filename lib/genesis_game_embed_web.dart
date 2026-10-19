@@ -248,7 +248,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   static const gold = Color(0xFFD8B66A);
-  static const navy = Color(0xFF10283C);
 
   Widget _arcadeButton({
     required VoidCallback onPressed,
