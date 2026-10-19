@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'agc_backend.dart';
+
 /// Native fallback: game cards open the HTML5 games in the browser.
 class GenesisGameTab extends StatelessWidget {
   const GenesisGameTab({super.key});
@@ -26,6 +28,7 @@ class GenesisGameTab extends StatelessWidget {
             'Wybierz grę. Otworzy się w przeglądarce.')),
           const SizedBox(height: 20),
           _card(
+            context: context,
             icon: Icons.hub_outlined,
             title: 'GENESIS SIGNAL',
             description: 'Łamigłówka: połącz źródło sygnału z celem.',
@@ -46,6 +49,7 @@ class GenesisGameTab extends StatelessWidget {
   );
 
   Widget _card({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String description,
@@ -112,7 +116,7 @@ class GenesisGameTab extends StatelessWidget {
                   icon: Icons.emoji_events_outlined,
                   accent: accent,
                   primary: false,
-                  onTap: () => _rankingUnavailable(),
+                  onTap: () => _showRanking(context, file),
                 )),
               ]),
             ]),
@@ -170,8 +174,83 @@ class GenesisGameTab extends StatelessWidget {
     ),
   );
 
-  void _rankingUnavailable() {
-    // Native games currently open externally; score submission is web-only.
+  Future<void> _showRanking(
+    BuildContext context, String file,
+  ) async {
+    final key = file == 'genesis-game.html' ? 'signal' : 'defender';
+    final title = key == 'signal' ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER';
+    Future<List<Map<String, dynamic>>> load() async {
+      final raw = await AgcBackend.client
+        .from('agc_game_scores')
+        .select('member_id,best_score,best_level,updated_at')
+        .eq('game_key', key)
+        .order('best_score', ascending: false)
+        .order('updated_at', ascending: true)
+        .limit(50);
+      final scores = List<Map<String, dynamic>>.from(raw);
+      if (scores.isEmpty) {
+        return scores;
+      }
+      final ids = scores.map((e) => e['member_id'] as String).toList();
+      final members = await AgcBackend.client
+        .from('agc_public_scores')
+        .select('id,handle')
+        .inFilter('id', ids);
+      final names = <String, String>{
+        for (final m in members)
+          m['id'] as String: m['handle'] as String? ?? 'Genesis',
+      };
+      return scores.map((e) => {
+        ...e,
+        'handle': names[e['member_id']] ?? 'Genesis',
+      }).toList();
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => SafeArea(child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * .7,
+        child: Column(children: [
+          const Icon(Icons.emoji_events_outlined, color: gold, size: 32),
+          const SizedBox(height: 5),
+          Text('RANKING · $title', style: const TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 12),
+          Expanded(child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: load(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return const Center(child: Text(
+                  'Nie udało się pobrać rankingu.'));
+              }
+              final rows = snapshot.data ?? [];
+              if (rows.isEmpty) {
+                return const Center(child: Text(
+                  'Brak wyników. Zostań pierwszym graczem!'));
+              }
+              return ListView.builder(
+                itemCount: rows.length,
+                itemBuilder: (context, index) {
+                  final row = rows[index];
+                  return ListTile(
+                    leading: CircleAvatar(child: Text('${index + 1}')),
+                    title: Text('${row['handle']}'),
+                    subtitle: Text('Poziom / fala: ${row['best_level']}'),
+                    trailing: Text('${row['best_score']}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: gold)),
+                  );
+                },
+              );
+            },
+          )),
+        ]),
+      )),
+    );
   }
 
   Future<void> _open(String file) async {
