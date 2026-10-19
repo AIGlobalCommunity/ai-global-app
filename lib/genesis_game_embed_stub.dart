@@ -51,44 +51,128 @@ class GenesisGameTab extends StatelessWidget {
     required String description,
     required String file,
     required String artwork,
-  }) => Card(
-    color: const Color(0xFF10283C),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: () => _open(file),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                width: double.infinity,
-                height: 175,
+  }) {
+    final signal = file == 'genesis-game.html';
+    final accent = signal
+      ? const Color(0xFF39CBFF) : const Color(0xFFFFB05A);
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF071525),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent, width: 1.2),
+        boxShadow: [
+          BoxShadow(color: accent.withValues(alpha: .22),
+            blurRadius: 18),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => _open(file),
+            child: Stack(children: [
+              SizedBox(
+                width: double.infinity, height: 215,
                 child: SvgPicture.asset(artwork, fit: BoxFit.cover),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              Icon(icon, size: 24, color: gold),
-              const SizedBox(width: 10),
-              Expanded(child: Text(title, style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: gold))),
+              Positioned(
+                bottom: 12, left: 12, right: 12,
+                child: Text(title, textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 23, fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2, color: Colors.white,
+                    shadows: [Shadow(
+                      color: Colors.black, blurRadius: 15)])),
+              ),
             ]),
-            const SizedBox(height: 8),
-            Text(description),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => _open(file),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('ZAGRAJ'),
-            ),
-          ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(children: [
+              Row(children: [
+                Icon(icon, color: accent, size: 21),
+                const SizedBox(width: 9),
+                Expanded(child: Text(description,
+                  style: const TextStyle(
+                    color: Color(0xFFDFEAF2)))),
+              ]),
+              const SizedBox(height: 18),
+              Row(children: [
+                Expanded(child: _button(
+                  label: 'ZAGRAJ',
+                  icon: Icons.play_arrow_rounded,
+                  accent: accent,
+                  primary: true,
+                  onTap: () => _open(file),
+                )),
+                const SizedBox(width: 10),
+                Expanded(child: _button(
+                  label: 'RANKING',
+                  icon: Icons.emoji_events_outlined,
+                  accent: accent,
+                  primary: false,
+                  onTap: () => _rankingUnavailable(),
+                )),
+              ]),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _button({
+    required String label,
+    required IconData icon,
+    required Color accent,
+    required bool primary,
+    required VoidCallback onTap,
+  }) => DecoratedBox(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(14),
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: primary
+          ? (accent == const Color(0xFF39CBFF)
+            ? [const Color(0xFF21D9FF), const Color(0xFF0076D8)]
+            : [const Color(0xFFFFD677), const Color(0xFFDA6A10)])
+          : [const Color(0xFF173047), const Color(0xFF071626)],
+      ),
+      border: Border.all(
+        color: primary ? accent : const Color(0xFF547998)),
+      boxShadow: primary
+        ? [BoxShadow(color: accent.withValues(alpha: .38),
+            blurRadius: 14)]
+        : null,
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 55),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const SizedBox(width: 5),
+              Flexible(child: Text(label,
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold))),
+            ],
+          ),
         ),
       ),
     ),
   );
+
+  void _rankingUnavailable() {
+    // Native games currently open externally; score submission is web-only.
+  }
 
   Future<void> _open(String file) async {
     await launchUrl(
