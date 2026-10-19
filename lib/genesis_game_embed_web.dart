@@ -446,24 +446,24 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               Stack(children: [
                 SizedBox(
                   height: 235, width: double.infinity,
-                  child: Image.asset(image, fit: BoxFit.cover, filterQuality: FilterQuality.high),
+                  child: Image.asset(image, fit: BoxFit.cover, filterQuality: FilterQuality.high, semanticLabel: title),
                 ),
                 Positioned.fill(child: IgnorePointer(
                   child: DecoratedBox(decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      stops: const [0, .44, 1],
+                      stops: const [0, .6, 1],
                       colors: [
-                        const Color(0xFF041020).withValues(alpha: .15),
-                        const Color(0xFF041020).withValues(alpha: .10),
-                        const Color(0xFF041020),
+                        const Color(0xFF041020).withValues(alpha: .02),
+                        const Color(0xFF041020).withValues(alpha: .03),
+                        const Color(0xFF041020).withValues(alpha: .25),
                       ],
                     ),
                   )),
                 )),
                 Positioned(
-                  top: 18, left: 16,
+                  top: 12, right: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 11, vertical: 7),
@@ -478,17 +478,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                       color: accent, fontSize: 11,
                       fontWeight: FontWeight.w700, letterSpacing: 1.1)),
                   ),
-                ),
-                Positioned(
-                  bottom: 10, left: 16, right: 16,
-                  child: Text(title, textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white, fontSize: 25,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.8,
-                      shadows: [Shadow(
-                        blurRadius: 14, color: Colors.black)],
-                    )),
                 ),
               ]),
               Padding(
