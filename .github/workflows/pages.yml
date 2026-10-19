@@ -37,7 +37,7 @@ jobs:
           flutter analyze
           flutter test
       - name: Build production site at thegenesisera.com
-        run: flutter build web --release --base-href /
+        run: flutter build web --release --base-href / --pwa-strategy=none
       - name: Set browser tab title and Genesis favicon
         run: |
           cp assets/agc_genesis_ai_vector.svg build/web/favicon.svg
@@ -63,6 +63,19 @@ jobs:
               '  <meta name="application-name" content="THE GENESIS ERA">\n'
               '  <meta name="apple-mobile-web-app-title" content="THE GENESIS ERA">\n'
               '  <meta name="theme-color" content="#071322">\n'
+              '  <script>\n'
+              '  if ("serviceWorker" in navigator) {\n'
+              '    navigator.serviceWorker.getRegistrations().then(function(regs) {\n'
+              '      if (!regs.length) return;\n'
+              '      Promise.all(regs.map(function(r) { return r.unregister(); })).then(function() {\n'
+              '        if (!sessionStorage.getItem("genesis-sw-refresh-20261019")) {\n'
+              '          sessionStorage.setItem("genesis-sw-refresh-20261019", "1");\n'
+              '          location.reload();\n'
+              '        }\n'
+              '      });\n'
+              '    });\n'
+              '  }\n'
+              '  </script>\n'
           )
           if '</head>' not in html:
               raise SystemExit('Missing HTML head')
@@ -74,6 +87,8 @@ jobs:
         run: |
           test -s build/web/genesis-game.html
           test -s build/web/genesis-defender.html
+          test -s build/web/assets/assets/genesis_signal_cinematic.jpg
+          test -s build/web/assets/assets/genesis_defender_cinematic.jpg
           python3 - <<'PY'
           from pathlib import Path
           import re
