@@ -70,7 +70,7 @@ button.action:disabled{opacity:.45;cursor:not-allowed}
   <button class="action secondary" type="button" id="restart">↺ Powtórz poziom</button>
   <button class="action secondary" type="button" id="newGame">✦ Nowa gra</button>
 </div>
-<p class="foot">Sterowanie: dotknij segmentu lub wybierz go klawiszem Tab i naciśnij Enter. Postęp i najlepszy wynik są zapisywane tylko w tej przeglądarce. Gra jest fikcyjną łamigłówką — nie symuluje rzeczywistego kontaktu z AI. <span id="best"></span></p>
+<p class="foot">Sterowanie: dotknij segmentu lub wybierz go klawiszem Tab i naciśnij Enter. Najlepszy wynik zapisuje się w przeglądarce, a po zalogowaniu w zakładce GRA również w rankingu graczy. Otwórz ranking przyciskiem 🏆 nad grą. Gra jest fikcyjną łamigłówką — nie symuluje rzeczywistego kontaktu z AI. <span id="best"></span></p>
 </main>
 <script>
 (function(){
@@ -177,6 +177,7 @@ function win(){
  locked=true;clearInterval(tick);elapsed=Math.floor((Date.now()-startedAt)/1000);
  var gain=Math.max(100,1200-moves*22-elapsed*4)+hints*75;
  score+=gain;
+ try{if(window.parent!==window)window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'signal',score:score,level:level}),window.location.origin);}catch(_){}
  if(score>best){best=score;try{localStorage.setItem("genesis-signal-best",String(best));}catch(e){}}
  document.getElementById("best").textContent="Najlepszy wynik: "+best;
  updateStats();document.getElementById("status").textContent="Transmisja przywrócona! +"+gain+" punktów.";
