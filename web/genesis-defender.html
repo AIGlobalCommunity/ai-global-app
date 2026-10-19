@@ -24,7 +24,7 @@ button.alt{background:#173147;color:#f0dfba;border-color:#506e7f}button:focus-vi
 .controls{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:10px auto}
 .tip{font-size:11px;line-height:1.65;color:#a6b7c5;text-align:center;max-width:540px;margin:9px auto}
 kbd{border:1px solid #536979;border-radius:3px;padding:1px 4px;color:#e5d4ad}
-@media(max-width:450px){main{padding:10px 5px 20px}.hud strong{font-size:16px}.hud span{font-size:9px}}
+@media(max-width:450px){main{padding:6px 5px 10px}.hud strong{font-size:16px}.hud span{font-size:9px}}
 </style></head><body><main>
 <div class="tag">THE GENESIS ERA · ARCADE HTML5</div><h1>GENESIS DEFENDER</h1>
 <p class="sub">Broń stacji Genesis przed falami dronów. Przetrwaj jak najdłużej.</p>
@@ -51,6 +51,13 @@ const scoreEl=document.getElementById('score'),waveEl=document.getElementById('w
 let best=0;try{best=Number(localStorage.getItem('genesis-defender-best')||0)||0;}catch(_){}
 bestEl.textContent=best;
 let mode='menu',score=0,wave=1,lives=3,shield=0,ship={x:210,y:536},keys={},bullets=[],enemies=[],enemyShots=[],pickups=[],sparks=[],stars=[],elapsed=0,spawnTimer=0,fireTimer=0,raf=0,last=0,invincible=0,dragging=false;
+let lastReportedScore=0,lastReportedAt=-10;
+function reportScore(force=false){
+ if(score<1||score<=lastReportedScore)return;
+ if(!force&&elapsed-lastReportedAt<6)return;
+ lastReportedScore=score;lastReportedAt=elapsed;
+ try{if(window.parent!==window)window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'defender',score:score,level:wave}),window.location.origin);}catch(_){}
+}
 for(let i=0;i<85;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:.5+Math.random()*1.4,v:12+Math.random()*26});
 const rand=(a,b)=>a+Math.random()*(b-a);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -61,15 +68,15 @@ function panel(title,description,label,action){
  start.textContent=label;start.onclick=action;overlay.hidden=false;
 }
 function reset(){
- score=0;wave=1;lives=3;shield=0;ship.x=210;ship.y=536;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
+ score=0;wave=1;lives=3;shield=0;lastReportedScore=0;lastReportedAt=-10;ship.x=210;ship.y=536;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
  elapsed=0;spawnTimer=.7;fireTimer=0;invincible=1.5;mode='playing';overlay.hidden=true;last=performance.now();hud();canvas.focus({preventScroll:true});
 }
 function end(){
- mode='over';if(score>0){try{if(window.parent!==window)window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'defender',score:score,level:wave}),window.location.origin);}catch(_){}}if(score>best){best=score;try{localStorage.setItem('genesis-defender-best',String(best));}catch(_){}}
+ mode='over';reportScore(true);if(score>best){best=score;try{localStorage.setItem('genesis-defender-best',String(best));}catch(_){}}
  hud();panel('KONIEC MISJI','Wynik: '+score+' punktów. Dotarłeś do fali '+wave+'. Spróbuj ponownie i pobij swój rekord!','ZAGRAJ PONOWNIE →',reset);
 }
 function pause(){
- if(mode==='playing'){mode='paused';panel('MISJA WSTRZYMANA','Twoja stacja czeka. Wróć do walki, kiedy będziesz gotowy.','WZNÓW MISJĘ →',resume);}
+ if(mode==='playing'){reportScore(true);mode='paused';panel('MISJA WSTRZYMANA','Twoja stacja czeka. Wróć do walki, kiedy będziesz gotowy.','WZNÓW MISJĘ →',resume);}
  else if(mode==='paused')resume();
 }
 function resume(){mode='playing';overlay.hidden=true;last=performance.now();canvas.focus({preventScroll:true});}
@@ -124,7 +131,7 @@ function update(dt){
  for(const b of enemyShots)if(!b.dead&&collision(ship,b,15)){b.dead=true;hit();}
  for(const p of pickups)if(!p.dead&&collision(ship,p,22)){p.dead=true;if(p.kind==='heal')lives=Math.min(5,lives+1);else shield=Math.min(3,shield+1);particles(p.x,p.y,'#91f4c9',12);}
  bullets=bullets.filter(b=>!b.dead&&b.y>-20);enemies=enemies.filter(e=>!e.dead);enemyShots=enemyShots.filter(b=>!b.dead&&b.y<H+20&&b.x>-20&&b.x<W+20);
- pickups=pickups.filter(p=>!p.dead&&p.y<H+20);sparks=sparks.filter(p=>p.life>0);hud();
+ pickups=pickups.filter(p=>!p.dead&&p.y<H+20);sparks=sparks.filter(p=>p.life>0);reportScore();hud();
 }
 function polygon(x,y,r,n,rot){ctx.beginPath();for(let i=0;i<n;i++){const a=rot+i*Math.PI*2/n;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.closePath();}
 function render(){
@@ -168,7 +175,7 @@ window.addEventListener('keyup',e=>{keys[e.code]=false;});
 window.addEventListener('blur',()=>{keys={};if(mode==='playing')pause();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='playing')pause();});
 document.getElementById('pause').onclick=pause;
-document.getElementById('restart').onclick=()=>{mode='menu';panel('NOWA MISJA','Rozpocznij nową rozgrywkę. Poprzedni wynik zostanie wyzerowany.','ROZPOCZNIJ →',reset);};
+document.getElementById('restart').onclick=()=>{reportScore(true);mode='menu';panel('NOWA MISJA','Rozpocznij nową rozgrywkę. Poprzedni wynik zostanie wyzerowany.','ROZPOCZNIJ →',reset);};
 panel('GENESIS DEFENDER','Strzelanka arcade. Lataj do przodu, do tyłu i na boki: przeciągaj palcem lub użyj strzałek / W A S D. Statek strzela automatycznie. Zbieraj tarcze i naprawy, unikaj dronów!','ROZPOCZNIJ MISJĘ →',reset);
 last=performance.now();raf=requestAnimationFrame(frame);
 })();
