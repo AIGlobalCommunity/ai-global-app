@@ -20,12 +20,16 @@ class GenesisGameTab extends StatelessWidget {
           const Center(child: Icon(
             Icons.sports_esports_outlined, color: gold, size: 44)),
           const SizedBox(height: 10),
-          const Center(child: Text('GENESIS ARCADE',
+          const Center(child: Text('GRA',
             style: TextStyle(fontSize: 24, color: gold,
               fontWeight: FontWeight.bold))),
           const SizedBox(height: 10),
           const Center(child: Text(
-            'Wybierz grę. Otworzy się w przeglądarce.')),
+            'WYBIERZ GRĘ I ODKRYWAJ NOWE WYZWANIA')),
+          const SizedBox(height: 5),
+          const Center(child: Text(
+            'Gry otwierają się w przeglądarce.',
+            style: TextStyle(fontSize: 11))),
           const SizedBox(height: 20),
           _card(
             context: context,
