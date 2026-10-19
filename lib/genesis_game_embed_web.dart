@@ -40,8 +40,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   void initState() {
     super.initState();
     if (!registered) {
-      _register(signalView, 'genesis-game.html?embed=1', 'GENESIS SIGNAL');
-      _register(defenderView, 'genesis-defender.html?embed=1', 'GENESIS DEFENDER');
+      _register(signalView, 'genesis-game.html?embed=1&version=20261019b', 'GENESIS SIGNAL');
+      _register(defenderView, 'genesis-defender.html?embed=1&version=20261019b', 'GENESIS DEFENDER');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
