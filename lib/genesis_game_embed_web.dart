@@ -27,6 +27,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
   static const scoreStoragePrefix = 'agc-game-pending-';
+  static const buildVersion = String.fromEnvironment(
+    'AGC_BUILD_VERSION', defaultValue: 'DEV');
+  static const buildDate = String.fromEnvironment(
+    'AGC_BUILD_DATE', defaultValue: 'LOCAL');
+  bool diagnosticsOpen = false;
+  String lastBridgeStatus = 'Brak zdarzeń z gry';
+  String lastDatabaseStatus = 'Nie sprawdzono';
+  String lastSaveStatus = 'Nie wysłano wyniku';
+  int receivedScoreEvents = 0;
+  int? lastReceivedScore;
   int? game;
   int? rankingGame;
   Future<List<Map<String, dynamic>>>? rankingFuture;
@@ -100,6 +110,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     final points = decoded['score'] as int;
     final stage = decoded['level'] as int;
+    receivedScoreEvents++;
+    lastReceivedScore = points;
+    lastBridgeStatus = 'Odebrano ${decoded['game']}: $points pkt · poziom $stage';
+    if (mounted) setState(() {});
+
     if (points < 1 || points > 10000000 || stage < 1 || stage > 1000) {
       return;
     }
@@ -220,6 +235,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           }
           if (confirmed) {
             _clearConfirmedScore(key, points);
+            lastSaveStatus = 'POTWIERDZONE: $key · $points pkt';
             setState(() {
               scoreNotice = GenesisLanguage.copy(
                 '✓ Wynik zapisany w rankingu! 🏆',
@@ -230,17 +246,20 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             });
           } else {
             pendingScores[key] = pending;
+            lastSaveStatus = 'OCZEKUJE: $key · $points pkt';
             setState(() => scoreNotice = GenesisLanguage.copy(
               'Wynik oczekuje na zapis. Ponowię automatycznie.',
               'Score pending. I will retry automatically.'));
           }
         } on PostgrestException catch (error) {
+          lastSaveStatus = 'BŁĄD BAZY: ${error.message}';
           pendingScores[key] = pending;
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
             'Błąd zapisu: ${error.message}. Ponowię automatycznie.',
             'Save error: ${error.message}. Retrying automatically.'));
-        } catch (_) {
+        } catch (error) {
+          lastSaveStatus = 'BŁĄD POŁĄCZENIA: $error';
           pendingScores[key] = pending;
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
@@ -341,6 +360,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ),
           ]),
         ),
+        _versionLabel(),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
           child: Text(GenesisLanguage.copy(
@@ -454,6 +474,117 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       ]),
     );
   }
+
+
+  Widget _versionLabel() => Center(
+    child: SelectableText(
+      'GENESIS ARCADE · v2026.10.19 · BUILD $buildVersion · $buildDate UTC',
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        color: Color(0xFF90B2C8), fontSize: 10, letterSpacing: .4),
+    ),
+  );
+
+  void _openDiagnostics() {
+    setState(() => diagnosticsOpen = true);
+    _checkDatabase();
+  }
+
+  Future<void> _checkDatabase() async {
+    if (AgcBackend.user == null) {
+      if (mounted) setState(() =>
+        lastDatabaseStatus = 'Brak logowania — zaloguj się w KONTO');
+      return;
+    }
+    try {
+      await AgcBackend.client
+        .from('agc_game_scores')
+        .select('game_key,best_score')
+        .limit(1);
+      if (mounted) setState(() =>
+        lastDatabaseStatus = 'POŁĄCZENIE OK — odczyt rankingu działa');
+    } on PostgrestException catch (error) {
+      if (mounted) setState(() =>
+        lastDatabaseStatus = 'BŁĄD: ${error.message}');
+    } catch (error) {
+      if (mounted) setState(() =>
+        lastDatabaseStatus = 'BŁĄD: $error');
+    }
+  }
+
+  Widget _diagnosticsPage() => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(children: [
+            const Icon(Icons.bug_report_outlined, color: gold),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('DIAGNOSTYKA GRY',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
+            IconButton.filled(
+              onPressed: () => setState(() => diagnosticsOpen = false),
+              tooltip: 'Zamknij diagnostykę',
+              icon: const Icon(Icons.close)),
+          ]),
+          _versionLabel(),
+          const Divider(height: 24),
+          Expanded(child: ListView(children: [
+            ListTile(
+              title: const Text('Logowanie'),
+              subtitle: Text(AgcBackend.user == null
+                ? 'BRAK — wyniki nie będą zapisywane'
+                : 'OK — konto zalogowane')),
+            ListTile(
+              title: const Text('Połączenie z rankingiem'),
+              subtitle: Text(lastDatabaseStatus)),
+            ListTile(
+              title: const Text('Komunikaty z gry'),
+              subtitle: Text('$lastBridgeStatus · zdarzeń: $receivedScoreEvents')),
+            ListTile(
+              title: const Text('Ostatni odebrany wynik'),
+              subtitle: Text(lastReceivedScore?.toString() ?? 'Brak')),
+            ListTile(
+              title: const Text('Zapis do bazy'),
+              subtitle: Text(lastSaveStatus)),
+            ListTile(
+              title: const Text('Kolejka wyników'),
+              subtitle: Text(pendingScores.isEmpty
+                ? 'Pusta' : pendingScores.entries
+                    .map((e) => '${e.key}: ${e.value.$1} pkt')
+                    .join(' · '))),
+            if (scoreNotice != null)
+              ListTile(title: const Text('Komunikat'),
+                subtitle: Text(scoreNotice!)),
+          ])),
+          Row(children: [
+            Expanded(child: OutlinedButton.icon(
+              onPressed: _checkDatabase,
+              icon: const Icon(Icons.wifi_tethering),
+              label: const Text('SPRAWDŹ BAZĘ'),
+            )),
+            const SizedBox(width: 8),
+            Expanded(child: FilledButton.icon(
+              onPressed: () {
+                _recoverPendingScores();
+                _savePendingScores();
+                _checkDatabase();
+              },
+              icon: const Icon(Icons.sync),
+              label: const Text('PONÓW ZAPIS'),
+            )),
+          ]),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () => setState(() => diagnosticsOpen = false),
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('WRÓĆ DO GRY'),
+          ),
+        ],
+      ),
+    ),
+  );
 
   static const gold = Color(0xFFD8B66A);
 
@@ -697,7 +828,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             'WYBIERZ GRĘ I ODKRYWAJ NOWE WYZWANIA',
             'CHOOSE A GAME AND DISCOVER NEW CHALLENGES'),
             textAlign: TextAlign.center),
-          const SizedBox(height: 20),
+          _versionLabel(),
+          TextButton.icon(
+            onPressed: _openDiagnostics,
+            icon: const Icon(Icons.bug_report_outlined, size: 17),
+            label: const Text('DIAGNOSTYKA RANKINGU'),
+          ),
+          const SizedBox(height: 10),
           LayoutBuilder(builder: (context, constraints) {
             final cards = [
               _gameCard(
@@ -744,6 +881,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   Widget build(BuildContext context) {
+    if (diagnosticsOpen) {
+      return _diagnosticsPage();
+    }
     if (rankingGame != null) {
       return _rankingPage(rankingGame!);
     }
@@ -771,6 +911,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             style: const TextStyle(
               fontWeight: FontWeight.bold, color: gold, fontSize: 16),
           )),
+          IconButton(
+            onPressed: _openDiagnostics,
+            tooltip: 'Diagnostyka rankingu',
+            icon: const Icon(Icons.bug_report_outlined),
+          ),
           IconButton.filledTonal(
             onPressed: () => _showRanking(selectedGame),
             tooltip: GenesisLanguage.copy(
@@ -779,6 +924,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ),
         ]),
       ),
+      _versionLabel(),
       if (AgcBackend.user == null)
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 5),
