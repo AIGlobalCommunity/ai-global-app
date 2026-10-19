@@ -105,7 +105,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         'agc_submit_game_score',
         params: {'p_game_key': gameKey, 'p_score': points, 'p_level': stage},
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => scoreNotice = updated == true
         ? GenesisLanguage.copy(
             'Nowy rekord zapisany w rankingu!', 'New personal best saved!')
@@ -113,12 +115,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             'Wynik zapisany wcześniej lub bez poprawy rekordu.',
             'Your previous personal best still stands.'));
     } on PostgrestException catch (_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => scoreNotice = GenesisLanguage.copy(
         'Nie udało się zapisać wyniku. Sprawdź połączenie.',
         'Could not save score. Check your connection.'));
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => scoreNotice = GenesisLanguage.copy(
         'Nie udało się zapisać wyniku.', 'Could not save score.'));
     } finally {
@@ -137,7 +143,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       .order('updated_at', ascending: true)
       .limit(50);
     final rows = List<Map<String, dynamic>>.from(raw);
-    if (rows.isEmpty) return rows;
+    if (rows.isEmpty) {
+      return rows;
+    }
     final ids = rows.map((r) => r['member_id'] as String).toList();
     final members = await AgcBackend.client
       .from('agc_public_scores')
