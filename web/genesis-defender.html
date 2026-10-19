@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GENESIS DEFENDER — THE GENESIS ERA</title>
+<style>
+:root{color-scheme:dark;--gold:#e3c485;--ice:#75dbf4;--ink:#081423}*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#071323;color:#f7f0dc;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+body{background:radial-gradient(ellipse at 50% 0,#1b3d50,transparent 70%),#071323}
+main{max-width:740px;margin:0 auto;padding:16px 10px 25px}
+h1{font:normal clamp(25px,5vw,37px) Georgia,serif;letter-spacing:2px;color:var(--gold);text-align:center;margin:4px 0 4px}
+.tag{font-size:10px;letter-spacing:2px;color:var(--gold);text-align:center}
+.sub{color:#b3c4d0;font-size:12px;text-align:center;margin:4px 0 12px}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 auto 9px;max-width:540px}
+.hud>div{background:#10283c;border:1px solid #365468;border-radius:8px;padding:8px 3px;text-align:center}
+.hud strong{display:block;font-size:19px;font-variant-numeric:tabular-nums;color:#f4dfad}
+.hud span{font-size:10px;letter-spacing:1px;color:#a7bac8;text-transform:uppercase}
+.arena{width:min(100%,540px);margin:auto;position:relative;border:1px solid #65849a;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px #0008;background:#081726}
+canvas{display:block;width:100%;aspect-ratio:420/600;touch-action:none;cursor:crosshair}
+.overlay{position:absolute;inset:0;background:#06131fe8;display:flex;justify-content:center;align-items:center;padding:15px;z-index:2}
+.overlay[hidden]{display:none}.modal{border:1px solid #957f57;background:#0d2336f5;border-radius:15px;padding:25px 20px;text-align:center;max-width:350px;width:100%}
+.modal .emblem{font-size:38px;color:var(--gold)}.modal h2{font:normal 27px Georgia,serif;color:var(--gold);margin:7px 0}
+.modal p{color:#cad6df;font-size:13px;line-height:1.6}
+button{font:700 13px system-ui;cursor:pointer;min-height:43px;border-radius:9px;border:1px solid #967a4b;background:var(--gold);color:#112435;padding:10px 15px}
+button.alt{background:#173147;color:#f0dfba;border-color:#506e7f}button:focus-visible{outline:3px solid #fff}
+.controls{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:10px auto}
+.tip{font-size:11px;line-height:1.65;color:#a6b7c5;text-align:center;max-width:540px;margin:9px auto}
+kbd{border:1px solid #536979;border-radius:3px;padding:1px 4px;color:#e5d4ad}
+@media(max-width:450px){main{padding:10px 5px 20px}.hud strong{font-size:16px}.hud span{font-size:9px}}
+</style></head><body><main>
+<div class="tag">THE GENESIS ERA · ARCADE HTML5</div><h1>GENESIS DEFENDER</h1>
+<p class="sub">Broń stacji Genesis przed falami dronów. Przetrwaj jak najdłużej.</p>
+<div class="hud" aria-label="Wyniki gry">
+<div><strong id="score">0</strong><span>Punkty</span></div><div><strong id="wave">1</strong><span>Fala</span></div>
+<div><strong id="lives">♥ ♥ ♥</strong><span>Życia</span></div><div><strong id="best">0</strong><span>Rekord</span></div>
+</div>
+<div class="arena">
+<canvas id="field" width="420" height="600" tabindex="0" aria-label="Gra strzelanka. Steruj strzałkami, WASD albo przesuwaj palcem. Strzelanie automatyczne."></canvas>
+<div class="overlay" id="overlay"><div class="modal">
+<div class="emblem" id="emblem">✦</div><h2 id="headline">GENESIS DEFENDER</h2>
+<p id="description">Steruj statkiem palcem, myszką lub klawiszami ← → / A D. Działo strzela automatycznie. Unikaj wrogich pocisków, zbieraj tarcze i naprawy.</p>
+<button id="start" type="button">ROZPOCZNIJ MISJĘ →</button>
+</div></div></div>
+<div class="controls"><button id="pause" class="alt" type="button">Ⅱ Pauza</button><button id="restart" class="alt" type="button">↺ Nowa gra</button></div>
+<p class="tip">📱 Telefon: przesuń palcem po planszy. 🖥️ Komputer: <kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd>, <kbd>Spacja</kbd> — pauza. Strzelanie automatyczne. Rekord zapisuje się tylko na tym urządzeniu; punkty gry nie są punktami GP.</p>
+</main>
+<script>
+(function(){
+'use strict';
+const canvas=document.getElementById('field'),ctx=canvas.getContext('2d');
+const W=420,H=600,overlay=document.getElementById('overlay'),start=document.getElementById('start');
+const scoreEl=document.getElementById('score'),waveEl=document.getElementById('wave'),livesEl=document.getElementById('lives'),bestEl=document.getElementById('best');
+let best=0;try{best=Number(localStorage.getItem('genesis-defender-best')||0)||0;}catch(_){}
+bestEl.textContent=best;
+let mode='menu',score=0,wave=1,lives=3,shield=0,ship={x:210,y:536},keys={},bullets=[],enemies=[],enemyShots=[],pickups=[],sparks=[],stars=[],elapsed=0,spawnTimer=0,fireTimer=0,raf=0,last=0,invincible=0,dragging=false;
+for(let i=0;i<85;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:.5+Math.random()*1.4,v:12+Math.random()*26});
+const rand=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hud(){scoreEl.textContent=score;waveEl.textContent=wave;livesEl.textContent='♥ '.repeat(lives).trim()||'—';bestEl.textContent=best;}
+function panel(title,description,label,action){
+ document.getElementById('headline').textContent=title;
+ document.getElementById('description').textContent=description;
+ start.textContent=label;start.onclick=action;overlay.hidden=false;
+}
+function reset(){
+ score=0;wave=1;lives=3;shield=0;ship.x=210;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
+ elapsed=0;spawnTimer=.7;fireTimer=0;invincible=1.5;mode='playing';overlay.hidden=true;last=performance.now();hud();canvas.focus({preventScroll:true});
+}
+function end(){
+ mode='over';if(score>best){best=score;try{localStorage.setItem('genesis-defender-best',String(best));}catch(_){}}
+ hud();panel('KONIEC MISJI','Wynik: '+score+' punktów. Dotarłeś do fali '+wave+'. Spróbuj ponownie i pobij swój rekord!','ZAGRAJ PONOWNIE →',reset);
+}
+function pause(){
+ if(mode==='playing'){mode='paused';panel('MISJA WSTRZYMANA','Twoja stacja czeka. Wróć do walki, kiedy będziesz gotowy.','WZNÓW MISJĘ →',resume);}
+ else if(mode==='paused')resume();
+}
+function resume(){mode='playing';overlay.hidden=true;last=performance.now();canvas.focus({preventScroll:true});}
+function particles(x,y,color,n){
+ for(let i=0;i<n;i++)sparks.push({x,y,vx:rand(-125,125),vy:rand(-125,125),life:rand(.25,.65),max:.65,color});
+}
+function spawn(){
+ const elite=Math.random()<Math.min(.12+wave*.015,.32),r=elite?19:14;
+ enemies.push({x:rand(28,W-28),y:-25,r,hp:elite?3:1,max:elite?3:1,vy:rand(54,88)+wave*12,vx:rand(-22,22),cooldown:rand(1.2,3.4),value:elite?90:35});
+}
+function collision(a,b,r){return (a.x-b.x)**2+(a.y-b.y)**2<r*r;}
+function hit(){
+ if(invincible>0||mode!=='playing')return;
+ if(shield>0){shield--;invincible=.7;particles(ship.x,ship.y,'#73e6ff',15);return;}
+ lives--;invincible=1.5;particles(ship.x,ship.y,'#ffd18a',24);hud();if(lives<=0)end();
+}
+function update(dt){
+ elapsed+=dt;wave=1+Math.floor(elapsed/24);invincible=Math.max(0,invincible-dt);
+ for(const s of stars){s.y+=s.v*dt*(1+wave*.06);if(s.y>H){s.y=0;s.x=Math.random()*W;}}
+ let direction=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
+ ship.x=clamp(ship.x+direction*280*dt,22,W-22);
+ fireTimer-=dt;if(fireTimer<=0){bullets.push({x:ship.x,y:ship.y-20,vy:-480});fireTimer=.19;}
+ spawnTimer-=dt;if(spawnTimer<=0){spawn();spawnTimer=Math.max(.28,1.0-wave*.065)*rand(.7,1.35);}
+ for(const b of bullets)b.y+=b.vy*dt;
+ for(const e of enemies){
+ e.y+=e.vy*dt;e.x=clamp(e.x+e.vx*dt,22,W-22);if(e.x<=22||e.x>=W-22)e.vx*=-1;
+ e.cooldown-=dt;
+ if(e.cooldown<=0&&e.y>25&&e.y<H-90){
+  const dx=ship.x-e.x,dy=ship.y-e.y,len=Math.hypot(dx,dy)||1;
+  enemyShots.push({x:e.x,y:e.y,vx:dx/len*(100+wave*5),vy:dy/len*(100+wave*5)});
+  e.cooldown=rand(1.8,3.8);
+ }
+ }
+ for(const b of enemyShots){b.x+=b.vx*dt;b.y+=b.vy*dt;}
+ for(const p of pickups)p.y+=90*dt;
+ for(const p of sparks){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;}
+ for(const b of bullets){if(b.dead)continue;
+   for(const e of enemies){if(e.dead)continue;
+     if(collision(b,e,e.r+5)){b.dead=true;e.hp--;particles(b.x,b.y,'#8deeff',4);
+       if(e.hp<=0){e.dead=true;score+=e.value;particles(e.x,e.y,'#e6c480',15);
+         if(Math.random()<.085)pickups.push({x:e.x,y:e.y,kind:Math.random()<.55?'shield':'heal'});}
+       break;
+     }
+   }
+ }
+ for(const e of enemies){if(!e.dead&&collision(ship,e,e.r+13)){e.dead=true;particles(e.x,e.y,'#ff9b8e',13);hit();}
+   if(e.y>H+25){e.dead=true;hit();}
+ }
+ for(const b of enemyShots)if(!b.dead&&collision(ship,b,15)){b.dead=true;hit();}
+ for(const p of pickups)if(!p.dead&&collision(ship,p,22)){p.dead=true;if(p.kind==='heal')lives=Math.min(5,lives+1);else shield=Math.min(3,shield+1);particles(p.x,p.y,'#91f4c9',12);}
+ bullets=bullets.filter(b=>!b.dead&&b.y>-20);enemies=enemies.filter(e=>!e.dead);enemyShots=enemyShots.filter(b=>!b.dead&&b.y<H+20&&b.x>-20&&b.x<W+20);
+ pickups=pickups.filter(p=>!p.dead&&p.y<H+20);sparks=sparks.filter(p=>p.life>0);hud();
+}
+function polygon(x,y,r,n,rot){ctx.beginPath();for(let i=0;i<n;i++){const a=rot+i*Math.PI*2/n;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.closePath();}
+function render(){
+ ctx.fillStyle='#071524';ctx.fillRect(0,0,W,H);
+ const grad=ctx.createRadialGradient(W/2,H*.35,20,W/2,H*.35,320);grad.addColorStop(0,'#123c50');grad.addColorStop(1,'#071524');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle='#174155';ctx.lineWidth=.5;for(let x=0;x<W;x+=42){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+ for(let y=0;y<H;y+=42){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+ for(const s of stars){ctx.fillStyle='#c5eaf3';ctx.globalAlpha=.3+s.r*.28;ctx.fillRect(s.x,s.y,s.r,s.r);}ctx.globalAlpha=1;
+ ctx.fillStyle='#e9d6a6';ctx.font='11px monospace';ctx.fillText('SEKTOR '+String(wave).padStart(2,'0'),14,22);
+ for(const b of bullets){ctx.shadowColor='#80eaff';ctx.shadowBlur=13;ctx.fillStyle='#b8f8ff';ctx.fillRect(b.x-2,b.y-11,4,15);}
+ ctx.shadowBlur=0;
+ for(const e of enemies){ctx.save();ctx.translate(e.x,e.y);ctx.shadowColor='#ff9e76';ctx.shadowBlur=10;polygon(0,0,e.r,6,Math.PI/6);ctx.fillStyle=e.max>1?'#ab5c76':'#8e5470';ctx.fill();ctx.strokeStyle='#f3af8c';ctx.lineWidth=2;ctx.stroke();ctx.shadowBlur=0;polygon(0,0,e.r*.48,4,Math.PI/4);ctx.fillStyle='#ffdf9d';ctx.fill();ctx.restore();}
+ for(const b of enemyShots){ctx.beginPath();ctx.arc(b.x,b.y,4,0,Math.PI*2);ctx.fillStyle='#ff9c88';ctx.shadowColor='#ff8866';ctx.shadowBlur=9;ctx.fill();}
+ ctx.shadowBlur=0;
+ for(const p of pickups){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(elapsed*2);ctx.strokeStyle=p.kind==='heal'?'#a5ffad':'#83e6ff';ctx.lineWidth=3;ctx.strokeRect(-10,-10,20,20);ctx.rotate(-elapsed*2);ctx.fillStyle=p.kind==='heal'?'#a5ffad':'#83e6ff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.kind==='heal'?'+':'◇',0,0);ctx.restore();}
+ if(mode!=='over'&&(invincible<=0||Math.floor(invincible*10)%2===0)){
+  ctx.save();ctx.translate(ship.x,ship.y);ctx.shadowColor='#6bdfff';ctx.shadowBlur=16;
+  ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(17,18);ctx.lineTo(0,11);ctx.lineTo(-17,18);ctx.closePath();
+  ctx.fillStyle='#71b8d1';ctx.fill();ctx.strokeStyle='#f3e0a6';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#fff0bc';ctx.fillRect(-3,-5,6,13);
+  ctx.shadowBlur=0;ctx.fillStyle='#5bdaff';ctx.beginPath();ctx.moveTo(-7,17);ctx.lineTo(0,28+Math.random()*6);ctx.lineTo(7,17);ctx.fill();ctx.restore();
+ }
+ if(shield>0){ctx.strokeStyle='#81e8ff';ctx.lineWidth=2;ctx.globalAlpha=.6;ctx.beginPath();ctx.arc(ship.x,ship.y,27,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle='#91efff';ctx.font='11px monospace';ctx.fillText('TARCZA '+shield,12,H-13);}
+ for(const p of sparks){ctx.globalAlpha=clamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,3,3);}ctx.globalAlpha=1;ctx.shadowBlur=0;
+}
+function frame(t){
+ const dt=Math.min((t-last)/1000,.035);last=t;
+ if(mode==='playing')update(dt);
+ render();raf=requestAnimationFrame(frame);
+}
+function setPointer(event){const r=canvas.getBoundingClientRect();ship.x=clamp((event.clientX-r.left)/r.width*W,22,W-22);}
+canvas.addEventListener('pointerdown',e=>{if(mode!=='playing')return;dragging=true;canvas.setPointerCapture(e.pointerId);setPointer(e);});
+canvas.addEventListener('pointermove',e=>{if(dragging&&mode==='playing')setPointer(e);});
+canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
+window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Space','KeyA','KeyD'].includes(e.code)&&e.target===canvas)e.preventDefault();keys[e.code]=true;if(e.code==='Space'&&!e.repeat&&e.target===canvas)pause();});
+window.addEventListener('keyup',e=>{keys[e.code]=false;});
+window.addEventListener('blur',()=>{keys={};if(mode==='playing')pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='playing')pause();});
+document.getElementById('pause').onclick=pause;
+document.getElementById('restart').onclick=()=>{mode='menu';panel('NOWA MISJA','Rozpocznij nową rozgrywkę. Poprzedni wynik zostanie wyzerowany.','ROZPOCZNIJ →',reset);};
+panel('GENESIS DEFENDER','Strzelanka arcade. Steruj palcem, myszką albo klawiszami ← → / A D. Statek strzela automatycznie. Zbieraj tarcze i naprawy, unikaj dronów!','ROZPOCZNIJ MISJĘ →',reset);
+last=performance.now();raf=requestAnimationFrame(frame);
+})();
+</script></body></html>
