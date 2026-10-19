@@ -38,6 +38,26 @@ button.action:disabled{opacity:.45;cursor:not-allowed}
 .modal{width:min(100%,390px);background:#10263b;border:1px solid #8d7549;border-radius:17px;padding:27px 20px;text-align:center;box-shadow:0 15px 70px #0008}
 .modal .symbol{font-size:45px;color:var(--gold)}.modal h2{font:normal 29px Georgia,serif;color:#e9d5a8;margin:10px 0}.modal p{font-size:13px;color:#c8d4dc;line-height:1.6}.modal button{margin-top:7px}
 @media(max-width:460px){main{padding:7px 7px 12px}.board-wrap{padding:6px;border-radius:12px}.board{gap:3px}.tile{border-radius:5px}.stats{gap:5px}.stat{padding:8px 2px}.stat b{font-size:17px}.stat span{font-size:9px}.actions{gap:6px}button.action{padding:10px 12px;font-size:11px}.legend{font-size:10px}}
+
+/* Embedded arcade: prioritize a fully visible, playable board. */
+body.embedded main{padding:5px 7px 8px}
+body.embedded .eyebrow,body.embedded .lead,body.embedded .foot{display:none}
+body.embedded h1{font-size:23px;margin:0 0 5px}
+body.embedded .stats{margin-bottom:5px;gap:5px}
+body.embedded .stat{padding:4px 2px}
+body.embedded .stat b{font-size:16px}
+body.embedded .stat span{font-size:9px}
+body.embedded .status{min-height:20px;font-size:11px}
+body.embedded .board-wrap{width:min(100%,420px,max(130px,calc(100dvh - 202px)));padding:4px;border-radius:11px}
+body.embedded .board{gap:3px}
+body.embedded .legend{margin:4px auto 5px;font-size:10px}
+body.embedded .actions{gap:5px}
+body.embedded button.action{min-height:35px;padding:7px 9px;font-size:11px}
+body.embedded .modal{padding:12px 10px}
+body.embedded .modal .symbol{font-size:25px}
+body.embedded .modal h2{font-size:21px;margin:4px 0}
+body.embedded .modal p{font-size:11px;line-height:1.35;margin:5px 0}
+@media(max-height:470px){body.embedded .status{min-height:16px}body.embedded .modal .symbol{display:none}body.embedded .modal p{font-size:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -75,6 +95,7 @@ button.action:disabled{opacity:.45;cursor:not-allowed}
 <script>
 (function(){
 "use strict";
+if(new URLSearchParams(window.location.search).has('embed'))document.body.classList.add('embedded');
 var N=1,E=2,S=4,W=8, dirs=[[-1,0,N,S],[0,1,E,W],[1,0,S,N],[0,-1,W,E]];
 var level=1,score=0,moves=0,hints=2,startedAt=0,elapsed=0,tick=null,tiles=[],solution=[],path=[],size=5,locked=true;
 var board=document.getElementById("board"),overlay=document.getElementById("overlay");
