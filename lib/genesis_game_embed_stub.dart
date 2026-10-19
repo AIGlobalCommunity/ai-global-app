@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'agc_backend.dart';
@@ -37,7 +36,7 @@ class GenesisGameTab extends StatelessWidget {
             title: 'GENESIS SIGNAL',
             description: 'Łamigłówka: połącz źródło sygnału z celem.',
             file: 'genesis-game.html',
-            artwork: 'assets/genesis_signal_card.svg',
+            artwork: 'assets/genesis_signal_cinematic.jpg',
           ),
           const SizedBox(height: 12),
           _card(
@@ -46,7 +45,7 @@ class GenesisGameTab extends StatelessWidget {
             title: 'GENESIS DEFENDER',
             description: 'Strzelanka: broń stacji przed falami dronów.',
             file: 'genesis-defender.html',
-            artwork: 'assets/genesis_defender_card.svg',
+            artwork: 'assets/genesis_defender_cinematic.jpg',
           ),
         ],
       ),
@@ -83,7 +82,7 @@ class GenesisGameTab extends StatelessWidget {
             child: Stack(children: [
               SizedBox(
                 width: double.infinity, height: 215,
-                child: SvgPicture.asset(artwork, fit: BoxFit.cover),
+                child: Image.asset(artwork, fit: BoxFit.cover, filterQuality: FilterQuality.high),
               ),
               Positioned(
                 bottom: 12, left: 12, right: 12,
