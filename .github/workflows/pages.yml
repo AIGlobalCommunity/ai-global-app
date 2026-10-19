@@ -73,17 +73,20 @@ jobs:
       - name: Verify bundled HTML5 Genesis Signal game
         run: |
           test -s build/web/genesis-game.html
+          test -s build/web/genesis-defender.html
           python3 - <<'PY'
           from pathlib import Path
           import re
-          page = Path('build/web/genesis-game.html').read_text(encoding='utf-8')
-          scripts = re.findall(r'<script>(.*?)</script>', page, re.DOTALL)
-          if len(scripts) != 1:
-              raise SystemExit('Expected one self-contained Genesis Signal game script')
-          Path('/tmp/genesis-signal-check.js').write_text(scripts[0], encoding='utf-8')
+          for name in ('genesis-game', 'genesis-defender'):
+              page = Path(f'build/web/{name}.html').read_text(encoding='utf-8')
+              scripts = re.findall(r'<script>(.*?)</script>', page, re.DOTALL)
+              if len(scripts) != 1:
+                  raise SystemExit(f'Expected one self-contained {name} game script')
+              Path(f'/tmp/{name}-check.js').write_text(scripts[0], encoding='utf-8')
           PY
-          node --check /tmp/genesis-signal-check.js
-          echo "Genesis Signal HTML5 game bundled and JavaScript syntax verified"
+          node --check /tmp/genesis-game-check.js
+          node --check /tmp/genesis-defender-check.js
+          echo "Both HTML5 games bundled and JavaScript syntax verified"
       - name: Verify bundled AGC artwork
         run: |
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
