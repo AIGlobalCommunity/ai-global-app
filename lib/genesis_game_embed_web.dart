@@ -82,7 +82,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     final activeFrame = frames[game == 0 ? signalView : defenderView];
-    if (activeFrame == null || event.source != activeFrame.contentWindow) {
+    if (activeFrame == null) {
       return;
     }
     dynamic decoded;
@@ -114,6 +114,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     if (current == null || points > current.$1) {
       pendingScores[key] = (points, stage);
     }
+    try {
+      html.window.localStorage['$scoreStoragePrefix$key'] = jsonEncode({
+        'game': key, 'score': points, 'level': stage,
+        'at': DateTime.now().millisecondsSinceEpoch,
+      });
+      html.window.localStorage['agc-game-owner-$key'] = AgcBackend.user!.id;
+    } catch (_) {}
     if (!saving) {
       await _savePendingScores();
     }
@@ -247,7 +254,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       .eq('game_key', key)
       .order('best_score', ascending: false)
       .order('updated_at', ascending: true)
-      .limit(50);
+      .limit(100);
     final rows = List<Map<String, dynamic>>.from(raw);
     if (rows.isEmpty) {
       return rows;
