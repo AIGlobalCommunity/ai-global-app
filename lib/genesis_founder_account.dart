@@ -208,10 +208,12 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
         await Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => GenesisFounderEmailConfirmation(
             email: email.text.trim())));
-        if (mounted) setState(() {
-          registering = false;
-          message = 'Po aktywacji adresu możesz zalogować się jako fundator.';
-        });
+        if (mounted) {
+          setState(() {
+            registering = false;
+            message = 'Po aktywacji adresu możesz zalogować się jako fundator.';
+          });
+        }
       } else {
         await AgcBackend.signIn(email.text, password.text);
         final current = AgcBackend.user;
