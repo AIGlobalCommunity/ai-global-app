@@ -44,9 +44,11 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           data: {'account_type': 'founder', 'organization_name': name},
           emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null,
         );
-        if (mounted) setState(() => message =
-          'Konto fundatora zgłoszone. Sprawdź pocztę i potwierdź e-mail. '
-          'Wpłaty nie są jeszcze aktywne.');
+        if (mounted) {
+          setState(() => message =
+            'Konto fundatora zgłoszone. Sprawdź pocztę i potwierdź e-mail. '
+            'Wpłaty nie są jeszcze aktywne.');
+        }
       } else {
         await AgcBackend.signIn(email.text, password.text);
         final current = AgcBackend.user;
