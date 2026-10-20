@@ -1,4 +1,4 @@
-name: Flutter CI and Web Deployment
+name: Flutter CI
 on:
   push:
     branches: [main]
@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   test-and-build:
@@ -29,26 +27,9 @@ jobs:
           name: agc-android-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
       - name: Build production web
-        run: flutter build web --release --base-href /ai-global-app/
+        run: flutter build web --release --base-href / --pwa-strategy=none
       - name: Upload web build
         uses: actions/upload-artifact@v4
         with:
           name: agc-web-release
           path: build/web
-      - name: Upload GitHub Pages site
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: build/web
-
-  deploy-pages:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: test-and-build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
