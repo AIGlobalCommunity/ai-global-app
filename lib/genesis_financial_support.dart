@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'genesis_language.dart';
 import 'agc_backend.dart';
+import 'genesis_founder_directory.dart';
 
 /// A fixed, single-screen mosaic with exactly 1,000 visible demo places.
 /// No payment, reservation or sponsor data is represented as real.
@@ -133,7 +134,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
       final width = bounds.maxWidth.isFinite ? bounds.maxWidth : 700.0;
       final height = bounds.maxHeight.isFinite ? bounds.maxHeight : 700.0;
       final compact = height < 440;
-      final headerHeight = compact ? 58.0 : 90.0;
+      final headerHeight = compact ? 82.0 : 112.0;
       return SizedBox(
         width: width,
         height: height,
@@ -155,9 +156,26 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 11)),
-                if (!compact) Text(
-                  '${founders.length} / 1000', style: const TextStyle(
-                    color: Colors.white70, fontSize: 11)),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.auto_awesome, size: 13, color: gold),
+                  const SizedBox(width: 5),
+                  Text('${founders.length} / 1000 TOP',
+                    style: const TextStyle(fontSize: 11, color: gold)),
+                  const SizedBox(width: 12),
+                  Flexible(child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      visualDensity: VisualDensity.compact,
+                      foregroundColor: gold),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) =>
+                        const GenesisFounderDirectory())),
+                    icon: const Icon(Icons.format_list_bulleted, size: 16),
+                    label: Text(GenesisLanguage.copy(
+                      'Wszystkie wpłaty i filtry →', 'All support & filters →'),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  )),
+                ]),
               ],
             )),
             const SizedBox(height: 6),
@@ -166,7 +184,18 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                 math.max(1, mosaicBounds.maxWidth),
                 math.max(1, mosaicBounds.maxHeight));
               final tiles = layout(size);
-              return GestureDetector(
+              return Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: gold.withValues(alpha: .65), width: 1.5),
+                  boxShadow: [BoxShadow(color: gold.withValues(alpha: .10),
+                    blurRadius: 18, spreadRadius: 1)],
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    colors: [Color(0xFF162A42), Color(0xFF060E1C)])),
+                padding: const EdgeInsets.all(4),
+                child: ClipRRect(borderRadius: BorderRadius.circular(9),
+                  child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTapUp: (details) {
                   final position = details.localPosition;
@@ -181,7 +210,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                   size: size,
                   painter: _FounderWallPainter(tiles, displayedIds, founders),
                 ),
-              );
+              )));
             })),
             const SizedBox(height: 5),
             Text(GenesisLanguage.copy(
@@ -207,7 +236,7 @@ class _FounderWallPainter extends CustomPainter {
     final fill = Paint()..style = PaintingStyle.fill;
     final border = Paint()
       ..color = const Color(0xFF8A7142)
-      ..strokeWidth = .65
+      ..strokeWidth = .7
       ..style = PaintingStyle.stroke;
     for (var i = 0; i < tiles.length; i++) {
       final r = tiles[i].deflate(.45);
@@ -216,8 +245,14 @@ class _FounderWallPainter extends CustomPainter {
           : i < 200
               ? const Color(0xFF254663)
               : const Color(0xFF172B40);
-      canvas.drawRect(r, fill);
-      canvas.drawRect(r, border);
+      canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(1.5)), fill);
+      canvas.drawRRect(RRect.fromRectAndRadius(r, const Radius.circular(1.5)), border);
+      if (i < 20) {
+        final shine = Paint()
+          ..color = const Color(0xFFEDC984).withValues(alpha: .12)
+          ..strokeWidth = 1;
+        canvas.drawLine(r.topLeft, r.topRight, shine);
+      }
       if (r.width >= 22 && r.height >= 11) {
         final label = TextPainter(
           text: TextSpan(
