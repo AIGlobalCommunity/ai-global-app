@@ -8,10 +8,14 @@ class FounderBackend {
   static const publishableKey = 'sb_publishable_dZGtqstR0cBLqqpr0Cde1Q_Mmzg7NW6';
   static final SupabaseClient client = SupabaseClient(
     url, publishableKey,
-    authOptions: const AuthClientOptions(autoRefreshToken: false),
+    authOptions: const AuthClientOptions(
+      authFlowType: AuthFlowType.implicit,
+      persistSession: false,
+      autoRefreshToken: false,
+    ),
   );
-  // A standalone SupabaseClient initializes auth lazily. Do not call
-  // GoTrueClient.initialize(), which is not available in this SDK.
+  // Founder auth uses a standalone client without an unconfigured
+  // session storage adapter. It never shares Genesis member sessions.
   static Future<void> ensureInitialized() async {}
 }
 
