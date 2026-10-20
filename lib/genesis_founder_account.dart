@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'genesis_language.dart';
+import 'genesis_founder_dashboard.dart';
 
 /// Independent founder authentication. No Genesis personal account is reused.
 class FounderBackend {
@@ -269,26 +270,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   @override
   Widget build(BuildContext context) {
     if (signedIn) {
-      return Center(child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 440),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.verified_user_outlined, size: 54),
-          const SizedBox(height: 12),
-          Text('Konto fundatora: ${organizationName ?? "Fundator"}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 20)),
-          const SizedBox(height: 10),
-          Text(FounderBackend.client.auth.currentUser?.email ?? ''),
-          const SizedBox(height: 12),
-          const Text('To niezależne konto firmowe. Nie przyznaje GP '
-            'ani uprawnień prywatnego konta Genesis.',
-            textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          OutlinedButton(onPressed: signOut,
-            child: const Text('Wyloguj fundatora')),
-          if (message != null) SelectableText(message!),
-        ]),
-      ));
+      return GenesisFounderDashboard(onSignOut: signOut);
     }
     return Center(child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
