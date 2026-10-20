@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 
@@ -44,12 +45,18 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
     setState(() { busy = true; message = null; });
     try {
       await AgcBackend.resendConfirmation(email.text.trim());
-      if (mounted) setState(() => message =
-        'Poproszono o ponowny e-mail aktywacyjny. Sprawdź folder spam.');
+      if (mounted) {
+        setState(() => message =
+          'Poproszono o ponowny e-mail aktywacyjny. Sprawdź folder spam.');
+      }
     } catch (error) {
-      if (mounted) setState(() => message = error.toString());
+      if (mounted) {
+        setState(() => message = error.toString());
+      }
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+      }
     }
   }
 
@@ -120,10 +127,12 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           await AgcBackend.client.auth.signInWithOtp(
             email: email.text.trim(), shouldCreateUser: false,
             emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null);
-          if (mounted) setState(() {
+          if (mounted) {
+            setState(() {
             codeStep = true;
             message = 'Wysłano kod e-mail. Wpisz 6 cyfr.';
           });
+          }
         }
       }
     } catch (error) {
