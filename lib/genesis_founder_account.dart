@@ -116,6 +116,14 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
             throw const FormatException(
               'To konto prywatne Genesis. Zaloguj się przez panel społeczności.');
           }
+          await AgcBackend.signOut();
+          await AgcBackend.client.auth.signInWithOtp(
+            email: email.text.trim(), shouldCreateUser: false,
+            emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null);
+          if (mounted) setState(() {
+            codeStep = true;
+            message = 'Wysłano kod e-mail. Wpisz 6 cyfr.';
+          });
         }
       }
     } catch (error) {
