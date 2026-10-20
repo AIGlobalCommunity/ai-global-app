@@ -106,6 +106,20 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   bool showRepeatPassword = false;
   String? message;
   String? organizationName;
+  String? emailError;
+  String? organizationError;
+  String? passwordError;
+  String? repeatPasswordError;
+
+  void clearFieldErrors() {
+    setState(() {
+      emailError = null;
+      organizationError = null;
+      passwordError = null;
+      repeatPasswordError = null;
+      message = null;
+    });
+  }
 
   @override
   void initState() {
@@ -159,23 +173,29 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
 
   Future<void> submit() async {
     if (busy) return;
-    setState(() { busy = true; message = null; });
+    setState(() { busy = true; message = null;
+      emailError = null; organizationError = null;
+      passwordError = null; repeatPasswordError = null; });
     try {
       await FounderBackend.ensureInitialized();
       final address = email.text.trim().toLowerCase();
       if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(address)) {
-        throw const FormatException('Wpisz poprawny adres e-mail.');
+        setState(() => emailError = 'Wpisz poprawny adres e-mail.');
+        return;
       }
       if (registering) {
         final name = organization.text.trim();
         if (name.length < 2 || name.length > 120) {
-          throw const FormatException('Nazwa firmy musi mieć 2–120 znaków.');
+          setState(() => organizationError = 'Podaj nazwę firmy (2–120 znaków).');
+          return;
         }
         if (password.text.length < 8) {
-          throw const FormatException('Hasło musi mieć minimum 8 znaków.');
+          setState(() => passwordError = 'Hasło musi mieć co najmniej 8 znaków.');
+          return;
         }
         if (password.text != repeatPassword.text) {
-          throw const FormatException('Podane hasła są różne.');
+          setState(() => repeatPasswordError = 'Hasła muszą być identyczne.');
+          return;
         }
         final response = await FounderBackend.client.auth.signUp(
           email: address,
@@ -219,8 +239,10 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           : error.message);
       }
     } catch (error) {
+      debugPrint('Founder authentication failed: $error');
       if (mounted) {
-        setState(() => message = error.toString());
+        setState(() => message =
+          'Nie udało się wykonać operacji. Sprawdź dane i spróbuj ponownie.');
       }
     } finally {
       if (mounted) {
@@ -292,17 +314,24 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           ]),
           const SizedBox(height: 16),
           TextField(controller: email,
+            onChanged: (_) => clearFieldErrors(),
             keyboardType: TextInputType.emailAddress,
             autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(labelText: 'E-mail')),
+            decoration: InputDecoration(labelText: 'E-mail', errorText: emailError)),
           const SizedBox(height: 12),
           if (registering) ...[
             TextField(controller: organization,
-              decoration: const InputDecoration(labelText: 'Nazwa firmy')),
+              onChanged: (_) => clearFieldErrors(),
+              decoration: InputDecoration(labelText: 'Nazwa firmy',
+                errorText: organizationError)),
             const SizedBox(height: 12),
           ],
           TextField(controller: password, obscureText: !showPassword,
+            enableSuggestions: false,
+            autocorrect: false,
+            onChanged: (_) => clearFieldErrors(),
             decoration: InputDecoration(
+              errorText: passwordError,
               labelText: 'Hasło fundatora',
               suffixIcon: IconButton(
                 tooltip: showPassword ? 'Ukryj hasło' : 'Pokaż hasło',
@@ -315,7 +344,11 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
             const SizedBox(height: 12),
             TextField(controller: repeatPassword,
               obscureText: !showRepeatPassword,
+              enableSuggestions: false,
+              autocorrect: false,
+              onChanged: (_) => clearFieldErrors(),
               decoration: InputDecoration(
+                errorText: repeatPasswordError,
                 labelText: 'Powtórz hasło',
                 suffixIcon: IconButton(
                   tooltip: showRepeatPassword ? 'Ukryj hasło' : 'Pokaż hasło',
