@@ -79,9 +79,13 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
         throw const FormatException('To nie jest konto fundatora.');
       }
     } catch (error) {
-      if (mounted) setState(() => message = error.toString());
+      if (mounted) {
+        setState(() => message = error.toString());
+      }
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+      }
     }
   }
 
