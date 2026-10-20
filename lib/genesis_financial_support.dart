@@ -15,7 +15,20 @@ class GenesisFinancialSupport extends StatefulWidget {
 class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
   static const int capacity = 1000;
   static const Color gold = Color(0xFFD8B66A);
-  static const Color navy = Color(0xFF0A1425);
+
+  // The first 100 IDs stay in fixed positions; the rest are shuffled
+  // once per view, separately within their support tiers.
+  late final List<int> displayedIds = _createDisplayOrder();
+
+  List<int> _createDisplayOrder() {
+    final ids = List<int>.generate(capacity, (i) => i);
+    final random = math.Random();
+    final partners = ids.sublist(100, 200)..shuffle(random);
+    final friends = ids.sublist(200)..shuffle(random);
+    ids.setRange(100, 200, partners);
+    ids.setRange(200, capacity, friends);
+    return ids;
+  }
 
   // Illustrative support amounts. The first spaces are proportionally larger.
   double amount(int i) {
@@ -113,8 +126,8 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                     fontSize: compact ? 17 : 22))),
                 const SizedBox(height: 4),
                 Text(GenesisLanguage.copy(
-                  '1000 miejsc • jedna ściana • większa wpłata = większy kafelek',
-                  '1000 spaces • one wall • more support = larger tile'),
+                  '1000 miejsc • TOP 100 na stałe • 900 losowo',
+                  '1000 spaces • TOP 100 fixed • 900 shuffled'),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 11)),
@@ -135,14 +148,14 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                   final position = details.localPosition;
                   for (var i = 0; i < tiles.length; i++) {
                     if (tiles[i].contains(position)) {
-                      showSpace(i);
+                      showSpace(displayedIds[i]);
                       break;
                     }
                   }
                 },
                 child: CustomPaint(
                   size: size,
-                  painter: _FounderWallPainter(tiles),
+                  painter: _FounderWallPainter(tiles, displayedIds),
                 ),
               );
             })),
@@ -162,8 +175,9 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
 }
 
 class _FounderWallPainter extends CustomPainter {
-  _FounderWallPainter(this.tiles);
+  _FounderWallPainter(this.tiles, this.displayedIds);
   final List<Rect> tiles;
+  final List<int> displayedIds;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -184,7 +198,7 @@ class _FounderWallPainter extends CustomPainter {
       if (r.width >= 22 && r.height >= 11) {
         final label = TextPainter(
           text: TextSpan(
-            text: '#${i + 1}',
+            text: '#${displayedIds[i] + 1}',
             style: TextStyle(
               color: i < 20
                   ? const Color(0xFFFFDF91)
