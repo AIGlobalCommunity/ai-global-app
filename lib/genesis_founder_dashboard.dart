@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'genesis_founder_account.dart';
 
 class GenesisFounderDashboard extends StatefulWidget {
@@ -111,7 +112,7 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
         notice = 'Zdjęcie zapisane. Pojawi się na tablicy po włączeniu publikacji.';
       });
     } catch (error) {
-      if (mounted) setState(() => notice = 'Nie udało się przesłać zdjęcia: $error');
+      if (mounted) { setState(() => notice = 'Nie udało się przesłać zdjęcia: $error'); }
     } finally {
       if (mounted) setState(() => busy = false);
     }
