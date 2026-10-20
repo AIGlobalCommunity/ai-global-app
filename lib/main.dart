@@ -2,6 +2,7 @@ import 'agc_backend.dart';
 import 'genesis_language.dart';
 import 'genesis_discussions.dart';
 import 'genesis_feed.dart';
+import 'genesis_community_statistics.dart';
 import 'genesis_chat.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
@@ -199,6 +200,8 @@ class _AgcHomeState extends State<AgcHome> {
           ),
         ),
         const SizedBox(height: 18),
+        const GenesisCommunityStatistics(),
+        const SizedBox(height: 16),
         GenesisCommunityFeed(
           onOpenDiscussions: () => setState(() => selected = 2),
           onOpenGroup: openGroupFromFeed,
@@ -226,6 +229,30 @@ class _AgcHomeState extends State<AgcHome> {
             color: AgcLuxury.champagne.withValues(alpha: .65))),
           const SizedBox(height: 24),
           const GenesisMission(),
+          const SizedBox(height: 14),
+          GenesisPanel(
+            icon: Icons.auto_stories_outlined,
+            title: GenesisLanguage.copy(
+              'MANIFEST GENESIS — JAK POWSTANIE',
+              'GENESIS MANIFESTO — HOW IT WILL BE WRITTEN'),
+            body: GenesisLanguage.copy(
+              'Manifest będzie tworzony etapami, wspólnie ze społecznością. '
+              'Najpierw zbierzemy pytania, propozycje i wartości od członków. '
+              'Następnie powstanie jawny projekt tekstu z kolejnymi wersjami '
+              'i możliwością zgłaszania uwag. Po dyskusji przedstawimy '
+              'uzgodnioną wersję do głosowania zgodnie z wcześniej '
+              'opublikowanymi zasadami. Dopiero zaakceptowany tekst '
+              'zostanie ogłoszony Manifestem Genesis. Terminy i zasady '
+              'głosowania zostaną podane przed rozpoczęciem procesu; '
+              'manifest nie jest jeszcze uchwalony.',
+              'The manifesto will be written in stages with the community. '
+              'First, members will submit questions, proposals and values. '
+              'Then a transparent draft with version history and feedback '
+              'will be published. After discussion, the agreed draft will '
+              'be put to a vote under rules announced in advance. '
+              'Only an approved text will become the Genesis Manifesto. '
+              'Dates and voting rules will be announced before the process; '
+              'the manifesto has not yet been adopted.')),
           const SizedBox(height: 14),
           GenesisPanel(
             icon: Icons.hourglass_top_outlined,
