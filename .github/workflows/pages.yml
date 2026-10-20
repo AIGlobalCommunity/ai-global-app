@@ -11,6 +11,7 @@ on:
       - 'pubspec.yaml'
       - 'web/**'
       - '.github/workflows/pages.yml'
+      - '.github/workflows/flutter.yml'
   workflow_dispatch:
 
 permissions:
