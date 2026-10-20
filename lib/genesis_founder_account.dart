@@ -196,7 +196,9 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           data: {'account_type': 'founder', 'organization_name': name},
           emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null,
         );
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         if (response.user?.identities?.isEmpty == true) {
           setState(() => message =
             'Ten adres e-mail jest już zarejestrowany. '
