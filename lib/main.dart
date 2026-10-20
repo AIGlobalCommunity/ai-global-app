@@ -3,6 +3,7 @@ import 'genesis_language.dart';
 import 'genesis_discussions.dart';
 import 'genesis_feed.dart';
 import 'genesis_community_statistics.dart';
+import 'genesis_financial_support.dart';
 import 'genesis_chat.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
@@ -84,7 +85,21 @@ class _AgcAccessGateState extends State<AgcAccessGate> {
       )));
     }
     if (AgcBackend.user == null) {
-      return Scaffold(body: SafeArea(child: AgcLuxuryBackdrop(child: AgcAccountPage())));
+      return Scaffold(
+        body: SafeArea(child: AgcLuxuryBackdrop(child: const AgcAccountPage())),
+        floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'public-support-preview',
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: Text(GenesisLanguage.copy(
+                'Wsparcie GENESIS', 'Support GENESIS'))),
+              body: const GenesisFinancialSupport(preview: true),
+            ))),
+          icon: const Icon(Icons.volunteer_activism_outlined),
+          label: Text(GenesisLanguage.copy('Ściana fundatorów',
+            'Founders wall')),
+        ),
+      );
     }
     return AgcHome();
   }
@@ -152,6 +167,7 @@ class _AgcHomeState extends State<AgcHome> {
                 _tabContent(const AgcDatabaseRanking()),
                 const GenesisChat(),
                 const GenesisGameTab(),
+                const GenesisFinancialSupport(),
                 const AgcAccountPage(),
               ],
             )),
@@ -168,6 +184,7 @@ class _AgcHomeState extends State<AgcHome> {
             NavigationDestination(icon: Icon(Icons.leaderboard), label: GenesisLanguage.t('ranking')),
             NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: GenesisLanguage.copy('CZAT', 'CHAT')),
             NavigationDestination(icon: Icon(Icons.extension_outlined), label: GenesisLanguage.copy('GRA', 'GAME')),
+            NavigationDestination(icon: Icon(Icons.volunteer_activism_outlined), label: GenesisLanguage.copy('Wsparcie', 'Support')),
             NavigationDestination(icon: Icon(Icons.person_outline), label: GenesisLanguage.t('account')),
           ],
         ),
