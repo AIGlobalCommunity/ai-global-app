@@ -40,8 +40,9 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
       final rows = await FounderBackend.client.from('founder_profiles')
         .select('organization_name,description,website,photo_path')
         .eq('public_visible', true).limit(100);
-      if (mounted) setState(() =>
-        founderBoard = List<Map<String, dynamic>>.from(rows));
+      if (mounted) {
+        setState(() => founderBoard = List<Map<String, dynamic>>.from(rows));
+      }
     } catch (error) {
       debugPrint('Founder board loading failed: $error');
     }
