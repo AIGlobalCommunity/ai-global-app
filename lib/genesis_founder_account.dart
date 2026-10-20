@@ -4,6 +4,81 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 
+
+class GenesisFounderEmailConfirmation extends StatefulWidget {
+  const GenesisFounderEmailConfirmation({super.key, required this.email});
+  final String email;
+
+  @override
+  State<GenesisFounderEmailConfirmation> createState() =>
+      _GenesisFounderEmailConfirmationState();
+}
+
+class _GenesisFounderEmailConfirmationState
+    extends State<GenesisFounderEmailConfirmation> {
+  bool busy = false;
+  String? status;
+
+  Future<void> resend() async {
+    if (busy) return;
+    setState(() { busy = true; status = null; });
+    try {
+      await AgcBackend.resendConfirmation(widget.email);
+      if (mounted) {
+        setState(() => status =
+          'Żądanie ponownego wysłania zostało przyjęte. '
+          'Dostarczenie wiadomości zależy od konfiguracji poczty.');
+      }
+    } catch (error) {
+      if (mounted) setState(() => status = error.toString());
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Potwierdź adres e-mail')),
+    body: Center(child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 480),
+      child: SingleChildScrollView(padding: const EdgeInsets.all(24),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const Icon(Icons.mark_email_read_outlined,
+            size: 72, color: Color(0xFFD8B66A)),
+          const SizedBox(height: 18),
+          const Text('Aktywacja konta fundatora',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          SelectableText(widget.email, textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFFD8B66A))),
+          const SizedBox(height: 16),
+          const Text(
+            'Otwórz wiadomość aktywacyjną i kliknij znajdujący się w niej link. '
+            'Po potwierdzeniu adresu wróć do strony GENESIS i zaloguj się. '
+            'Sprawdź także Spam, Oferty i inne foldery.\n\n'
+            'Jeśli adres jest już przypisany do prywatnego konta Genesis, '
+            'do konta firmowego użyj innego adresu e-mail.',
+            textAlign: TextAlign.center),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: busy ? null : resend,
+            icon: const Icon(Icons.forward_to_inbox_outlined),
+            label: Text(busy ? 'Wysyłanie…' : 'Wyślij link ponownie')),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.login_rounded),
+            label: const Text('Wróć do logowania')),
+          if (status != null) ...[
+            const SizedBox(height: 14),
+            SelectableText(status!, textAlign: TextAlign.center),
+          ],
+        ])),
+    )),
+  );
+}
+
 /// Separate organization identity; it never enters Genesis member rankings.
 class GenesisFounderAccount extends StatefulWidget {
   const GenesisFounderAccount({super.key, this.startRegistering = false});
@@ -104,17 +179,26 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
         if (password.text != repeatPassword.text) {
           throw const FormatException('Hasła nie są identyczne. Sprawdź oba pola.');
         }
-        await AgcBackend.client.auth.signUp(
+        final response = await AgcBackend.client.auth.signUp(
           email: email.text.trim(),
           password: password.text,
           data: {'account_type': 'founder', 'organization_name': name},
           emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null,
         );
-        if (mounted) {
+        if (!mounted) return;
+        if (response.user?.identities?.isEmpty == true) {
           setState(() => message =
-            'Konto fundatora zgłoszone. Sprawdź pocztę i potwierdź e-mail. '
-            'Wpłaty nie są jeszcze aktywne.');
+            'Ten adres jest już zarejestrowany. '
+            'Użyj innego e-maila dla konta firmowego lub zaloguj się.');
+          return;
         }
+        await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => GenesisFounderEmailConfirmation(
+            email: email.text.trim())));
+        if (mounted) setState(() {
+          registering = false;
+          message = 'Po aktywacji adresu możesz zalogować się jako fundator.';
+        });
       } else {
         await AgcBackend.signIn(email.text, password.text);
         final current = AgcBackend.user;
