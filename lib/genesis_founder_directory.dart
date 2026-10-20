@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'agc_backend.dart';
+import 'genesis_founder_account.dart';
 import 'genesis_language.dart';
 
 /// Public directory of all verified, opted-in supporters, including those
@@ -19,17 +20,31 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
   bool more = false;
   String? error;
   List<Map<String, dynamic>> entries = [];
+  List<Map<String, dynamic>> founderBoard = [];
 
   @override
   void initState() {
     super.initState();
     load(reset: true);
+    loadBoard();
   }
 
   @override
   void dispose() {
     search.dispose();
     super.dispose();
+  }
+
+  Future<void> loadBoard() async {
+    try {
+      final rows = await FounderBackend.client.from('founder_profiles')
+        .select('organization_name,description,website,photo_path')
+        .eq('public_visible', true).limit(100);
+      if (mounted) setState(() =>
+        founderBoard = List<Map<String, dynamic>>.from(rows));
+    } catch (error) {
+      debugPrint('Founder board loading failed: $error');
+    }
   }
 
   Future<void> load({bool reset = false}) async {
@@ -85,6 +100,35 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 12),
+            if (founderBoard.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              const Text('TABLICA WSPARCIA FUNDATORÓW',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 160, child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: founderBoard.length,
+                itemBuilder: (context, i) {
+                  final entry = founderBoard[i];
+                  final path = entry['photo_path'] as String?;
+                  return SizedBox(width: 230, child: Card(child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(children: [
+                      if (path != null) Image.network(
+                        FounderBackend.client.storage.from('founder-photos')
+                          .getPublicUrl(path),
+                        height: 65, width: 120, fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.business)),
+                      Text(entry['organization_name'] as String? ?? '',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(entry['description'] as String? ?? '',
+                        maxLines: 2, overflow: TextOverflow.ellipsis),
+                    ]),
+                  )));
+                },
+              )),
+              const SizedBox(height: 10),
+            ],
             TextField(controller: search,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => load(reset: true),
