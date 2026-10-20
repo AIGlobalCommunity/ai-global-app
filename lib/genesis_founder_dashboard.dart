@@ -107,10 +107,12 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
             upsert: true, contentType: contentType));
       await FounderBackend.client.from('founder_profiles')
           .update({'photo_path': path}).eq('user_id', user.id);
-      if (mounted) setState(() {
-        photoPath = path;
-        notice = 'Zdjęcie zapisane. Pojawi się na tablicy po włączeniu publikacji.';
-      });
+      if (mounted) {
+        setState(() {
+          photoPath = path;
+          notice = 'Zdjęcie zapisane. Pojawi się na tablicy po włączeniu publikacji.';
+        });
+      }
     } catch (error) {
       if (mounted) { setState(() => notice = 'Nie udało się przesłać zdjęcia: $error'); }
     } finally {
