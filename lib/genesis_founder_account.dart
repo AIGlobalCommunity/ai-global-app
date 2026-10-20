@@ -10,10 +10,9 @@ class FounderBackend {
     url, publishableKey,
     authOptions: const AuthClientOptions(autoRefreshToken: false),
   );
-  static Future<void>? _initialization;
-
-  static Future<void> ensureInitialized() =>
-      _initialization ??= client.auth.initialize();
+  // A standalone SupabaseClient initializes auth lazily. Do not call
+  // GoTrueClient.initialize(), which is not available in this SDK.
+  static Future<void> ensureInitialized() async {}
 }
 
 class GenesisFounderEmailConfirmation extends StatefulWidget {
