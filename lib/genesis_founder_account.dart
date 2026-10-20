@@ -118,7 +118,9 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   Future<void> initializeFounderSession() async {
     try {
       await FounderBackend.ensureInitialized();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final hasSession = FounderBackend.client.auth.currentSession != null;
       setState(() => signedIn = hasSession);
       if (hasSession) await loadProfile();
