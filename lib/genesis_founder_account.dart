@@ -160,7 +160,9 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           data: {'organization_name': name},
           emailRedirectTo: 'https://thegenesisera.com/',
         );
-        if (!mounted) return;
+        if (!mounted) {
+          return;
+        }
         if (response.user?.identities?.isEmpty == true) {
           setState(() => message =
             'Ten adres jest już zarejestrowany jako fundator.');
