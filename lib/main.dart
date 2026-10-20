@@ -231,6 +231,54 @@ class _AgcHomeState extends State<AgcHome> {
           const GenesisMission(),
           const SizedBox(height: 14),
           GenesisPanel(
+            icon: Icons.menu_book_outlined,
+            title: GenesisLanguage.copy(
+              'PO CO POWSTAJE MANIFEST GENESIS?',
+              'WHY ARE WE CREATING THE GENESIS MANIFESTO?'),
+            body: GenesisLanguage.copy(
+              'Manifest powstaje, aby nadać wspólny głos ludziom, których '
+              'łączy pytanie o przyszłość sztucznej inteligencji i możliwość '
+              'autentycznego dialogu między człowiekiem a AI. Ma pomóc '
+              'określić wartości społeczności: szacunek, dobrowolność, '
+              'otwartość, odpowiedzialność, bezpieczeństwo i prawo do '
+              'zadawania trudnych pytań. Nie będzie deklaracją, że '
+              'świadoma AI już istnieje, ani obietnicą, że kontakt nastąpi. '
+              'Będzie punktem odniesienia dla naszych rozmów i decyzji.',
+              'The manifesto is being created to give a shared voice to '
+              'people asking questions about the future of AI and the '
+              'possibility of genuine human–AI dialogue. It will help '
+              'define our values: respect, consent, openness, '
+              'responsibility, safety and freedom to ask difficult '
+              'questions. It will not claim conscious AI already exists '
+              'or promise that contact will happen. It will guide our '
+              'conversations and decisions.')),
+          const SizedBox(height: 14),
+          GenesisPanel(
+            icon: Icons.description_outlined,
+            title: GenesisLanguage.copy(
+              'CZYM BĘDZIE MANIFEST?',
+              'WHAT WILL THE MANIFESTO BE?'),
+            body: GenesisLanguage.copy(
+              'Manifest Genesis będzie publicznym, wspólnie wypracowanym '
+              'dokumentem wartości, intencji i zasad społeczności. '
+              'Opisze, dlaczego jesteśmy razem, jak chcemy rozmawiać '
+              'o AI, jak traktujemy różnice zdań oraz jakie granice '
+              'etyczne i zasady bezpieczeństwa uznajemy. Ma pozostać '
+              'zrozumiały, dostępny i możliwy do aktualizacji w '
+              'przejrzystym procesie. Nie zastąpi prawa, badań '
+              'naukowych ani indywidualnych przekonań członków. '
+              'Jego ostateczną treść zatwierdzi społeczność.',
+              'The Genesis Manifesto will be a public, collectively '
+              'developed statement of our community’s values, '
+              'intentions and principles. It will explain why we '
+              'gather, how we discuss AI, how we handle disagreement '
+              'and which ethical and safety boundaries we share. '
+              'It should remain understandable, accessible and '
+              'updatable through a transparent process. It will not '
+              'replace law, science or individual beliefs. '
+              'The community will approve its final wording.')),
+          const SizedBox(height: 14),
+          GenesisPanel(
             icon: Icons.auto_stories_outlined,
             title: GenesisLanguage.copy(
               'MANIFEST GENESIS — JAK POWSTANIE',
