@@ -1,9 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'agc_backend.dart';
 import 'genesis_language.dart';
 
+/// Independent founder authentication. No Genesis personal account is reused.
+class FounderBackend {
+  static const url = 'https://xhzxoqbfqdttkvgxogse.supabase.co';
+  static const publishableKey = 'sb_publishable_dZGtqstR0cBLqqpr0Cde1Q_Mmzg7NW6';
+  static final SupabaseClient client = SupabaseClient(
+    url, publishableKey,
+    authOptions: const AuthClientOptions(autoRefreshToken: true),
+  );
+}
 
 class GenesisFounderEmailConfirmation extends StatefulWidget {
   const GenesisFounderEmailConfirmation({super.key, required this.email});
@@ -17,20 +24,25 @@ class GenesisFounderEmailConfirmation extends StatefulWidget {
 class _GenesisFounderEmailConfirmationState
     extends State<GenesisFounderEmailConfirmation> {
   bool busy = false;
-  String? status;
+  String? message;
 
   Future<void> resend() async {
     if (busy) return;
-    setState(() { busy = true; status = null; });
+    setState(() { busy = true; message = null; });
     try {
-      await AgcBackend.resendConfirmation(widget.email);
+      await FounderBackend.client.auth.resend(
+        type: OtpType.signup,
+        email: widget.email,
+        emailRedirectTo: 'https://thegenesisera.com/',
+      );
       if (mounted) {
-        setState(() => status =
-          'Żądanie ponownego wysłania zostało przyjęte. '
-          'Dostarczenie wiadomości zależy od konfiguracji poczty.');
+        setState(() => message =
+          'Przyjęto prośbę o wysłanie wiadomości. Sprawdź także spam.');
       }
-    } catch (error) {
-      if (mounted) setState(() => status = error.toString());
+    } on AuthException catch (error) {
+      if (mounted) {
+        setState(() => message = error.message);
+      }
     } finally {
       if (mounted) {
         setState(() => busy = false);
@@ -40,51 +52,40 @@ class _GenesisFounderEmailConfirmationState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Potwierdź adres e-mail')),
+    appBar: AppBar(title: const Text('Aktywacja fundatora')),
     body: Center(child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 480),
-      child: SingleChildScrollView(padding: const EdgeInsets.all(24),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Icon(Icons.mark_email_read_outlined,
-            size: 72, color: Color(0xFFD8B66A)),
+      constraints: const BoxConstraints(maxWidth: 460),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.mark_email_read_outlined, size: 64),
           const SizedBox(height: 18),
-          const Text('Aktywacja konta fundatora',
-            textAlign: TextAlign.center,
+          const Text('Potwierdź adres e-mail',
             style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          SelectableText(widget.email, textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFFD8B66A))),
-          const SizedBox(height: 16),
-          const Text(
-            'Otwórz wiadomość aktywacyjną i kliknij znajdujący się w niej link. '
-            'Po potwierdzeniu adresu wróć do strony GENESIS i zaloguj się. '
-            'Sprawdź także Spam, Oferty i inne foldery.\n\n'
-            'Jeśli adres jest już przypisany do prywatnego konta Genesis, '
-            'do konta firmowego użyj innego adresu e-mail.',
+          SelectableText(widget.email),
+          const SizedBox(height: 12),
+          const Text('Kliknij link aktywacyjny z wiadomości, '
+            'a następnie wróć do logowania fundatora.',
             textAlign: TextAlign.center),
           const SizedBox(height: 20),
-          FilledButton.icon(
+          FilledButton(
             onPressed: busy ? null : resend,
-            icon: const Icon(Icons.forward_to_inbox_outlined),
-            label: Text(busy ? 'Wysyłanie…' : 'Wyślij link ponownie')),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
+            child: Text(busy ? 'Wysyłanie…' : 'Wyślij link ponownie')),
+          TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.login_rounded),
-            label: const Text('Wróć do logowania')),
-          if (status != null) ...[
-            const SizedBox(height: 14),
-            SelectableText(status!, textAlign: TextAlign.center),
-          ],
-        ])),
+            child: const Text('Wróć do logowania')),
+          if (message != null) SelectableText(message!),
+        ]),
+      ),
     )),
   );
 }
 
-/// Separate organization identity; it never enters Genesis member rankings.
 class GenesisFounderAccount extends StatefulWidget {
   const GenesisFounderAccount({super.key, this.startRegistering = false});
   final bool startRegistering;
+
   @override
   State<GenesisFounderAccount> createState() => _GenesisFounderAccountState();
 }
@@ -93,18 +94,36 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   final email = TextEditingController();
   final password = TextEditingController();
   final repeatPassword = TextEditingController();
-  bool showPassword = false;
-  bool codeStep = false;
-  final code = TextEditingController();
   final organization = TextEditingController();
   late bool registering;
   bool busy = false;
+  bool signedIn = false;
   String? message;
+  String? organizationName;
 
   @override
   void initState() {
     super.initState();
     registering = widget.startRegistering;
+    signedIn = FounderBackend.client.auth.currentUser != null;
+    if (signedIn) loadProfile();
+  }
+
+  Future<void> loadProfile() async {
+    final user = FounderBackend.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final row = await FounderBackend.client.from('founder_profiles')
+        .select('organization_name').eq('user_id', user.id).maybeSingle();
+      if (mounted) {
+        setState(() => organizationName =
+          row?['organization_name'] as String? ?? 'Fundator');
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => message = error.toString());
+      }
+    }
   }
 
   @override
@@ -112,130 +131,57 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
     email.dispose();
     password.dispose();
     repeatPassword.dispose();
-    code.dispose();
     organization.dispose();
     super.dispose();
-  }
-
-  Future<void> resendConfirmation() async {
-    if (busy) return;
-    setState(() { busy = true; message = null; });
-    try {
-      await AgcBackend.resendConfirmation(email.text.trim());
-      if (mounted) {
-        setState(() => message =
-          'Poproszono o ponowny e-mail aktywacyjny. Sprawdź folder spam.');
-      }
-    } catch (error) {
-      if (mounted) {
-        setState(() => message = error.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() => busy = false);
-      }
-    }
-  }
-
-  Future<void> verifyCode() async {
-    final token = code.text.trim();
-    if (token.length != 6 || int.tryParse(token) == null) {
-      setState(() => message = 'Wpisz 6 cyfr z wiadomości e-mail.');
-      return;
-    }
-    setState(() { busy = true; message = null; });
-    try {
-      await AgcBackend.client.auth.verifyOTP(
-        email: email.text.trim(), token: token, type: OtpType.email);
-      final current = AgcBackend.user;
-      if (current == null) throw StateError('Kod nie został potwierdzony.');
-      final account = await AgcBackend.client.from('agc_founder_accounts')
-        .select('user_id').eq('user_id', current.id).maybeSingle();
-      if (account == null) {
-        await AgcBackend.signOut();
-        throw const FormatException('To nie jest konto fundatora.');
-      }
-    } catch (error) {
-      if (mounted) {
-        setState(() => message = error.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() => busy = false);
-      }
-    }
   }
 
   Future<void> submit() async {
     if (busy) return;
     setState(() { busy = true; message = null; });
     try {
+      final address = email.text.trim().toLowerCase();
+      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(address)) {
+        throw const FormatException('Wpisz poprawny adres e-mail.');
+      }
       if (registering) {
         final name = organization.text.trim();
         if (name.length < 2 || name.length > 120) {
-          throw const FormatException('Podaj nazwę firmy (2–120 znaków).');
+          throw const FormatException('Nazwa firmy musi mieć 2–120 znaków.');
         }
         if (password.text.length < 8) {
-          throw const FormatException('Hasło musi mieć co najmniej 8 znaków.');
+          throw const FormatException('Hasło musi mieć minimum 8 znaków.');
         }
         if (password.text != repeatPassword.text) {
-          throw const FormatException('Hasła nie są identyczne. Sprawdź oba pola.');
+          throw const FormatException('Podane hasła są różne.');
         }
-        final address = email.text.trim();
-        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-            .hasMatch(address)) {
-          throw const FormatException('Wpisz poprawny adres e-mail.');
-        }
-        if (AgcBackend.user != null) {
-          throw const FormatException(
-            'Jesteś zalogowany. Wyloguj się, aby zarejestrować oddzielne konto fundatora.');
-        }
-        final response = await AgcBackend.client.auth.signUp(
+        final response = await FounderBackend.client.auth.signUp(
           email: address,
           password: password.text,
-          data: {'account_type': 'founder', 'organization_name': name},
-          emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null,
+          data: {'organization_name': name},
+          emailRedirectTo: 'https://thegenesisera.com/',
         );
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
         if (response.user?.identities?.isEmpty == true) {
           setState(() => message =
-            'Ten adres e-mail jest już zarejestrowany. '
-            'Podaj inny adres, aby utworzyć oddzielne konto fundatora.');
+            'Ten adres jest już zarejestrowany jako fundator.');
           return;
         }
-        await Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => GenesisFounderEmailConfirmation(
-            email: email.text.trim())));
-        if (mounted) {
-          setState(() {
-            registering = false;
-            message = 'Po aktywacji adresu możesz zalogować się jako fundator.';
-          });
+        if (response.session != null) {
+          setState(() { signedIn = true; organizationName = name; });
+        } else {
+          await Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => GenesisFounderEmailConfirmation(email: address)));
+          if (mounted) {
+            setState(() { registering = false; message =
+              'Po aktywacji e-maila zaloguj się na konto fundatora.'; });
+          }
         }
       } else {
-        await AgcBackend.signIn(email.text, password.text);
-        final current = AgcBackend.user;
-        if (current != null) {
-          final account = await AgcBackend.client
-            .from('agc_founder_accounts')
-            .select('user_id').eq('user_id', current.id).maybeSingle();
-          if (account == null) {
-            await AgcBackend.signOut();
-            throw const FormatException(
-              'To konto prywatne Genesis. Zaloguj się przez panel społeczności.');
-          }
-          await AgcBackend.signOut();
-          await AgcBackend.client.auth.signInWithOtp(
-            email: email.text.trim(), shouldCreateUser: false,
-            emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null);
-          if (mounted) {
-            setState(() {
-            codeStep = true;
-            message = 'Wysłano kod e-mail. Wpisz 6 cyfr.';
-          });
-          }
+        await FounderBackend.client.auth.signInWithPassword(
+          email: address, password: password.text);
+        if (mounted) {
+          setState(() { signedIn = true; message = null; });
+          await loadProfile();
         }
       }
     } on AuthException catch (error) {
@@ -244,7 +190,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           error.message.toLowerCase().contains('already registered');
       if (mounted) {
         setState(() => message = duplicate
-          ? 'Ten adres e-mail jest już zarejestrowany. Podaj inny adres.'
+          ? 'Ten adres e-mail jest już zarejestrowany jako fundator.'
           : error.message);
       }
     } catch (error) {
@@ -258,105 +204,95 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
     }
   }
 
+  Future<void> signOut() async {
+    await FounderBackend.client.auth.signOut();
+    if (mounted) {
+      setState(() {
+        signedIn = false;
+        organizationName = null;
+        message = null;
+      });
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
+  Widget build(BuildContext context) {
+    if (signedIn) {
+      return Center(child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.verified_user_outlined, size: 54),
+          const SizedBox(height: 12),
+          Text('Konto fundatora: ${organizationName ?? "Fundator"}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20)),
+          const SizedBox(height: 10),
+          Text(FounderBackend.client.auth.currentUser?.email ?? ''),
+          const SizedBox(height: 12),
+          const Text('To niezależne konto firmowe. Nie przyznaje GP '
+            'ani uprawnień prywatnego konta Genesis.',
+            textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          OutlinedButton(onPressed: signOut,
+            child: const Text('Wyloguj fundatora')),
+          if (message != null) SelectableText(message!),
+        ]),
+      ));
+    }
+    return Center(child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),
       child: SingleChildScrollView(padding: const EdgeInsets.all(20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text(GenesisLanguage.copy('KONTO FUNDATORA', 'FOUNDER ACCOUNT'),
-            textAlign: TextAlign.center, style: const TextStyle(
-              fontSize: 22, color: Color(0xFFD8B66A),
-              fontWeight: FontWeight.bold)),
+          const Text('KONTO FUNDATORA', textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Text(GenesisLanguage.copy(
-            'Konto firmy jest oddzielne od prywatnego konta Genesis. '
-            'Nie otrzymuje GP ani praw głosu.',
-            'Company accounts are separate from personal Genesis accounts. '
-            'They do not earn GP or voting rights.'),
+            'Oddzielne konto i hasło. Możesz użyć tego samego e-maila '
+            'co w prywatnym koncie Genesis.',
+            'Separate founder account and password. You may use the '
+            'same email as your personal Genesis account.'),
             textAlign: TextAlign.center),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Row(children: [
-            Expanded(child: registering
-              ? OutlinedButton.icon(
-                  onPressed: () => setState(() { registering = false; message = null; }),
-                  icon: const Icon(Icons.login_rounded),
-                  label: Text(GenesisLanguage.copy('Logowanie', 'Sign in')))
-              : FilledButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.login_rounded),
-                  label: Text(GenesisLanguage.copy('Logowanie', 'Sign in')))),
-            const SizedBox(width: 10),
-            Expanded(child: registering
-              ? FilledButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.person_add_alt_1_rounded),
-                  label: Text(GenesisLanguage.copy('Rejestracja', 'Register')))
-              : OutlinedButton.icon(
-                  onPressed: () => setState(() { registering = true; message = null; }),
-                  icon: const Icon(Icons.person_add_alt_1_rounded),
-                  label: Text(GenesisLanguage.copy('Rejestracja', 'Register')))),
+            Expanded(child: OutlinedButton(
+              onPressed: busy ? null : () => setState(() {
+                registering = false; message = null;
+              }), child: const Text('Logowanie'))),
+            const SizedBox(width: 8),
+            Expanded(child: OutlinedButton(
+              onPressed: busy ? null : () => setState(() {
+                registering = true; message = null;
+              }), child: const Text('Rejestracja'))),
           ]),
           const SizedBox(height: 16),
-          if (registering) ...[
-            TextField(controller: organization,
-              decoration: InputDecoration(labelText: GenesisLanguage.copy(
-                'Nazwa firmy lub instytucji', 'Organization name'))),
-            const SizedBox(height: 10),
-          ],
           TextField(controller: email,
             keyboardType: TextInputType.emailAddress,
+            autofillHints: const [AutofillHints.email],
             decoration: const InputDecoration(labelText: 'E-mail')),
-          const SizedBox(height: 10),
-          TextField(controller: password, obscureText: !showPassword,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.lock_outline_rounded),
-              labelText: GenesisLanguage.copy('Hasło', 'Password'),
-              suffixIcon: IconButton(
-                tooltip: GenesisLanguage.copy('Pokaż lub ukryj hasło', 'Show or hide password'),
-                onPressed: () => setState(() => showPassword = !showPassword),
-                icon: Icon(showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined)))),
+          const SizedBox(height: 12),
           if (registering) ...[
-            const SizedBox(height: 10),
-            TextField(controller: repeatPassword, obscureText: !showPassword,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.verified_user_outlined),
-                labelText: GenesisLanguage.copy('Powtórz hasło', 'Confirm password'),
-                helperText: GenesisLanguage.copy(
-                  'Hasła muszą być identyczne', 'Passwords must match'))),
+            TextField(controller: organization,
+              decoration: const InputDecoration(labelText: 'Nazwa firmy')),
+            const SizedBox(height: 12),
           ],
-          if (codeStep && !registering) ...[
-            const SizedBox(height: 10),
-            TextField(controller: code, maxLength: 6,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.mark_email_read_outlined),
-                labelText: '6-cyfrowy kod e-mail')),
+          TextField(controller: password, obscureText: true,
+            decoration: const InputDecoration(labelText: 'Hasło fundatora')),
+          if (registering) ...[
+            const SizedBox(height: 12),
+            TextField(controller: repeatPassword, obscureText: true,
+              decoration: const InputDecoration(labelText: 'Powtórz hasło')),
           ],
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 17),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: busy ? null : (codeStep && !registering ? verifyCode : submit),
-            icon: Icon(registering ? Icons.how_to_reg_rounded : Icons.login_rounded),
-            label: Text(busy ? '...' : codeStep && !registering
-              ? GenesisLanguage.copy('Potwierdź kod', 'Verify code') : registering
-              ? GenesisLanguage.copy('Załóż konto fundatora', 'Create founder account')
-              : GenesisLanguage.copy('Zaloguj fundatora', 'Founder sign in')),
-          ),
-          if (registering) TextButton.icon(
-            onPressed: busy ? null : resendConfirmation,
-            icon: const Icon(Icons.mark_email_unread_outlined),
-            label: Text(GenesisLanguage.copy(
-              'Nie otrzymałem linku aktywacyjnego – wyślij ponownie',
-              'Activation email missing – resend'))),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: busy ? null : submit,
+            child: Text(busy ? 'Proszę czekać…' :
+              registering ? 'Załóż konto fundatora' : 'Zaloguj fundatora')),
           if (message != null) ...[
             const SizedBox(height: 14),
             SelectableText(message!, textAlign: TextAlign.center),
           ],
         ]),
       ),
-    ),
-  );
+    ));
+  }
 }
