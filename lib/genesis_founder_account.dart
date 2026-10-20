@@ -13,6 +13,8 @@ class GenesisFounderAccount extends StatefulWidget {
 class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   final email = TextEditingController();
   final password = TextEditingController();
+  final repeatPassword = TextEditingController();
+  bool showPassword = false;
   final organization = TextEditingController();
   bool registering = false;
   bool busy = false;
@@ -22,6 +24,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   void dispose() {
     email.dispose();
     password.dispose();
+    repeatPassword.dispose();
     organization.dispose();
     super.dispose();
   }
@@ -37,6 +40,9 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
         }
         if (password.text.length < 8) {
           throw const FormatException('Hasło musi mieć co najmniej 8 znaków.');
+        }
+        if (password.text != repeatPassword.text) {
+          throw const FormatException('Hasła nie są identyczne. Sprawdź oba pola.');
         }
         await AgcBackend.client.auth.signUp(
           email: email.text.trim(),
@@ -88,17 +94,27 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
             'They do not earn GP or voting rights.'),
             textAlign: TextAlign.center),
           const SizedBox(height: 20),
-          SegmentedButton<bool>(
-            segments: [
-              ButtonSegment(value: false, label: Text(GenesisLanguage.copy(
-                'Logowanie', 'Sign in'))),
-              ButtonSegment(value: true, label: Text(GenesisLanguage.copy(
-                'Rejestracja', 'Register'))),
-            ],
-            selected: {registering},
-            onSelectionChanged: (value) =>
-              setState(() { registering = value.first; message = null; }),
-          ),
+          Row(children: [
+            Expanded(child: registering
+              ? OutlinedButton.icon(
+                  onPressed: () => setState(() { registering = false; message = null; }),
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(GenesisLanguage.copy('Logowanie', 'Sign in')))
+              : FilledButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(GenesisLanguage.copy('Logowanie', 'Sign in')))),
+            const SizedBox(width: 10),
+            Expanded(child: registering
+              ? FilledButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.person_add_alt_1_rounded),
+                  label: Text(GenesisLanguage.copy('Rejestracja', 'Register')))
+              : OutlinedButton.icon(
+                  onPressed: () => setState(() { registering = true; message = null; }),
+                  icon: const Icon(Icons.person_add_alt_1_rounded),
+                  label: Text(GenesisLanguage.copy('Rejestracja', 'Register')))),
+          ]),
           const SizedBox(height: 16),
           if (registering) ...[
             TextField(controller: organization,
@@ -110,12 +126,30 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(labelText: 'E-mail')),
           const SizedBox(height: 10),
-          TextField(controller: password, obscureText: true,
-            decoration: InputDecoration(labelText: GenesisLanguage.copy(
-              'Hasło', 'Password'))),
+          TextField(controller: password, obscureText: !showPassword,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.lock_outline_rounded),
+              labelText: GenesisLanguage.copy('Hasło', 'Password'),
+              suffixIcon: IconButton(
+                tooltip: GenesisLanguage.copy('Pokaż lub ukryj hasło', 'Show or hide password'),
+                onPressed: () => setState(() => showPassword = !showPassword),
+                icon: Icon(showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined)))),
+          if (registering) ...[
+            const SizedBox(height: 10),
+            TextField(controller: repeatPassword, obscureText: !showPassword,
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.verified_user_outlined),
+                labelText: GenesisLanguage.copy('Powtórz hasło', 'Confirm password'),
+                helperText: GenesisLanguage.copy(
+                  'Hasła muszą być identyczne', 'Passwords must match'))),
+          ],
           const SizedBox(height: 16),
-          FilledButton(
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 17),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             onPressed: busy ? null : submit,
+            icon: Icon(registering ? Icons.how_to_reg_rounded : Icons.login_rounded),
             child: Text(busy ? '...' : registering
               ? GenesisLanguage.copy('Załóż konto fundatora', 'Create founder account')
               : GenesisLanguage.copy('Zaloguj fundatora', 'Founder sign in')),
