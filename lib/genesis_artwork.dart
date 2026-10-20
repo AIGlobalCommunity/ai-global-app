@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'genesis_language.dart';
 
 const agcGold = Color(0xFFE3C78C);
 const agcNavy = Color(0xFF060C17);
