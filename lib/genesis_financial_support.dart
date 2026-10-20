@@ -155,8 +155,8 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 11)),
-                if (!compact) const Text(
-                  '${founders.length} / 1000', style: TextStyle(
+                if (!compact) Text(
+                  '${founders.length} / 1000', style: const TextStyle(
                     color: Colors.white70, fontSize: 11)),
               ],
             )),
