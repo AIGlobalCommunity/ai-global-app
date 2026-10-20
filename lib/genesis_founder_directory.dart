@@ -14,7 +14,6 @@ class GenesisFounderDirectory extends StatefulWidget {
 class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
   final search = TextEditingController();
   String order = 'amount';
-  int minimum = 0;
   int offset = 0;
   bool loading = false;
   bool more = false;
@@ -44,7 +43,7 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
       final result = await AgcBackend.client.rpc('agc_public_founder_directory',
         params: {
           'p_search': search.text.trim(),
-          'p_min_grosz': minimum * 100,
+          'p_min_grosz': 0,
           'p_sort': order,
           'p_offset': offset,
           'p_limit': 50,
@@ -96,49 +95,28 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
                   icon: const Icon(Icons.arrow_forward),
                   onPressed: () => load(reset: true)))),
             const SizedBox(height: 8),
-            Row(children: [
-              Expanded(child: DropdownButtonFormField<String>(
-                initialValue: order,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: GenesisLanguage.copy('Sortuj', 'Sort')),
-                items: [
-                  DropdownMenuItem(value: 'amount',
-                    child: Text(GenesisLanguage.copy('Największe wpłaty', 'Highest amount'))),
-                  DropdownMenuItem(value: 'lowest',
-                    child: Text(GenesisLanguage.copy('Najniższe wpłaty', 'Lowest amount'))),
-                  DropdownMenuItem(value: 'name',
-                    child: Text(GenesisLanguage.copy('Nazwa A–Z', 'Name A–Z'))),
-                  DropdownMenuItem(value: 'newest',
-                    child: Text(GenesisLanguage.copy('Najnowsze', 'Newest'))),
-                  DropdownMenuItem(value: 'oldest',
-                    child: Text(GenesisLanguage.copy('Najstarsze', 'Oldest'))),
-                ],
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => order = v);
-                  load(reset: true);
-                })),
-              const SizedBox(width: 8),
-              Expanded(child: DropdownButtonFormField<int>(
-                initialValue: minimum,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: GenesisLanguage.copy('Minimum', 'Minimum')),
-                items: const [
-                  DropdownMenuItem(value: 0, child: Text('0 PLN')),
-                  DropdownMenuItem(value: 100, child: Text('100 PLN')),
-                  DropdownMenuItem(value: 500, child: Text('500 PLN')),
-                  DropdownMenuItem(value: 1000, child: Text('1 000 PLN')),
-                  DropdownMenuItem(value: 5000, child: Text('5 000 PLN')),
-                ],
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() => minimum = v);
-                  load(reset: true);
-                })),
-            ]),
-          ])),
+            DropdownButtonFormField<String>(
+              initialValue: order,
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: GenesisLanguage.copy('Sortuj', 'Sort')),
+              items: [
+                DropdownMenuItem(value: 'amount',
+                  child: Text(GenesisLanguage.copy('Największe wpłaty', 'Highest amount'))),
+                DropdownMenuItem(value: 'lowest',
+                  child: Text(GenesisLanguage.copy('Najniższe wpłaty', 'Lowest amount'))),
+                DropdownMenuItem(value: 'name',
+                  child: Text(GenesisLanguage.copy('Nazwa A–Z', 'Name A–Z'))),
+                DropdownMenuItem(value: 'newest',
+                  child: Text(GenesisLanguage.copy('Najnowsze', 'Newest'))),
+                DropdownMenuItem(value: 'oldest',
+                  child: Text(GenesisLanguage.copy('Najstarsze', 'Oldest'))),
+              ],
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => order = v);
+                load(reset: true);
+              }),          ])),
         Expanded(child: error != null
           ? Center(child: Text(error!, textAlign: TextAlign.center))
           : entries.isEmpty && !loading
