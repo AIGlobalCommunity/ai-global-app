@@ -65,6 +65,23 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
       setState(() => notice = 'Nazwa musi mieć od 2 do 120 znaków.');
       return;
     }
+    if (visible && description.text.trim().length < 20) {
+      setState(() => notice =
+          'Aby opublikować profil, wpisz opis wsparcia (minimum 20 znaków).');
+      return;
+    }
+    if (visible && photoPath == null) {
+      setState(() => notice =
+          'Aby opublikować profil, dodaj zdjęcie lub logo (JPG, PNG lub WebP, do 5 MB).');
+      return;
+    }
+    final link = website.text.trim();
+    if (link.isNotEmpty && !(Uri.tryParse(link)?.hasScheme == true &&
+        (link.startsWith('https://') || link.startsWith('http://')) &&
+        Uri.tryParse(link)?.host.isNotEmpty == true)) {
+      setState(() => notice = 'Podaj pełny adres strony, np. https://firma.pl.');
+      return;
+    }
     setState(() { busy = true; notice = null; });
     try {
       await FounderBackend.client.from('founder_profiles').update({
@@ -144,6 +161,8 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
           if (tab == 0) ...[
             const Text('Dane fundatora na tablicę wsparcia',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('Minimalne kryteria: nazwa 2–120 znaków. Do publikacji na tablicy: opis minimum 20 znaków oraz zdjęcie lub logo (JPG/PNG/WebP, do 5 MB). Strona WWW jest opcjonalna. Możesz zapisać wersję roboczą bez publikacji.'),
             const SizedBox(height: 12),
             if (photoUrl != null) Center(child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
