@@ -28,7 +28,7 @@ class GenesisArtwork extends StatelessWidget {
   );
 }
 
-class GenesisPanel extends StatelessWidget {
+class GenesisPanel extends StatefulWidget {
   const GenesisPanel({super.key, required this.title, required this.body,
     required this.icon});
   final String title;
@@ -36,24 +36,54 @@ class GenesisPanel extends StatelessWidget {
   final IconData icon;
 
   @override
+  State<GenesisPanel> createState() => _GenesisPanelState();
+}
+
+class _GenesisPanelState extends State<GenesisPanel> {
+  bool expanded = false;
+
+  @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final narrow = constraints.maxWidth < 430;
+      final collapsible = widget.body.length > 280;
       final iconBox = Container(
         padding: EdgeInsets.all(narrow ? 8 : 11),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(13),
           border: Border.all(color: agcGold.withValues(alpha: .35)),
           color: agcGold.withValues(alpha: .07)),
-        child: Icon(icon, color: agcGold, size: narrow ? 20 : 24),
+        child: Icon(widget.icon, color: agcGold, size: narrow ? 20 : 24),
       );
-      final heading = Text(title, softWrap: true,
+      final heading = Text(widget.title, softWrap: true,
         style: TextStyle(color: agcGold,
           letterSpacing: narrow ? .5 : 1.1,
           fontWeight: FontWeight.w700, fontSize: narrow ? 12 : 13));
-      final content = Text(body, softWrap: true,
-        style: const TextStyle(height: 1.5,
-          color: Color(0xFFE3E5EA)));
+      final content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            alignment: Alignment.topCenter,
+            child: Text(widget.body, softWrap: true,
+              maxLines: collapsible && !expanded ? 4 : null,
+              overflow: collapsible && !expanded
+                ? TextOverflow.ellipsis : TextOverflow.visible,
+              style: const TextStyle(height: 1.5,
+                color: Color(0xFFE3E5EA))),
+          ),
+          if (collapsible) ...[
+            const SizedBox(height: 6),
+            TextButton.icon(
+              onPressed: () => setState(() => expanded = !expanded),
+              icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+              label: Text(expanded
+                ? GenesisLanguage.copy('Zwiń', 'Show less')
+                : GenesisLanguage.copy('Czytaj więcej', 'Read more')),
+            ),
+          ],
+        ],
+      );
       return Container(
         width: double.infinity,
         decoration: BoxDecoration(
