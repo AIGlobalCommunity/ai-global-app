@@ -182,7 +182,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           throw const FormatException('Hasła nie są identyczne. Sprawdź oba pola.');
         }
         final address = email.text.trim();
-        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+)
+        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
             .hasMatch(address)) {
           throw const FormatException('Wpisz poprawny adres e-mail.');
         }
