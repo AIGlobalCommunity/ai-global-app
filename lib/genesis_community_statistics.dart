@@ -64,17 +64,26 @@ class _GenesisCommunityStatisticsState extends State<GenesisCommunityStatistics>
               ('questions', GenesisLanguage.copy('Pytania', 'Questions'), Icons.help_outline),
             ];
             return Column(children: [
-              LayoutBuilder(builder: (context, box) {
-                final width = (box.maxWidth - 12) / 2;
-                return Wrap(spacing: 12, runSpacing: 12,
-                  children: [for (final item in labels)
-                    SizedBox(width: width, child: Column(children: [
-                      Icon(item.$3, color: const Color(0xFFD8B66A), size: 19),
-                      Text('${data[item.$1] ?? 0}', style: const TextStyle(
-                        fontSize: 27, fontWeight: FontWeight.bold)),
-                      Text(item.$2, textAlign: TextAlign.center),
-                    ]))]);
-              }),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final item in labels)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: Column(children: [
+                          Icon(item.$3, color: const Color(0xFFD8B66A), size: 19),
+                          Text('${data[item.$1] ?? 0}', style: const TextStyle(
+                            fontSize: 27, fontWeight: FontWeight.bold)),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(item.$2, textAlign: TextAlign.center),
+                          ),
+                        ]),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 10),
               Text(GenesisLanguage.copy(
                 'Dane z bazy • kraje z profili członków • pytania z tematów dyskusji',
