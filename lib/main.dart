@@ -4,6 +4,7 @@ import 'genesis_discussions.dart';
 import 'genesis_feed.dart';
 import 'genesis_community_statistics.dart';
 import 'genesis_financial_support.dart';
+import 'genesis_founder_account.dart';
 import 'genesis_chat.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
@@ -93,12 +94,35 @@ class _AgcAccessGateState extends State<AgcAccessGate> {
             builder: (_) => Scaffold(
               appBar: AppBar(title: Text(GenesisLanguage.copy(
                 'Wsparcie GENESIS', 'Support GENESIS'))),
-              body: const GenesisFinancialSupport(preview: true),
+              body: Column(children: [
+                Expanded(child: const GenesisFinancialSupport(preview: true)),
+                TextButton.icon(
+                  icon: const Icon(Icons.business),
+                  label: Text(GenesisLanguage.copy('Konto fundatora: rejestracja / logowanie', 'Founder account: register / sign in')),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('GENESIS • FUNDATOR')),
+                      body: const GenesisFounderAccount()))),
+                ),
+              ]),
             ))),
           icon: const Icon(Icons.volunteer_activism_outlined),
           label: Text(GenesisLanguage.copy('Ściana fundatorów',
             'Founders wall')),
         ),
+      );
+    }
+    if (AgcBackend.user!.userMetadata?['account_type'] == 'founder') {
+      return Scaffold(
+        appBar: AppBar(title: const Text('GENESIS • FUNDATOR'),
+          actions: [TextButton(
+            onPressed: () async => AgcBackend.signOut(),
+            child: Text(GenesisLanguage.copy('Wyloguj', 'Sign out')))]),
+        body: const Column(children: [
+          Expanded(child: GenesisFinancialSupport()),
+          Padding(padding: EdgeInsets.all(8),
+            child: Text('Konto fundatora • wpłaty nie są jeszcze aktywne')),
+        ]),
       );
     }
     return AgcHome();
