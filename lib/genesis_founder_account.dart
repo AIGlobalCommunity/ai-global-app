@@ -8,8 +8,12 @@ class FounderBackend {
   static const publishableKey = 'sb_publishable_dZGtqstR0cBLqqpr0Cde1Q_Mmzg7NW6';
   static final SupabaseClient client = SupabaseClient(
     url, publishableKey,
-    authOptions: const AuthClientOptions(autoRefreshToken: true),
+    authOptions: const AuthClientOptions(autoRefreshToken: false),
   );
+  static Future<void>? _initialization;
+
+  static Future<void> ensureInitialized() =>
+      _initialization ??= client.auth.initialize();
 }
 
 class GenesisFounderEmailConfirmation extends StatefulWidget {
@@ -30,6 +34,7 @@ class _GenesisFounderEmailConfirmationState
     if (busy) return;
     setState(() { busy = true; message = null; });
     try {
+      await FounderBackend.ensureInitialized();
       await FounderBackend.client.auth.resend(
         type: OtpType.signup,
         email: widget.email,
@@ -98,6 +103,8 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   late bool registering;
   bool busy = false;
   bool signedIn = false;
+  bool showPassword = false;
+  bool showRepeatPassword = false;
   String? message;
   String? organizationName;
 
@@ -105,8 +112,22 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   void initState() {
     super.initState();
     registering = widget.startRegistering;
-    signedIn = FounderBackend.client.auth.currentUser != null;
-    if (signedIn) loadProfile();
+    initializeFounderSession();
+  }
+
+  Future<void> initializeFounderSession() async {
+    try {
+      await FounderBackend.ensureInitialized();
+      if (!mounted) return;
+      final hasSession = FounderBackend.client.auth.currentSession != null;
+      setState(() => signedIn = hasSession);
+      if (hasSession) await loadProfile();
+    } catch (error) {
+      if (mounted) {
+        setState(() => message =
+          'Nie udało się uruchomić logowania fundatora: $error');
+      }
+    }
   }
 
   Future<void> loadProfile() async {
@@ -139,6 +160,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
     if (busy) return;
     setState(() { busy = true; message = null; });
     try {
+      await FounderBackend.ensureInitialized();
       final address = email.text.trim().toLowerCase();
       if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(address)) {
         throw const FormatException('Wpisz poprawny adres e-mail.');
@@ -207,6 +229,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   }
 
   Future<void> signOut() async {
+    await FounderBackend.ensureInitialized();
     await FounderBackend.client.auth.signOut();
     if (mounted) {
       setState(() {
@@ -277,12 +300,30 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
               decoration: const InputDecoration(labelText: 'Nazwa firmy')),
             const SizedBox(height: 12),
           ],
-          TextField(controller: password, obscureText: true,
-            decoration: const InputDecoration(labelText: 'Hasło fundatora')),
+          TextField(controller: password, obscureText: !showPassword,
+            decoration: InputDecoration(
+              labelText: 'Hasło fundatora',
+              suffixIcon: IconButton(
+                tooltip: showPassword ? 'Ukryj hasło' : 'Pokaż hasło',
+                icon: Icon(showPassword
+                  ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                onPressed: () => setState(() => showPassword = !showPassword),
+              ),
+            )),
           if (registering) ...[
             const SizedBox(height: 12),
-            TextField(controller: repeatPassword, obscureText: true,
-              decoration: const InputDecoration(labelText: 'Powtórz hasło')),
+            TextField(controller: repeatPassword,
+              obscureText: !showRepeatPassword,
+              decoration: InputDecoration(
+                labelText: 'Powtórz hasło',
+                suffixIcon: IconButton(
+                  tooltip: showRepeatPassword ? 'Ukryj hasło' : 'Pokaż hasło',
+                  icon: Icon(showRepeatPassword
+                    ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                  onPressed: () => setState(
+                    () => showRepeatPassword = !showRepeatPassword),
+                ),
+              )),
           ],
           const SizedBox(height: 20),
           FilledButton(
