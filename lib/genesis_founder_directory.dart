@@ -105,6 +105,8 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
                 items: [
                   DropdownMenuItem(value: 'amount',
                     child: Text(GenesisLanguage.copy('Największe wpłaty', 'Highest amount'))),
+                  DropdownMenuItem(value: 'lowest',
+                    child: Text(GenesisLanguage.copy('Najniższe wpłaty', 'Lowest amount'))),
                   DropdownMenuItem(value: 'name',
                     child: Text(GenesisLanguage.copy('Nazwa A–Z', 'Name A–Z'))),
                   DropdownMenuItem(value: 'newest',
