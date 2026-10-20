@@ -10,7 +10,6 @@ class FounderBackend {
     url, publishableKey,
     authOptions: const AuthClientOptions(
       authFlowType: AuthFlowType.implicit,
-      persistSession: false,
       autoRefreshToken: false,
     ),
   );
