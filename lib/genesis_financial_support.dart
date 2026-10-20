@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'genesis_language.dart';
 import 'agc_backend.dart';
 import 'genesis_founder_directory.dart';
+import 'genesis_founder_account.dart';
 
 /// A fixed, single-screen mosaic with exactly 1,000 visible demo places.
 /// No payment, reservation or sponsor data is represented as real.
@@ -134,7 +135,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
       final width = bounds.maxWidth.isFinite ? bounds.maxWidth : 700.0;
       final height = bounds.maxHeight.isFinite ? bounds.maxHeight : 700.0;
       final compact = height < 440;
-      final headerHeight = compact ? 82.0 : 112.0;
+      final headerHeight = compact ? 114.0 : 145.0;
       return SizedBox(
         width: width,
         height: height,
@@ -175,6 +176,39 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                       'Wszystkie wpłaty i filtry →', 'All support & filters →'),
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   )),
+                ]),
+                const SizedBox(height: 4),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Flexible(child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: gold, foregroundColor: const Color(0xFF101C2C),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => Scaffold(
+                        appBar: AppBar(title: Text(GenesisLanguage.copy(
+                          'Logowanie fundatora', 'Founder sign in'))),
+                        body: const GenesisFounderAccount()))),
+                    icon: const Icon(Icons.login_rounded, size: 16),
+                    label: Text(GenesisLanguage.copy('Logowanie', 'Sign in'),
+                      maxLines: 1, overflow: TextOverflow.ellipsis))),
+                  const SizedBox(width: 8),
+                  Flexible(child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: gold,
+                      side: BorderSide(color: gold.withValues(alpha: .75)),
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => Scaffold(
+                        appBar: AppBar(title: Text(GenesisLanguage.copy(
+                          'Rejestracja fundatora', 'Founder registration'))),
+                        body: const GenesisFounderAccount(startRegistering: true)))),
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                    label: Text(GenesisLanguage.copy('Rejestracja', 'Register'),
+                      maxLines: 1, overflow: TextOverflow.ellipsis))),
                 ]),
               ],
             )),
