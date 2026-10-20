@@ -1,108 +1,207 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'genesis_language.dart';
 
-/// Public concept preview. No payments, paid placements or sponsors are active.
-class GenesisFinancialSupport extends StatelessWidget {
+/// A fixed, single-screen mosaic with exactly 1,000 visible demo places.
+/// No payment, reservation or sponsor data is represented as real.
+class GenesisFinancialSupport extends StatefulWidget {
   const GenesisFinancialSupport({super.key, this.preview = false});
   final bool preview;
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    padding: const EdgeInsets.all(16),
-    child: Center(child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 760),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(GenesisLanguage.copy('ŚCIANA FUNDATORÓW GENESIS',
-          'GENESIS FOUNDERS WALL'), textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold,
-            color: Color(0xFFD8B66A))),
-        const SizedBox(height: 12),
-        Text(GenesisLanguage.copy(
-          'Wspólnie budujemy niezależną przestrzeń rozmowy o przyszłości AI. '
-          'Instytucje, firmy i osoby prywatne będą mogły dobrowolnie wspierać '
-          'rozwój platformy. W zamian, za zgodą i po weryfikacji, '
-          'będziemy mogli podziękować im na publicznej ścianie fundatorów.',
-          'We are building an independent space to discuss the future of AI. '
-          'Institutions, businesses and individuals may voluntarily support '
-          'the platform. With their consent and after review, we may thank '
-          'them on a public founders wall.'), textAlign: TextAlign.center),
-        const SizedBox(height: 20),
-        Text(GenesisLanguage.copy('WIZUALIZACJA PRZYSZŁEJ ŚCIANY',
-          'FUTURE WALL PREVIEW'), style: const TextStyle(
-          color: Color(0xFFD8B66A), fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Text(GenesisLanguage.copy(
-          'Poniższe pola są przykładowe. Nie oznaczają wpłat ani rezerwacji.',
-          'These are example spaces. No payments or reservations are implied.'),
-          style: const TextStyle(fontSize: 12, color: Colors.white70)),
-        const SizedBox(height: 12),
-        LayoutBuilder(builder: (context, constraints) {
-          final columns = constraints.maxWidth < 360 ? 2
-            : constraints.maxWidth < 600 ? 3 : 4;
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 12,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns, crossAxisSpacing: 8,
-              mainAxisSpacing: 8, childAspectRatio: 1.35),
-            itemBuilder: (context, index) => Container(
-              decoration: BoxDecoration(
-                color: index % 3 == 0
-                  ? const Color(0xFF263C54) : const Color(0xFF16273B),
-                border: Border.all(color: const Color(0xFFD8B66A)
-                  .withValues(alpha: .4)),
-                borderRadius: BorderRadius.circular(12)),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.add_business_outlined,
-                    color: Color(0xFFD8B66A), size: 24),
-                  const SizedBox(height: 5),
-                  Text(GenesisLanguage.copy('Miejsce na instytucję',
-                    'Institution space'), textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 11)),
-                ]),
-            ),
-          );
-        }),
-        const SizedBox(height: 20),
-        Card(child: Padding(padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(GenesisLanguage.copy('JAK BĘDZIE DZIAŁAĆ WSPARCIE?',
-              'HOW WILL SUPPORT WORK?'), style: const TextStyle(
-                color: Color(0xFFD8B66A), fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Text(GenesisLanguage.copy(
-              '1. Dobrowolne wsparcie rozwoju platformy.\n'
-              '2. Możliwość zgłoszenia nazwy i logo do moderacji.\n'
-              '3. Publiczny kafelek z podziękowaniem po akceptacji.\n'
-              '4. Przejrzyste informacje o przeznaczeniu środków.',
-              '1. Voluntary support for platform development.\n'
-              '2. Optional name and logo submission for review.\n'
-              '3. A public acknowledgement tile after approval.\n'
-              '4. Transparent reporting on how funds are used.')),
-          ]))),
-        const SizedBox(height: 12),
-        Card(child: Padding(padding: const EdgeInsets.all(16),
-          child: Text(GenesisLanguage.copy(
-            'Płatności i rezerwacje miejsc nie są jeszcze aktywne. '
-            'Wpłaty nie dają punktów GP, praw głosu, wpływu na Manifest '
-            'ani gwarancji kontaktu z AI. Udział w społeczności jest bezpłatny. '
-            'Przed uruchomieniem wsparcia opublikujemy regulamin, '
-            'dane odbiorcy wpłat i zasady oznaczania treści sponsorowanych.',
-            'Payments and space reservations are not active yet. '
-            'Contributions do not grant GP points, voting rights, '
-            'influence over the Manifesto or any guarantee of AI contact. '
-            'Community membership is free. Before launch we will publish '
-            'terms, payment recipient details and sponsored-content rules.')))),
-        if (preview) ...[
-          const SizedBox(height: 12),
-          Text(GenesisLanguage.copy(
-            'Pełna zakładka Wsparcie jest dostępna po zalogowaniu.',
-            'The full Support tab is available after signing in.'),
-            textAlign: TextAlign.center),
+  State<GenesisFinancialSupport> createState() => _GenesisFinancialSupportState();
+}
+
+class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
+  static const int capacity = 1000;
+  static const Color gold = Color(0xFFD8B66A);
+  static const Color navy = Color(0xFF0A1425);
+
+  // Illustrative support amounts. The first spaces are proportionally larger.
+  double amount(int i) {
+    if (i < 20) return 5000;
+    if (i < 200) return 1000;
+    return 200;
+  }
+
+  List<Rect> layout(Size size) {
+    final result = List<Rect>.filled(capacity, Rect.zero);
+    void partition(int first, int end, Rect rect) {
+      if (end - first == 1) {
+        result[first] = rect;
+        return;
+      }
+      final total = _weight(first, end);
+      final target = total / 2;
+      var midpoint = first + 1;
+      var subtotal = amount(first);
+      while (midpoint < end - 1 &&
+          subtotal + amount(midpoint) <= target) {
+        subtotal += amount(midpoint);
+        midpoint++;
+      }
+      final ratio = subtotal / total;
+      if (rect.width >= rect.height) {
+        final split = rect.left + rect.width * ratio;
+        partition(first, midpoint,
+          Rect.fromLTRB(rect.left, rect.top, split, rect.bottom));
+        partition(midpoint, end,
+          Rect.fromLTRB(split, rect.top, rect.right, rect.bottom));
+      } else {
+        final split = rect.top + rect.height * ratio;
+        partition(first, midpoint,
+          Rect.fromLTRB(rect.left, rect.top, rect.right, split));
+        partition(midpoint, end,
+          Rect.fromLTRB(rect.left, split, rect.right, rect.bottom));
+      }
+    }
+    partition(0, capacity, Offset.zero & size);
+    return result;
+  }
+
+  double _weight(int first, int end) {
+    double sum = 0;
+    for (var i = first; i < end; i++) {
+      sum += amount(i);
+    }
+    return sum;
+  }
+
+  void showSpace(int i) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(GenesisLanguage.copy(
+          'Miejsce #${i + 1}', 'Space #${i + 1}')),
+        content: Text(GenesisLanguage.copy(
+          'Przykładowe miejsce na ścianie fundatorów. '
+          'Sugerowany poziom wsparcia: ${amount(i).toInt()} zł. '
+          'Wpłaty i rezerwacje nie są jeszcze dostępne.',
+          'Example founders wall space. Suggested support tier: '
+          '${amount(i).toInt()} PLN. Payments and reservations '
+          'are not yet available.')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(GenesisLanguage.copy('Zamknij', 'Close')),
+          ),
         ],
-      ]),
-    )),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, bounds) {
+      final width = bounds.maxWidth.isFinite ? bounds.maxWidth : 700.0;
+      final height = bounds.maxHeight.isFinite ? bounds.maxHeight : 700.0;
+      final compact = height < 440;
+      final headerHeight = compact ? 58.0 : 90.0;
+      return SizedBox(
+        width: width,
+        height: height,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(children: [
+            SizedBox(height: headerHeight, child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FittedBox(fit: BoxFit.scaleDown, child: Text(
+                  GenesisLanguage.copy('ŚCIANA FUNDATORÓW GENESIS',
+                    'GENESIS FOUNDERS WALL'),
+                  style: TextStyle(color: gold, fontWeight: FontWeight.bold,
+                    fontSize: compact ? 17 : 22))),
+                const SizedBox(height: 4),
+                Text(GenesisLanguage.copy(
+                  '1000 miejsc • jedna ściana • większa wpłata = większy kafelek',
+                  '1000 spaces • one wall • more support = larger tile'),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 11)),
+                if (!compact) const Text(
+                  'DEMO • 0 / 1000', style: TextStyle(
+                    color: Colors.white70, fontSize: 11)),
+              ],
+            )),
+            const SizedBox(height: 6),
+            Expanded(child: LayoutBuilder(builder: (context, mosaicBounds) {
+              final size = Size(
+                math.max(1, mosaicBounds.maxWidth),
+                math.max(1, mosaicBounds.maxHeight));
+              final tiles = layout(size);
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (details) {
+                  final position = details.localPosition;
+                  for (var i = 0; i < tiles.length; i++) {
+                    if (tiles[i].contains(position)) {
+                      showSpace(i);
+                      break;
+                    }
+                  }
+                },
+                child: CustomPaint(
+                  size: size,
+                  painter: _FounderWallPainter(tiles),
+                ),
+              );
+            })),
+            const SizedBox(height: 5),
+            Text(GenesisLanguage.copy(
+              'Wizualizacja: wszystkie 1000 pól jest wolnych. '
+              'Brak aktywnych wpłat i rezerwacji.',
+              'Preview: all 1000 spaces are available. '
+              'No payments or reservations are active.'),
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 9, color: Colors.white70)),
+          ]),
+        ),
+      );
+    },
   );
+}
+
+class _FounderWallPainter extends CustomPainter {
+  _FounderWallPainter(this.tiles);
+  final List<Rect> tiles;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fill = Paint()..style = PaintingStyle.fill;
+    final border = Paint()
+      ..color = const Color(0xFF8A7142)
+      ..strokeWidth = .65
+      ..style = PaintingStyle.stroke;
+    for (var i = 0; i < tiles.length; i++) {
+      final r = tiles[i].deflate(.45);
+      fill.color = i < 20
+          ? const Color(0xFF6A512B)
+          : i < 200
+              ? const Color(0xFF254663)
+              : const Color(0xFF172B40);
+      canvas.drawRect(r, fill);
+      canvas.drawRect(r, border);
+      if (r.width >= 22 && r.height >= 11) {
+        final label = TextPainter(
+          text: TextSpan(
+            text: '#${i + 1}',
+            style: TextStyle(
+              color: i < 20
+                  ? const Color(0xFFFFDF91)
+                  : const Color(0xFFB8C8D6),
+              fontSize: math.min(12, math.min(r.width / 4, r.height / 2)),
+              fontWeight: FontWeight.w600)),
+          textDirection: TextDirection.ltr,
+          maxLines: 1,
+        )..layout(maxWidth: r.width - 3);
+        label.paint(canvas, Offset(
+          r.left + (r.width - label.width) / 2,
+          r.top + (r.height - label.height) / 2));
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FounderWallPainter oldDelegate) =>
+      oldDelegate.tiles != tiles;
 }
