@@ -32,7 +32,9 @@ class _GenesisFounderEmailConfirmationState
     } catch (error) {
       if (mounted) setState(() => status = error.toString());
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+      }
     }
   }
 
@@ -93,7 +95,6 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   final repeatPassword = TextEditingController();
   bool showPassword = false;
   bool codeStep = false;
-  bool useExistingGenesis = false;
   final code = TextEditingController();
   final organization = TextEditingController();
   late bool registering;
@@ -177,34 +178,20 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
         if (password.text.length < 8) {
           throw const FormatException('Hasło musi mieć co najmniej 8 znaków.');
         }
-        if (!useExistingGenesis && password.text != repeatPassword.text) {
+        if (password.text != repeatPassword.text) {
           throw const FormatException('Hasła nie są identyczne. Sprawdź oba pola.');
         }
-        if (useExistingGenesis || AgcBackend.user != null) {
-          if (AgcBackend.user == null) {
-            await AgcBackend.signIn(email.text.trim(), password.text);
-          }
-          final current = AgcBackend.user;
-          if (current == null || current.email?.toLowerCase() !=
-              email.text.trim().toLowerCase()) {
-            throw const FormatException(
-              'Zaloguj się na istniejące konto Genesis z podanym adresem.');
-          }
-          await AgcBackend.client.from('agc_founder_accounts').upsert({
-            'user_id': current.id,
-            'organization_name': name,
-          }, onConflict: 'user_id', ignoreDuplicates: true);
-          if (mounted) {
-            setState(() {
-              registering = false;
-              message = 'Profil fundatora utworzony dla tego samego e-maila. '
-                'Profil prywatny Genesis pozostaje oddzielny.';
-            });
-          }
-          return;
+        final address = email.text.trim();
+        if (!RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+            .hasMatch(address)) {
+          throw const FormatException('Wpisz poprawny adres e-mail.');
+        }
+        if (AgcBackend.user != null) {
+          throw const FormatException(
+            'Jesteś zalogowany. Wyloguj się, aby zarejestrować oddzielne konto fundatora.');
         }
         final response = await AgcBackend.client.auth.signUp(
-          email: email.text.trim(),
+          email: address,
           password: password.text,
           data: {'account_type': 'founder', 'organization_name': name},
           emailRedirectTo: kIsWeb ? 'https://thegenesisera.com/' : null,
@@ -212,9 +199,8 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
         if (!mounted) return;
         if (response.user?.identities?.isEmpty == true) {
           setState(() => message =
-            'Ten e-mail ma już konto Genesis. Zaznacz opcję '
-            '„Mam już konto Genesis” i podaj jego hasło, aby '
-            'utworzyć dodatkowy profil fundatora.');
+            'Ten adres e-mail jest już zarejestrowany. '
+            'Podaj inny adres, aby utworzyć oddzielne konto fundatora.');
           return;
         }
         await Navigator.of(context).push(MaterialPageRoute(
@@ -300,12 +286,6 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           ]),
           const SizedBox(height: 16),
           if (registering) ...[
-            CheckboxListTile(
-              value: useExistingGenesis,
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Mam już konto prywatne Genesis z tym e-mailem'),
-              subtitle: const Text('Użyj istniejącego hasła. Profil fundatora będzie zapisany w osobnej tabeli.'),
-              onChanged: (v) => setState(() => useExistingGenesis = v ?? false)),
             TextField(controller: organization,
               decoration: InputDecoration(labelText: GenesisLanguage.copy(
                 'Nazwa firmy lub instytucji', 'Organization name'))),
@@ -323,7 +303,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
                 tooltip: GenesisLanguage.copy('Pokaż lub ukryj hasło', 'Show or hide password'),
                 onPressed: () => setState(() => showPassword = !showPassword),
                 icon: Icon(showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined)))),
-          if (registering && !useExistingGenesis) ...[
+          if (registering) ...[
             const SizedBox(height: 10),
             TextField(controller: repeatPassword, obscureText: !showPassword,
               decoration: InputDecoration(
