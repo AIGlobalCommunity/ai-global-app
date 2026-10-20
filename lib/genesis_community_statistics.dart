@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 
@@ -20,37 +19,13 @@ class _GenesisCommunityStatisticsState extends State<GenesisCommunityStatistics>
     stats = _load();
   }
 
-  Future<int> _count(String table) async {
-    final result = await AgcBackend.client.from(table)
-        .select('id').count(CountOption.exact);
-    return result.count;
-  }
-
   Future<Map<String, int>> _load() async {
-    final counts = await Future.wait([
-      _count('agc_profiles'),
-      _count('agc_group_prompts'),
-      _count('agc_group_posts'),
-      _count('agc_post_comments'),
-      _count('agc_groups'),
-    ]);
-    final countries = <String>{};
-    var offset = 0;
-    while (true) {
-      final rows = List<Map<String, dynamic>>.from(
-        await AgcBackend.client.from('agc_profiles')
-            .select('country_code').range(offset, offset + 999));
-      for (final row in rows) {
-        final code = (row['country_code'] as String? ?? '').trim().toUpperCase();
-        if (code.isNotEmpty) countries.add(code);
-      }
-      if (rows.length < 1000) break;
-      offset += rows.length;
-    }
+    final response = await AgcBackend.client.rpc('agc_community_stats');
+    final data = Map<String, dynamic>.from(response as Map);
     return {
-      'members': counts[0], 'countries': countries.length,
-      'questions': counts[1], 'posts': counts[2],
-      'comments': counts[3], 'groups': counts[4],
+      'members': (data['members'] as num?)?.toInt() ?? 0,
+      'countries': (data['countries'] as num?)?.toInt() ?? 0,
+      'questions': (data['questions'] as num?)?.toInt() ?? 0,
     };
   }
 
@@ -87,9 +62,6 @@ class _GenesisCommunityStatisticsState extends State<GenesisCommunityStatistics>
               ('members', GenesisLanguage.copy('Członkowie', 'Members'), Icons.people_outline),
               ('countries', GenesisLanguage.copy('Kraje', 'Countries'), Icons.language),
               ('questions', GenesisLanguage.copy('Pytania', 'Questions'), Icons.help_outline),
-              ('posts', GenesisLanguage.copy('Posty', 'Posts'), Icons.article_outlined),
-              ('comments', GenesisLanguage.copy('Komentarze', 'Comments'), Icons.chat_bubble_outline),
-              ('groups', GenesisLanguage.copy('Grupy', 'Groups'), Icons.groups_outlined),
             ];
             return Column(children: [
               LayoutBuilder(builder: (context, box) {
@@ -105,8 +77,8 @@ class _GenesisCommunityStatisticsState extends State<GenesisCommunityStatistics>
               }),
               const SizedBox(height: 10),
               Text(GenesisLanguage.copy(
-                'Dane z bazy • liczba krajów według uzupełnionych profili • pytania z tematów dyskusji',
-                'Database data • countries from completed profiles • questions from discussion prompts'),
+                'Dane z bazy • kraje z profili członków • pytania z tematów dyskusji',
+                'Database totals • countries from member profiles • questions from discussion prompts'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 11, color: Colors.white60)),
             ]);
