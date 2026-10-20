@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'genesis_language.dart';
+import 'agc_backend.dart';
 
 /// A fixed, single-screen mosaic with exactly 1,000 visible demo places.
 /// No payment, reservation or sponsor data is represented as real.
@@ -15,6 +16,26 @@ class GenesisFinancialSupport extends StatefulWidget {
 class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
   static const int capacity = 1000;
   static const Color gold = Color(0xFFD8B66A);
+  List<Map<String, dynamic>> founders = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFounders();
+  }
+
+  Future<void> _loadFounders() async {
+    if (!AgcBackend.configured) return;
+    try {
+      final result = await AgcBackend.client.rpc('agc_public_founder_top1000');
+      if (!mounted) return;
+      setState(() {
+        founders = List<Map<String, dynamic>>.from(result as List);
+      });
+    } catch (error) {
+      debugPrint('Founder wall data unavailable: $error');
+    }
+  }
 
   // The first 100 IDs stay in fixed positions; the rest are shuffled
   // once per view, separately within their support tiers.
@@ -32,6 +53,9 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
 
   // Illustrative support amounts. The first spaces are proportionally larger.
   double amount(int i) {
+    if (i < founders.length) {
+      return math.max(1, ((founders[i]['total_grosz'] as num?)?.toDouble() ?? 100) / 100);
+    }
     if (i < 20) return 5000;
     if (i < 200) return 1000;
     return 200;
@@ -87,10 +111,10 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
         title: Text(GenesisLanguage.copy(
           'Miejsce #${i + 1}', 'Space #${i + 1}')),
         content: Text(GenesisLanguage.copy(
-          'Przykładowe miejsce na ścianie fundatorów. '
+          '${i < founders.length ? founders[i]['organization_name'] : 'Wolne miejsce'}. '
           'Sugerowany poziom wsparcia: ${amount(i).toInt()} zł. '
           'Wpłaty i rezerwacje nie są jeszcze dostępne.',
-          'Example founders wall space. Suggested support tier: '
+          '${i < founders.length ? founders[i]['organization_name'] : 'Available space'}. Suggested support tier: '
           '${amount(i).toInt()} PLN. Payments and reservations '
           'are not yet available.')),
         actions: [
@@ -132,7 +156,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 11)),
                 if (!compact) const Text(
-                  'DEMO • 0 / 1000', style: TextStyle(
+                  '${founders.length} / 1000', style: TextStyle(
                     color: Colors.white70, fontSize: 11)),
               ],
             )),
@@ -155,16 +179,14 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                 },
                 child: CustomPaint(
                   size: size,
-                  painter: _FounderWallPainter(tiles, displayedIds),
+                  painter: _FounderWallPainter(tiles, displayedIds, founders),
                 ),
               );
             })),
             const SizedBox(height: 5),
             Text(GenesisLanguage.copy(
-              'Wizualizacja: wszystkie 1000 pól jest wolnych. '
-              'Brak aktywnych wpłat i rezerwacji.',
-              'Preview: all 1000 spaces are available. '
-              'No payments or reservations are active.'),
+              'Widoczne: 1000 najwyższych zweryfikowanych wpłat. Płatności jeszcze nieaktywne.',
+              'Showing: top 1000 verified supporters. Payments not active yet.'),
               maxLines: 1, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 9, color: Colors.white70)),
           ]),
@@ -175,9 +197,10 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
 }
 
 class _FounderWallPainter extends CustomPainter {
-  _FounderWallPainter(this.tiles, this.displayedIds);
+  _FounderWallPainter(this.tiles, this.displayedIds, this.founders);
   final List<Rect> tiles;
   final List<int> displayedIds;
+  final List<Map<String, dynamic>> founders;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -198,7 +221,9 @@ class _FounderWallPainter extends CustomPainter {
       if (r.width >= 22 && r.height >= 11) {
         final label = TextPainter(
           text: TextSpan(
-            text: '#${displayedIds[i] + 1}',
+            text: displayedIds[i] < founders.length
+              ? (founders[displayedIds[i]]['organization_name'] as String? ?? '')
+              : '#${displayedIds[i] + 1}',
             style: TextStyle(
               color: i < 20
                   ? const Color(0xFFFFDF91)
