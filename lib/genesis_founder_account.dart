@@ -5,7 +5,8 @@ import 'genesis_language.dart';
 
 /// Separate organization identity; it never enters Genesis member rankings.
 class GenesisFounderAccount extends StatefulWidget {
-  const GenesisFounderAccount({super.key});
+  const GenesisFounderAccount({super.key, this.startRegistering = false});
+  final bool startRegistering;
   @override
   State<GenesisFounderAccount> createState() => _GenesisFounderAccountState();
 }
@@ -16,9 +17,15 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   final repeatPassword = TextEditingController();
   bool showPassword = false;
   final organization = TextEditingController();
-  bool registering = false;
+  late bool registering;
   bool busy = false;
   String? message;
+
+  @override
+  void initState() {
+    super.initState();
+    registering = widget.startRegistering;
+  }
 
   @override
   void dispose() {
