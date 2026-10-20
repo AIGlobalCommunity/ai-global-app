@@ -116,7 +116,8 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
                 if (v == null) return;
                 setState(() => order = v);
                 load(reset: true);
-              }),          ])),
+              }),
+          ])),
         Expanded(child: error != null
           ? Center(child: Text(error!, textAlign: TextAlign.center))
           : entries.isEmpty && !loading
