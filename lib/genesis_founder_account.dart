@@ -234,6 +234,15 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           }
         }
       }
+    } on AuthException catch (error) {
+      final duplicate = error.code == 'email_exists' ||
+          error.code == 'user_already_exists' ||
+          error.message.toLowerCase().contains('already registered');
+      if (mounted) {
+        setState(() => message = duplicate
+          ? 'Ten adres e-mail jest już zarejestrowany. Podaj inny adres.'
+          : error.message);
+      }
     } catch (error) {
       if (mounted) {
         setState(() => message = error.toString());
