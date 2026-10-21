@@ -175,38 +175,22 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                   )),
                 ]),
                 const SizedBox(height: 4),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Flexible(child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: gold, foregroundColor: const Color(0xFF101C2C),
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => Scaffold(
-                        appBar: AppBar(title: Text(GenesisLanguage.copy(
-                          'Logowanie fundatora', 'Founder sign in'))),
-                        body: const GenesisFounderAccount()))),
-                    icon: const Icon(Icons.login_rounded, size: 16),
-                    label: Text(GenesisLanguage.copy('Logowanie', 'Sign in'),
-                      maxLines: 1, overflow: TextOverflow.ellipsis))),
-                  const SizedBox(width: 8),
-                  Flexible(child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: gold,
-                      side: BorderSide(color: gold.withValues(alpha: .75)),
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => Scaffold(
-                        appBar: AppBar(title: Text(GenesisLanguage.copy(
-                          'Rejestracja fundatora', 'Founder registration'))),
-                        body: const GenesisFounderAccount(startRegistering: true)))),
-                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-                    label: Text(GenesisLanguage.copy('Rejestracja', 'Register'),
-                      maxLines: 1, overflow: TextOverflow.ellipsis))),
-                ]),
+                Center(child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: gold,
+                    foregroundColor: const Color(0xFF101C2C),
+                    visualDensity: VisualDensity.compact,
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    shape: const StadiumBorder()),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('Logowanie Fundatora / Rejestracja')),
+                      body: const GenesisFounderAccount()))),
+                  icon: const Icon(Icons.account_circle_outlined, size: 15),
+                  label: const Text('Logowanie Fundatora / Rejestracja',
+                    style: TextStyle(fontSize: 12)))),
+
               ],
             )),
             const SizedBox(height: 6),
