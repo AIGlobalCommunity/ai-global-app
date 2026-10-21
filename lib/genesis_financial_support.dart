@@ -101,27 +101,6 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
     return sum;
   }
 
-  void showSpace(int i) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(GenesisLanguage.copy(
-          'Miejsce #${i + 1}', 'Space #${i + 1}')),
-        content: Text(GenesisLanguage.copy(
-          '${i < founders.length ? founders[i]['organization_name'] : 'Wolne miejsce'}. '
-          'Suma potwierdzonych wpłat: ${i < founders.length ? (((founders[i]['total_grosz'] as num?)?.toDouble() ?? 0) / 100).toStringAsFixed(2) : '0,00'} PLN.',
-          '${i < founders.length ? founders[i]['organization_name'] : 'Available space'}. '
-          'Confirmed contributions: ${i < founders.length ? (((founders[i]['total_grosz'] as num?)?.toDouble() ?? 0) / 100).toStringAsFixed(2) : '0.00'} PLN.')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(GenesisLanguage.copy('Zamknij', 'Close')),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, bounds) {
