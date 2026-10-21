@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'genesis_language.dart';
-import 'agc_backend.dart';
+
 import 'genesis_founder_directory.dart';
 import 'genesis_founder_account.dart';
 
@@ -27,9 +27,8 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
   }
 
   Future<void> _loadFounders() async {
-    if (!AgcBackend.configured) return;
     try {
-      final result = await AgcBackend.client.rpc('agc_public_founder_top1000');
+      final result = await FounderBackend.client.rpc('founder_public_board', params: {'p_search': '', 'p_offset': 0, 'p_limit': 100});
       if (!mounted) return;
       setState(() {
         founders = List<Map<String, dynamic>>.from(result as List);
@@ -56,7 +55,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
   // Illustrative support amounts. The first spaces are proportionally larger.
   double amount(int i) {
     if (i < founders.length) {
-      return math.max(1, ((founders[i]['total_grosz'] as num?)?.toDouble() ?? 100) / 100);
+      return math.max(1, ((founders[i]['total_grosz'] as num?)?.toDouble() ?? 0) / 100);
     }
     if (i < 20) return 5000;
     if (i < 200) return 1000;
@@ -114,11 +113,9 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
           'Miejsce #${i + 1}', 'Space #${i + 1}')),
         content: Text(GenesisLanguage.copy(
           '${i < founders.length ? founders[i]['organization_name'] : 'Wolne miejsce'}. '
-          'Sugerowany poziom wsparcia: ${amount(i).toInt()} zł. '
-          'Wpłaty i rezerwacje nie są jeszcze dostępne.',
-          '${i < founders.length ? founders[i]['organization_name'] : 'Available space'}. Suggested support tier: '
-          '${amount(i).toInt()} PLN. Payments and reservations '
-          'are not yet available.')),
+          'Suma potwierdzonych wpłat: ${i < founders.length ? (((founders[i]['total_grosz'] as num?)?.toDouble() ?? 0) / 100).toStringAsFixed(2) : '0,00'} PLN.',
+          '${i < founders.length ? founders[i]['organization_name'] : 'Available space'}. '
+          'Confirmed contributions: ${i < founders.length ? (((founders[i]['total_grosz'] as num?)?.toDouble() ?? 0) / 100).toStringAsFixed(2) : '0.00'} PLN.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -152,8 +149,8 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                     fontSize: compact ? 17 : 22))),
                 const SizedBox(height: 4),
                 Text(GenesisLanguage.copy(
-                  '1000 miejsc • TOP 100 na stałe • 900 losowo',
-                  '1000 spaces • TOP 100 fixed • 900 shuffled'),
+                  'Ranking wg wpłat • przy remisie kolejność dołączenia',
+                  'Ranked by contributions • join order breaks ties'),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 11)),
@@ -213,6 +210,27 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
               ],
             )),
             const SizedBox(height: 6),
+            if (founders.isNotEmpty) SizedBox(height: 86, child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: founders.length,
+              itemBuilder: (context, index) {
+                final founder = founders[index];
+                final photo = founder['photo_path'] as String?;
+                return Card(child: SizedBox(width: 190, child: Row(children: [
+                  if (photo != null) Image.network(
+                    FounderBackend.client.storage.from('founder-photos').getPublicUrl(photo),
+                    width: 65, height: 65, fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.business)),
+                  Expanded(child: Padding(padding: const EdgeInsets.all(6),
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text('#${index + 1} ${founder['organization_name']}',
+                        maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text('${(((founder['total_grosz'] as num?)?.toDouble() ?? 0) / 100).toStringAsFixed(2)} PLN',
+                        style: const TextStyle(fontSize: 11)),
+                    ]))),
+                ]))));
+              })),
             Expanded(child: LayoutBuilder(builder: (context, mosaicBounds) {
               final size = Size(
                 math.max(1, mosaicBounds.maxWidth),
@@ -248,7 +266,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
             })),
             const SizedBox(height: 5),
             Text(GenesisLanguage.copy(
-              'Widoczne: 1000 najwyższych zweryfikowanych wpłat. Płatności jeszcze nieaktywne.',
+              'Fundatorzy są widoczni również przy 0 PLN. Wpłaty nie są jeszcze aktywne.',
               'Showing: top 1000 verified supporters. Payments not active yet.'),
               maxLines: 1, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 9, color: Colors.white70)),
