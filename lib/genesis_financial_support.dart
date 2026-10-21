@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'genesis_language.dart';
 
 import 'genesis_founder_directory.dart';
@@ -44,11 +45,6 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
 
   List<int> _createDisplayOrder() {
     final ids = List<int>.generate(capacity, (i) => i);
-    final random = math.Random();
-    final partners = ids.sublist(100, 200)..shuffle(random);
-    final friends = ids.sublist(200)..shuffle(random);
-    ids.setRange(100, 200, partners);
-    ids.setRange(200, capacity, friends);
     return ids;
   }
 
@@ -194,27 +190,6 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
               ],
             )),
             const SizedBox(height: 6),
-            if (founders.isNotEmpty) SizedBox(height: 86, child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: founders.length,
-              itemBuilder: (context, index) {
-                final founder = founders[index];
-                final photo = founder['photo_path'] as String?;
-                return Card(child: SizedBox(width: 190, child: Row(children: [
-                  if (photo != null) Image.network(
-                    FounderBackend.client.storage.from('founder-photos').getPublicUrl(photo),
-                    width: 65, height: 65, fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.business)),
-                  Expanded(child: Padding(padding: const EdgeInsets.all(6),
-                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text('#${index + 1} ${founder['organization_name']}',
-                        maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      Text('${(((founder['total_grosz'] as num?)?.toDouble() ?? 0) / 100).toStringAsFixed(2)} PLN',
-                        style: const TextStyle(fontSize: 11)),
-                    ]))),
-                ])));
-              })),
             Expanded(child: LayoutBuilder(builder: (context, mosaicBounds) {
               final size = Size(
                 math.max(1, mosaicBounds.maxWidth),
@@ -231,22 +206,39 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                     colors: [Color(0xFF162A42), Color(0xFF060E1C)])),
                 padding: const EdgeInsets.all(4),
                 child: ClipRRect(borderRadius: BorderRadius.circular(9),
-                  child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapUp: (details) {
-                  final position = details.localPosition;
-                  for (var i = 0; i < tiles.length; i++) {
-                    if (tiles[i].contains(position)) {
-                      showSpace(displayedIds[i]);
-                      break;
-                    }
-                  }
-                },
-                child: CustomPaint(
-                  size: size,
-                  painter: _FounderWallPainter(tiles, displayedIds, founders),
-                ),
-              )));
+                  child: Stack(children: [
+                    Positioned.fill(child: CustomPaint(
+                      painter: _FounderWallPainter(tiles, displayedIds, founders))),
+                    for (var i = 0; i < founders.length && i < capacity; i++)
+                      if ((founders[i]['photo_path'] as String?) != null)
+                        Positioned(
+                          left: tiles[i].left,
+                          top: tiles[i].top,
+                          width: tiles[i].width,
+                          height: tiles[i].height,
+                          child: Tooltip(
+                            message: '${founders[i]['organization_name']}\n${founders[i]['description']}\n${founders[i]['website']}',
+                            waitDuration: const Duration(milliseconds: 250),
+                            child: InkWell(
+                              onTap: () async {
+                                final site = (founders[i]['website'] as String? ?? '').trim();
+                                final uri = Uri.tryParse(site);
+                                if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http') && uri.host.isNotEmpty) {
+                                  await launchUrl(uri, webOnlyWindowName: '_blank');
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(1),
+                                child: Image.network(
+                                  FounderBackend.client.storage.from('founder-photos')
+                                    .getPublicUrl(founders[i]['photo_path'] as String),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.business, size: 12)),
+                              ),
+                            ),
+                          ),
+                        ),
+                  ])),
             })),
             const SizedBox(height: 5),
             Text(GenesisLanguage.copy(
@@ -293,7 +285,7 @@ class _FounderWallPainter extends CustomPainter {
         final label = TextPainter(
           text: TextSpan(
             text: displayedIds[i] < founders.length
-              ? (founders[displayedIds[i]]['organization_name'] as String? ?? '')
+              ? ''
               : '#${displayedIds[i] + 1}',
             style: TextStyle(
               color: i < 20
