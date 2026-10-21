@@ -215,6 +215,19 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
               webOnlyWindowName: '_blank'),
             icon: const Icon(Icons.favorite_outline),
             label: const Text('Wesprzyj THE GENESIS ERA ☕')),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => launchUrl(
+              Uri.parse('https://www.paypal.com/biz/profile/thegenesisera'),
+              webOnlyWindowName: '_blank'),
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            label: const Text('Wesprzyj THE GENESIS ERA przez PayPal')),
+          const SizedBox(height: 6),
+          const Text('PayPal jest dodatkową metodą dobrowolnego wsparcia. '
+            'Dostępne kwoty i limity zależą od PayPal. '
+            'Wpłaty wymagają ręcznego potwierdzenia przed dodaniem do rankingu.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12)),
           const SizedBox(height: 6),
           const Text('Dobrowolne wsparcie przez Buycoffee.to. '
             'Wpłata nie jest automatycznie księgowana w rankingu.',
