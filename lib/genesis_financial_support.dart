@@ -48,11 +48,9 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
     return ids;
   }
 
-  // Illustrative support amounts. The first spaces are proportionally larger.
+  // Tile geometry is independent of payment totals. A zero-payment
+  // founder must never collapse into a one-pixel slot.
   double amount(int i) {
-    if (i < founders.length) {
-      return math.max(1, ((founders[i]['total_grosz'] as num?)?.toDouble() ?? 0) / 100);
-    }
     if (i < 20) return 5000;
     if (i < 200) return 1000;
     return 200;
