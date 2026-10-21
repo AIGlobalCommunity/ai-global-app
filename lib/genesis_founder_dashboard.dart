@@ -20,7 +20,13 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
   String? photoPath, notice;
   List<Map<String, dynamic>> payments = [];
   bool adminEnabled = false;
-  final adminFounder = TextEditingController();
+  final adminEmail = TextEditingController();
+  final issueEmail = TextEditingController();
+  final issueAmount = TextEditingController();
+  final issueReference = TextEditingController();
+  final issueDetails = TextEditingController();
+  String issueProvider = 'PayPal';
+  List<Map<String, dynamic>> issues = [];
   final adminAmount = TextEditingController();
   final adminReference = TextEditingController();
 
@@ -29,6 +35,7 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
     super.initState();
     refresh();
     checkAdmin();
+    loadIssues();
   }
 
   Future<void> checkAdmin() async {
@@ -47,16 +54,15 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
     if (!adminEnabled || busy) return;
     final amount = double.tryParse(adminAmount.text.trim().replaceAll(',', '.'));
     final grosz = amount == null ? 0 : (amount * 100).round();
-    final founderId = adminFounder.text.trim();
-    final validUuid = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(founderId);
-    if (grosz <= 0 || !validUuid || adminReference.text.trim().length < 4) {
-      setState(() => notice = 'Podaj UUID fundatora, kwotę i numer transakcji.');
+    final email = adminEmail.text.trim();
+    if (grosz <= 0 || !email.contains('@') || adminReference.text.trim().length < 4) {
+      setState(() => notice = 'Podaj e-mail fundatora, kwotę i numer transakcji.');
       return;
     }
     setState(() { busy = true; notice = null; });
     try {
-      await FounderBackend.client.rpc('admin_approve_founder_payment', params: {
-        'p_founder': founderId,
+      await FounderBackend.client.rpc('admin_approve_founder_payment_by_email', params: {
+        'p_email': email,
         'p_amount_grosz': grosz,
         'p_reference': adminReference.text.trim(),
       });
@@ -73,12 +79,61 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
     }
   }
 
+  Future<void> loadIssues() async {
+    final user = FounderBackend.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final rows = await FounderBackend.client.from('founder_payment_issues')
+          .select('id,payment_email,provider,transaction_reference,amount_grosz,details,status,created_at')
+          .order('created_at', ascending: false).limit(100);
+      if (mounted) setState(() => issues = List<Map<String, dynamic>>.from(rows));
+    } catch (_) {
+      // Only authorized users may access these reports.
+    }
+  }
+
+  Future<void> submitIssue() async {
+    final user = FounderBackend.client.auth.currentUser;
+    if (user == null || busy) return;
+    final amount = double.tryParse(issueAmount.text.trim().replaceAll(',', '.'));
+    final grosz = amount == null ? 0 : (amount * 100).round();
+    if (!issueEmail.text.contains('@') || grosz <= 0 ||
+        issueReference.text.trim().length < 4 || issueDetails.text.trim().length < 10) {
+      setState(() => notice = 'Podaj e-mail płatności, kwotę, numer transakcji i opis (min. 10 znaków).');
+      return;
+    }
+    setState(() { busy = true; notice = null; });
+    try {
+      await FounderBackend.client.from('founder_payment_issues').insert({
+        'founder_id': user.id,
+        'payment_email': issueEmail.text.trim(),
+        'provider': issueProvider,
+        'transaction_reference': issueReference.text.trim(),
+        'amount_grosz': grosz,
+        'details': issueDetails.text.trim(),
+      });
+      issueReference.clear();
+      issueAmount.clear();
+      issueDetails.clear();
+      await loadIssues();
+      if (mounted) setState(() => notice = 'Zgłoszenie zapisane. Administrator je zweryfikuje.');
+    } catch (_) {
+      if (mounted) setState(() => notice = 'Nie udało się wysłać zgłoszenia.');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   @override
   void dispose() {
     name.dispose();
     description.dispose();
     website.dispose();
-    adminFounder.dispose();
+    adminEmail.dispose();
+    issueEmail.dispose();
+    issueAmount.dispose();
+    issueReference.dispose();
+    issueDetails.dispose();
     adminAmount.dispose();
     adminReference.dispose();
     super.dispose();
@@ -201,11 +256,12 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
           const Text('PANEL FUNDATORA', textAlign: TextAlign.center,
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          SegmentedButton<int>(segments: const [
-            ButtonSegment(value: 0, icon: Icon(Icons.favorite_outline),
+          SegmentedButton<int>(segments: [
+            const ButtonSegment(value: 0, icon: Icon(Icons.favorite_outline),
               label: Text('Wsparcie')),
-            ButtonSegment(value: 1, icon: Icon(Icons.payments_outlined),
-              label: Text('Suma wpłat')),
+            const ButtonSegment(value: 1, icon: Icon(Icons.payments_outlined), label: Text('Suma wpłat')),
+            const ButtonSegment(value: 2, icon: Icon(Icons.report_problem_outlined), label: Text('Zgłoś problem')),
+            if (adminEnabled) const ButtonSegment(value: 3, icon: Icon(Icons.admin_panel_settings_outlined), label: Text('Admin')),
           ], selected: {tab}, onSelectionChanged: (v) =>
               setState(() => tab = v.first)),
           const SizedBox(height: 12),
@@ -263,7 +319,7 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
             FilledButton.icon(onPressed: busy ? null : save,
               icon: const Icon(Icons.save_outlined),
               label: Text(busy ? 'Zapisywanie…' : 'Zapisz dane')),
-          ] else ...[
+          ] else if (tab == 1) ...[
             const Text('Łączna suma zweryfikowanych wpłat',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
@@ -283,20 +339,44 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
                 title: Text('${((payment['amount_grosz'] as num).toInt() / 100).toStringAsFixed(2)} PLN'),
                 subtitle: Text(payment['verified_at']?.toString().split('T').first ?? ''),
                 trailing: const Icon(Icons.verified_outlined)),
+          ] else if (tab == 2) ...[
+            const Text('Zgłoś problem z wpłatą', style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('Zgłoszenie nie księguje wpłaty automatycznie. Administrator sprawdzi ją w PayPal lub BuyCoffee.'),
+            TextField(controller: issueEmail, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-mail użyty przy wpłacie')),
+            DropdownButtonFormField<String>(initialValue: issueProvider,
+              items: const [DropdownMenuItem(value: 'PayPal', child: Text('PayPal')), DropdownMenuItem(value: 'BuyCoffee', child: Text('BuyCoffee'))],
+              onChanged: (v) => setState(() => issueProvider = v ?? 'PayPal'),
+              decoration: const InputDecoration(labelText: 'Metoda wpłaty')),
+            TextField(controller: issueAmount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Kwota wpłaty PLN')),
+            TextField(controller: issueReference, decoration: const InputDecoration(labelText: 'Numer transakcji z potwierdzenia')),
+            const Text('Numer transakcji to identyfikator płatności widoczny w szczegółach PayPal lub BuyCoffee. Nie jest to numer karty ani hasło.'),
+            TextField(controller: issueDetails, maxLines: 3, maxLength: 2000, decoration: const InputDecoration(labelText: 'Opis problemu')),
+            FilledButton.icon(onPressed: busy ? null : submitIssue, icon: const Icon(Icons.send_outlined), label: const Text('Wyślij zgłoszenie')),
+            const SizedBox(height: 12),
+            const Text('Historia zgłoszeń', style: TextStyle(fontWeight: FontWeight.bold)),
+            for (final issue in issues.where((e) => e['payment_email'] == issueEmail.text.trim() || !adminEnabled))
+              ListTile(title: Text('${issue['provider']} — ${issue['transaction_reference']}'),
+                subtitle: Text('Status: ${issue['status']}')),
+          ] else if (tab == 3 && adminEnabled) ...[
+            const Text('ADMINISTRATOR — WERYFIKACJA WPŁAT', style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
+            const Text('Sprawdź rzeczywistą wpłatę u operatora przed zatwierdzeniem. E-mail musi odpowiadać kontu fundatora.'),
+            TextField(controller: adminEmail, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'E-mail konta fundatora')),
+            TextField(controller: adminAmount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Kwota PLN')),
+            TextField(controller: adminReference, decoration: const InputDecoration(labelText: 'Unikalny numer transakcji')),
+            const Text('UUID to wewnętrzny identyfikator konta fundatora. Nie musisz go wpisywać — system znajdzie konto po e-mailu. Unikalny numer transakcji to ID płatności nadane przez PayPal lub BuyCoffee; zapobiega podwójnemu zaksięgowaniu.'),
+            FilledButton.icon(onPressed: busy ? null : approvePayment, icon: const Icon(Icons.verified_user_outlined), label: const Text('Zatwierdź zweryfikowaną wpłatę')),
+            const SizedBox(height: 14),
+            const Text('Zgłoszenia wpłat', style: TextStyle(fontWeight: FontWeight.bold)),
+            OutlinedButton.icon(onPressed: loadIssues, icon: const Icon(Icons.refresh), label: const Text('Odśwież zgłoszenia')),
+            for (final issue in issues)
+              ListTile(
+                title: Text('${issue['provider']} — ${issue['payment_email']}'),
+                subtitle: Text('${issue['transaction_reference']} • ${((issue['amount_grosz'] as num).toInt() / 100).toStringAsFixed(2)} PLN\n${issue['details']}'),
+                isThreeLine: true),
           ],
           if (notice != null) Padding(padding: const EdgeInsets.only(top: 12),
             child: SelectableText(notice!)),
-          if (adminEnabled) ...[
-            const Divider(height: 36),
-            const Text('ADMINISTRATOR — ZATWIERDZANIE WPŁAT', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text('Zatwierdzaj tylko wpłaty zweryfikowane w Buycoffee.to lub PayPal. Sprawdź zgodność adresu e-mail fundatora.'),
-            TextField(controller: adminFounder, decoration: const InputDecoration(labelText: 'UUID fundatora')),
-            TextField(controller: adminAmount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Kwota PLN')),
-            TextField(controller: adminReference, decoration: const InputDecoration(labelText: 'Unikalny numer transakcji')),
-            const SizedBox(height: 8),
-            FilledButton.icon(onPressed: busy ? null : approvePayment, icon: const Icon(Icons.verified_user_outlined), label: const Text('Zatwierdź wpłatę')),
-          ],
           const SizedBox(height: 20),
           TextButton.icon(onPressed: busy ? null : widget.onSignOut,
             icon: const Icon(Icons.logout), label: const Text('Wyloguj fundatora')),
