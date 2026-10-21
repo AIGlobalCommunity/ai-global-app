@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'genesis_language.dart';
 import 'genesis_founder_dashboard.dart';
 
@@ -11,12 +12,43 @@ class FounderBackend {
     url, publishableKey,
     authOptions: const AuthClientOptions(
       authFlowType: AuthFlowType.implicit,
-      autoRefreshToken: false,
+      autoRefreshToken: true,
     ),
   );
-  // Founder auth uses a standalone client without an unconfigured
-  // session storage adapter. It never shares Genesis member sessions.
-  static Future<void> ensureInitialized() async {}
+  static const _sessionKey = 'genesis_founder_refresh_token_v1';
+  static Future<void>? _initialization;
+  static Future<void> ensureInitialized() =>
+      _initialization ??= _restoreSession();
+
+  static Future<void> _restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_sessionKey);
+    if (token != null && token.isNotEmpty) {
+      try {
+        await client.auth.refreshSession(token);
+      } catch (_) {
+        await prefs.remove(_sessionKey);
+      }
+    }
+    client.auth.onAuthStateChange.listen((data) async {
+      final refresh = data.session?.refreshToken;
+      final storage = await SharedPreferences.getInstance();
+      if (refresh != null && refresh.isNotEmpty) {
+        await storage.setString(_sessionKey, refresh);
+      } else if (data.event == AuthChangeEvent.signedOut) {
+        await storage.remove(_sessionKey);
+      }
+    });
+  }
+
+  static Future<void> saveSession() async {
+    final token = client.auth.currentSession?.refreshToken;
+    if (token != null && token.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sessionKey, token);
+    }
+  }
+
 }
 
 class GenesisFounderEmailConfirmation extends StatefulWidget {
@@ -216,6 +248,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
           return;
         }
         if (response.session != null) {
+          await FounderBackend.saveSession();
           setState(() { signedIn = true; organizationName = name; });
         } else {
           await Navigator.of(context).push(MaterialPageRoute(
@@ -228,6 +261,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
       } else {
         await FounderBackend.client.auth.signInWithPassword(
           email: address, password: password.text);
+        await FounderBackend.saveSession();
         if (mounted) {
           setState(() { signedIn = true; message = null; });
           await loadProfile();
@@ -258,6 +292,8 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   Future<void> signOut() async {
     await FounderBackend.ensureInitialized();
     await FounderBackend.client.auth.signOut();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('genesis_founder_refresh_token_v1');
     if (mounted) {
       setState(() {
         signedIn = false;
