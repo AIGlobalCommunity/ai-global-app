@@ -217,7 +217,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                             ),
                           ),
                         ),
-                  ])),
+                  ])));
             })),
             const SizedBox(height: 5),
             Text(GenesisLanguage.copy(
