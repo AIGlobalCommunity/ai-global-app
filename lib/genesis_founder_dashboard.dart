@@ -265,35 +265,50 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
             if (adminEnabled) const ButtonSegment(value: 3, icon: Icon(Icons.admin_panel_settings_outlined), label: Text('Admin')),
           ], selected: {tab}, onSelectionChanged: (v) =>
               setState(() => tab = v.first)),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: () => launchUrl(
-              Uri.parse('https://buycoffee.to/thegenesisera.com'),
-              webOnlyWindowName: '_blank'),
-            icon: const Icon(Icons.favorite_outline),
-            label: const Text('Wesprzyj THE GENESIS ERA ☕')),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => launchUrl(
-              Uri.parse('https://www.paypal.com/biz/profile/thegenesisera'),
-              webOnlyWindowName: '_blank'),
-            icon: const Icon(Icons.account_balance_wallet_outlined),
-            label: const Text('Wesprzyj THE GENESIS ERA przez PayPal')),
-          const SizedBox(height: 6),
-          const Text('PayPal jest dodatkową metodą dobrowolnego wsparcia. '
-            'Dostępne kwoty i limity zależą od PayPal. '
-            'Wpłaty wymagają ręcznego potwierdzenia przed dodaniem do rankingu.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12)),
-          const SizedBox(height: 6),
-          const Text('Dobrowolne wsparcie przez Buycoffee.to. '
-            'Wpłata nie jest automatycznie księgowana w rankingu.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12)),
-          const SizedBox(height: 10),
-          const Text('WAŻNE: Adres e-mail podany podczas wpłaty musi być identyczny z adresem e-mail konta fundatora w THE GENESIS ERA. Wpłaty są weryfikowane i księgowane ręcznie do 24 godzin od otrzymania potwierdzenia płatności. Po zaksięgowaniu pojawią się w panelu i rankingu. Wsparcie jest dobrowolne, a tablica fundatorów jest formą podziękowania.', textAlign: TextAlign.center),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           if (tab == 0) ...[
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                const Text('WESPRZYJ THE GENESIS ERA',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 14),
+                Row(children: [
+                  Expanded(child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                    onPressed: () => launchUrl(
+                      Uri.parse('https://buycoffee.to/thegenesisera.com'),
+                      webOnlyWindowName: '_blank'),
+                    icon: const Icon(Icons.local_cafe_outlined, size: 20),
+                    label: const Text('BuyCoffee', maxLines: 1, overflow: TextOverflow.ellipsis))),
+                  const SizedBox(width: 10),
+                  Expanded(child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                    onPressed: () => launchUrl(
+                      Uri.parse('https://www.paypal.com/biz/profile/thegenesisera'),
+                      webOnlyWindowName: '_blank'),
+                    icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+                    label: const Text('PayPal', maxLines: 1, overflow: TextOverflow.ellipsis))),
+                ]),
+                const SizedBox(height: 14),
+                const Text('Wsparcie jest całkowicie dobrowolne. Tablica fundatorów stanowi formę podziękowania.',
+                  textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+                const SizedBox(height: 8),
+                const Text('WAŻNE: Użyj przy wpłacie adresu e-mail zgodnego z kontem fundatora. Wpłaty są weryfikowane ręcznie po potwierdzeniu w PayPal lub BuyCoffee; dopiero potem pojawiają się w panelu i rankingu.',
+                  textAlign: TextAlign.center, style: TextStyle(fontSize: 12)),
+              ]),
+            ),
+            const SizedBox(height: 20),
             const Text('Dane fundatora na tablicę wsparcia',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
