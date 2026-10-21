@@ -98,7 +98,7 @@ class _AgcAccessGateState extends State<AgcAccessGate> {
                 Expanded(child: const GenesisFinancialSupport(preview: true)),
                 TextButton.icon(
                   icon: const Icon(Icons.business),
-                  label: Text(GenesisLanguage.copy('Konto fundatora: rejestracja / logowanie', 'Founder account: register / sign in')),
+                  label: Text(GenesisLanguage.copy('Logowanie Fundatora / Rejestracja', 'Founder account: register / sign in')),
                   onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => Scaffold(
                       appBar: AppBar(title: const Text('GENESIS • FUNDATOR')),
