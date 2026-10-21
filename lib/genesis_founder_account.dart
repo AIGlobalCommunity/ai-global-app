@@ -81,7 +81,7 @@ class _GenesisFounderEmailConfirmationState
       }
     } on AuthException catch (error) {
       if (mounted) {
-        setState(() => message = error.message);
+        setState(() => message = 'Nie udało się wysłać linku. Sprawdź adres e-mail lub spróbuj ponownie później.');
       }
     } finally {
       if (mounted) {
@@ -146,6 +146,32 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
   String? organizationError;
   String? passwordError;
   String? repeatPasswordError;
+
+  String explainAuthError(AuthException error) {
+    final code = (error.code ?? '').toLowerCase();
+    final description = error.message.toLowerCase();
+    if (code == 'invalid_credentials' || description.contains('invalid login credentials')) {
+      return 'Nieprawidłowy e-mail lub hasło. Sprawdź dane i spróbuj ponownie.';
+    }
+    if (code == 'email_not_confirmed' || description.contains('email not confirmed')) {
+      return 'Adres e-mail nie został jeszcze potwierdzony. Otwórz wiadomość aktywacyjną i kliknij link.';
+    }
+    if (code == 'user_already_exists' || code == 'email_exists' ||
+        description.contains('already registered')) {
+      return 'Konto z tym adresem e-mail już istnieje. Wybierz zakładkę Logowanie.';
+    }
+    if (code == 'over_email_send_rate_limit' || code == 'over_request_rate_limit' ||
+        code == 'too_many_requests' || description.contains('rate limit')) {
+      return 'Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie.';
+    }
+    if (code == 'weak_password' || description.contains('password should')) {
+      return 'Hasło jest zbyt słabe. Użyj dłuższego, trudniejszego hasła.';
+    }
+    if (description.contains('network') || description.contains('connection')) {
+      return 'Brak połączenia z usługą logowania. Sprawdź internet i spróbuj ponownie.';
+    }
+    return 'Nie udało się zalogować lub zarejestrować. Sprawdź dane, połączenie i spróbuj ponownie.';
+  }
 
   void clearFieldErrors() {
     setState(() {
@@ -268,14 +294,7 @@ class _GenesisFounderAccountState extends State<GenesisFounderAccount> {
         }
       }
     } on AuthException catch (error) {
-      final duplicate = error.code == 'email_exists' ||
-          error.code == 'user_already_exists' ||
-          error.message.toLowerCase().contains('already registered');
-      if (mounted) {
-        setState(() => message = duplicate
-          ? 'Ten adres e-mail jest już zarejestrowany jako fundator.'
-          : error.message);
-      }
+      if (mounted) setState(() => message = explainAuthError(error));
     } catch (error) {
       debugPrint('Founder authentication failed: $error');
       if (mounted) {
