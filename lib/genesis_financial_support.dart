@@ -213,7 +213,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                       Text('${(((founder['total_grosz'] as num?)?.toDouble() ?? 0) / 100).toStringAsFixed(2)} PLN',
                         style: const TextStyle(fontSize: 11)),
                     ]))),
-                ]))));
+                ])));
               })),
             Expanded(child: LayoutBuilder(builder: (context, mosaicBounds) {
               final size = Size(
