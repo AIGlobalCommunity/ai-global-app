@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'genesis_founder_account.dart';
@@ -157,6 +158,18 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
               label: Text('Suma wpłat')),
           ], selected: {tab}, onSelectionChanged: (v) =>
               setState(() => tab = v.first)),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => launchUrl(
+              Uri.parse('https://buycoffee.to/thegenesisera.com'),
+              webOnlyWindowName: '_blank'),
+            icon: const Icon(Icons.favorite_outline),
+            label: const Text('Wesprzyj THE GENESIS ERA ☕')),
+          const SizedBox(height: 6),
+          const Text('Dobrowolne wsparcie przez Buycoffee.to. '
+            'Wpłata nie jest automatycznie księgowana w rankingu.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12)),
           const SizedBox(height: 18),
           if (tab == 0) ...[
             const Text('Dane fundatora na tablicę wsparcia',
