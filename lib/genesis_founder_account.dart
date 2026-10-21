@@ -79,7 +79,7 @@ class _GenesisFounderEmailConfirmationState
         setState(() => message =
           'Przyjęto prośbę o wysłanie wiadomości. Sprawdź także spam.');
       }
-    } on AuthException catch (error) {
+    } on AuthException {
       if (mounted) {
         setState(() => message = 'Nie udało się wysłać linku. Sprawdź adres e-mail lub spróbuj ponownie później.');
       }
