@@ -20,6 +20,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
   static const int capacity = 1000;
   static const Color gold = Color(0xFFD8B66A);
   List<Map<String, dynamic>> founders = const [];
+  int? hoveredFounder;
 
   @override
   void initState() {
@@ -87,7 +88,14 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
           Rect.fromLTRB(rect.left, split, rect.right, rect.bottom));
       }
     }
-    partition(0, capacity, Offset.zero & size);
+    // First ten ranked founders form one horizontal row inside the wall.
+    final rowHeight = math.min(94.0, size.height * 0.24);
+    final rowWidth = size.width / 10;
+    for (var i = 0; i < 10; i++) {
+      result[i] = Rect.fromLTWH(i * rowWidth, 0, rowWidth, rowHeight);
+    }
+    partition(10, capacity,
+      Rect.fromLTWH(0, rowHeight, size.width, math.max(1, size.height - rowHeight)));
     return result;
   }
 
@@ -193,7 +201,10 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                           top: tiles[i].top,
                           width: tiles[i].width,
                           height: tiles[i].height,
-                          child: Tooltip(
+                          child: MouseRegion(
+                            onEnter: (_) => setState(() => hoveredFounder = i),
+                            onExit: (_) => setState(() => hoveredFounder = null),
+                            child: Tooltip(
                             message: '${founders[i]['organization_name']}\n${founders[i]['description']}\n${founders[i]['website']}',
                             waitDuration: const Duration(milliseconds: 250),
                             child: InkWell(
@@ -204,8 +215,15 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                                   await launchUrl(uri, webOnlyWindowName: '_blank');
                                 }
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.all(1),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                padding: EdgeInsets.all(hoveredFounder == i ? 3 : 1),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: hoveredFounder == i ? const Color(0xFFFFE29A) : Colors.transparent,
+                                    width: hoveredFounder == i ? 3 : 0),
+                                  boxShadow: hoveredFounder == i ? [BoxShadow(
+                                    color: gold.withValues(alpha: .8), blurRadius: 14)] : null),
                                 child: Image.network(
                                   FounderBackend.client.storage.from('founder-photos')
                                     .getPublicUrl(founders[i]['photo_path'] as String),
@@ -213,6 +231,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
                                   errorBuilder: (_, __, ___) => const Icon(Icons.business, size: 12)),
                               ),
                             ),
+                          ),
                           ),
                         ),
                   ])));
