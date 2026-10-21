@@ -37,8 +37,7 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
 
   Future<void> loadBoard() async {
     try {
-      final rows = await FounderBackend.client.from('founder_profiles')
-         .rpc('founder_public_board', params: {
+      final rows = await FounderBackend.client.rpc('founder_public_board', params: {
           'p_search': '', 'p_offset': 0, 'p_limit': 100,
         });
       if (mounted) {
