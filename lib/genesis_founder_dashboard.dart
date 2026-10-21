@@ -47,8 +47,31 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
     if (!adminEnabled || busy) return;
     final amount = double.tryParse(adminAmount.text.trim().replaceAll(',', '.'));
     final grosz = amount == null ? 0 : (amount * 100).round();
-    if (grosz <= 0 || adminReference.text.trim().length < 4 ||
-        !RegExp(r'^[0-9a-fA-F-]{36}
+    final founderId = adminFounder.text.trim();
+    final validUuid = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(founderId);
+    if (grosz <= 0 || !validUuid || adminReference.text.trim().length < 4) {
+      setState(() => notice = 'Podaj UUID fundatora, kwotę i numer transakcji.');
+      return;
+    }
+    setState(() { busy = true; notice = null; });
+    try {
+      await FounderBackend.client.rpc('admin_approve_founder_payment', params: {
+        'p_founder': founderId,
+        'p_amount_grosz': grosz,
+        'p_reference': adminReference.text.trim(),
+      });
+      adminAmount.clear();
+      adminReference.clear();
+      await refresh();
+      if (mounted) setState(() => notice = 'Wpłata została zatwierdzona.');
+    } catch (_) {
+      if (mounted) {
+        setState(() => notice = 'Nie udało się zatwierdzić wpłaty. Sprawdź uprawnienia i numer transakcji.');
+      }
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
 
   @override
   void dispose() {
