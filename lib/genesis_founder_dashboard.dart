@@ -170,6 +170,8 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
             'Wpłata nie jest automatycznie księgowana w rankingu.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12)),
+          const SizedBox(height: 10),
+          const Text('WAŻNE: Adres e-mail podany podczas wpłaty musi być identyczny z adresem e-mail konta fundatora w THE GENESIS ERA. Wpłaty są weryfikowane i księgowane ręcznie do 24 godzin od otrzymania potwierdzenia płatności. Po zaksięgowaniu pojawią się w panelu i rankingu. Wsparcie jest dobrowolne, a tablica fundatorów jest formą podziękowania.', textAlign: TextAlign.center),
           const SizedBox(height: 18),
           if (tab == 0) ...[
             const Text('Dane fundatora na tablicę wsparcia',
