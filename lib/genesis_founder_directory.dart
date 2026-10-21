@@ -38,8 +38,9 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
   Future<void> loadBoard() async {
     try {
       final rows = await FounderBackend.client.from('founder_profiles')
-        .select('organization_name,description,website,photo_path')
-        .eq('public_visible', true).limit(100);
+         .rpc('founder_public_board', params: {
+          'p_search': '', 'p_offset': 0, 'p_limit': 100,
+        });
       if (mounted) {
         setState(() => founderBoard = List<Map<String, dynamic>>.from(rows));
       }
@@ -101,11 +102,15 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 12),
-            if (founderBoard.isNotEmpty) ...[
+            ...[
               const SizedBox(height: 14),
               const Text('TABLICA WSPARCIA FUNDATORÓW',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(height: 160, child: ListView.builder(
+              const SizedBox(height: 6),
+              const Text('Ranking według sumy wpłat. Przy remisie decyduje kolejność dołączenia.', textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              if (founderBoard.isEmpty) const Text('Brak opublikowanych profili fundatorów.'),
+              if (founderBoard.isNotEmpty) SizedBox(height: 190, child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: founderBoard.length,
                 itemBuilder: (context, i) {
@@ -114,6 +119,8 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
                   return SizedBox(width: 230, child: Card(child: Padding(
                     padding: const EdgeInsets.all(10),
                     child: Column(children: [
+                      Text('Miejsce ${i + 1} · ${((entry['total_grosz'] as num?)?.toInt() ?? 0) / 100} PLN',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                       if (path != null) Image.network(
                         FounderBackend.client.storage.from('founder-photos')
                           .getPublicUrl(path),
@@ -129,6 +136,8 @@ class _GenesisFounderDirectoryState extends State<GenesisFounderDirectory> {
                 },
               )),
               const SizedBox(height: 10),
+              OutlinedButton.icon(onPressed: loadBoard,
+                icon: const Icon(Icons.refresh), label: const Text('Odśwież tablicę')),
             ],
             TextField(controller: search,
               textInputAction: TextInputAction.search,
