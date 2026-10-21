@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'genesis_founder_account.dart';
+import 'genesis_founder_directory.dart';
 
 class GenesisFounderDashboard extends StatefulWidget {
   const GenesisFounderDashboard({super.key, required this.onSignOut});
@@ -257,7 +258,19 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
           const Text('PANEL FUNDATORA', textAlign: TextAlign.center,
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          SegmentedButton<int>(segments: [
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const GenesisFounderDirectory())),
+            icon: const Icon(Icons.leaderboard_outlined),
+            label: const Text('Otwórz tablicę fundatorów'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SegmentedButton<int>(segments: [
             const ButtonSegment(value: 0, icon: Icon(Icons.favorite_outline),
               label: Text('Wsparcie')),
             const ButtonSegment(value: 1, icon: Icon(Icons.rule_outlined), label: Text('Zasady')),
@@ -266,6 +279,7 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
             if (adminEnabled) const ButtonSegment(value: 4, icon: Icon(Icons.admin_panel_settings_outlined), label: Text('Admin')),
           ], selected: {tab}, onSelectionChanged: (v) =>
               setState(() => tab = v.first)),
+          ),
           const SizedBox(height: 14),
           if (tab == 0) ...[
             Container(
