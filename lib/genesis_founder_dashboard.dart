@@ -45,6 +45,7 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
       final row = await FounderBackend.client.from('founder_admins')
           .select('user_id').eq('user_id', user.id).maybeSingle();
       if (mounted) setState(() => adminEnabled = row != null);
+      if (row != null) await loadIssues();
     } catch (_) {
       // Admin backend is not configured yet; never expose privileged controls.
     }
@@ -84,7 +85,7 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
     if (user == null) return;
     try {
       final rows = await FounderBackend.client.from('founder_payment_issues')
-          .select('id,payment_email,provider,transaction_reference,amount_grosz,details,status,created_at')
+          .select('id,founder_id,payment_email,provider,transaction_reference,amount_grosz,details,status,created_at')
           .order('created_at', ascending: false).limit(100);
       if (mounted) setState(() => issues = List<Map<String, dynamic>>.from(rows));
     } catch (_) {
@@ -355,7 +356,7 @@ class _GenesisFounderDashboardState extends State<GenesisFounderDashboard> {
             FilledButton.icon(onPressed: busy ? null : submitIssue, icon: const Icon(Icons.send_outlined), label: const Text('Wyślij zgłoszenie')),
             const SizedBox(height: 12),
             const Text('Historia zgłoszeń', style: TextStyle(fontWeight: FontWeight.bold)),
-            for (final issue in issues.where((e) => e['payment_email'] == issueEmail.text.trim() || !adminEnabled))
+            for (final issue in issues.where((e) => e['founder_id'] == FounderBackend.client.auth.currentUser?.id))
               ListTile(title: Text('${issue['provider']} — ${issue['transaction_reference']}'),
                 subtitle: Text('Status: ${issue['status']}')),
           ] else if (tab == 3 && adminEnabled) ...[
