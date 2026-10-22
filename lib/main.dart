@@ -5,6 +5,7 @@ import 'genesis_feed.dart';
 import 'genesis_community_statistics.dart';
 import 'genesis_financial_support.dart';
 import 'genesis_founder_account.dart';
+import 'genesis_founder_directory.dart';
 import 'genesis_chat.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
@@ -169,7 +170,15 @@ class _AgcHomeState extends State<AgcHome> {
             fit: BoxFit.scaleDown,
             child: Text('✦  THE GENESIS ERA  ✦')),
           centerTitle: true,
-          actions: const [GenesisLanguagePicker()],
+          actions: [
+            IconButton(
+              tooltip: GenesisLanguage.copy('Tablica fundatorów', 'Founders board'),
+              icon: const Icon(Icons.volunteer_activism_outlined),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const GenesisFounderDirectory())),
+            ),
+            const GenesisLanguagePicker(),
+          ],
           backgroundColor: background,
           foregroundColor: gold,
         ),
