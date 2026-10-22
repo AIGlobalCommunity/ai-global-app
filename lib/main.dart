@@ -170,15 +170,7 @@ class _AgcHomeState extends State<AgcHome> {
             fit: BoxFit.scaleDown,
             child: Text('✦  THE GENESIS ERA  ✦')),
           centerTitle: true,
-          actions: [
-            IconButton(
-              tooltip: GenesisLanguage.copy('Tablica fundatorów', 'Founders board'),
-              icon: const Icon(Icons.volunteer_activism_outlined),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const GenesisFounderDirectory())),
-            ),
-            const GenesisLanguagePicker(),
-          ],
+          actions: const [GenesisLanguagePicker()],
           backgroundColor: background,
           foregroundColor: gold,
         ),
@@ -205,6 +197,30 @@ class _AgcHomeState extends State<AgcHome> {
               ],
             )),
           ])),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'signed-in-founders-wall',
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(title: Text(GenesisLanguage.copy(
+                'Wsparcie GENESIS', 'Support GENESIS'))),
+              body: Column(children: [
+                const Expanded(child: GenesisFinancialSupport(preview: true)),
+                TextButton.icon(
+                  icon: const Icon(Icons.business),
+                  label: Text(GenesisLanguage.copy(
+                    'Logowanie Fundatora / Rejestracja',
+                    'Founder account: register / sign in')),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('GENESIS • FUNDATOR')),
+                      body: const GenesisFounderAccount()))),
+                ),
+              ]),
+            ))),
+          icon: const Icon(Icons.volunteer_activism_outlined),
+          label: Text(GenesisLanguage.copy('Ściana fundatorów',
+            'Founders wall')),
         ),
         bottomNavigationBar: NavigationBar(
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
