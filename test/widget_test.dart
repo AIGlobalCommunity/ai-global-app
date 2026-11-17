@@ -230,10 +230,11 @@ void main() {
       expect(find.byKey(const Key('signup_confirm_password')), findsOneWidget);
     });
   });
-  testWidgets('Without initialized authentication, community is not accessible',
+  testWidgets('Games portal home is accessible without authentication',
       (tester) async {
     await tester.pumpWidget(const AgcApp());
-    expect(find.textContaining('Połączenie z Supabase jest niedostępne'), findsOneWidget);
+    expect(find.text('TWOJE CENTRUM GIER'), findsOneWidget);
+    expect(find.text('ZAGRAJ TERAZ'), findsOneWidget);
     expect(find.text('GENESIS RANKING'), findsNothing);
   });
 
