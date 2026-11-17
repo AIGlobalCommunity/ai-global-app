@@ -3,6 +3,7 @@ import 'genesis_language.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
 import 'genesis_artwork.dart';
+import 'genesis_global_ranking.dart';
 import 'agc_luxury_theme.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -86,6 +87,7 @@ class _AgcHomeState extends State<AgcHome> {
           children: [
             _home(),
             const GenesisGameTab(),
+            const GenesisGlobalRanking(),
             _offlineInfo(),
             const AgcAccountPage(),
           ],
@@ -102,6 +104,9 @@ class _AgcHomeState extends State<AgcHome> {
         NavigationDestination(
           icon: const Icon(Icons.sports_esports_outlined),
           label: GenesisLanguage.copy('Gry', 'Games')),
+        NavigationDestination(
+          icon: const Icon(Icons.emoji_events_outlined),
+          label: GenesisLanguage.copy('Ranking', 'Ranking')),
         NavigationDestination(
           icon: const Icon(Icons.offline_bolt_outlined),
           label: GenesisLanguage.copy('Offline', 'Offline')),
@@ -157,13 +162,24 @@ class _AgcHomeState extends State<AgcHome> {
           ),
           Card(
             child: ListTile(
+              leading: const Icon(Icons.emoji_events_outlined, color: gold),
+              title: Text(GenesisLanguage.copy('Ranking globalny', 'Global leaderboard')),
+              subtitle: Text(GenesisLanguage.copy(
+                'Suma rekordów ze wszystkich gier i wyniki każdego gracza.',
+                'Combined best scores across games and player breakdowns.')),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => setState(() => selected = 2),
+            ),
+          ),
+          Card(
+            child: ListTile(
               leading: const Icon(Icons.offline_bolt_outlined, color: gold),
               title: Text(GenesisLanguage.copy('Granie offline', 'Offline play')),
               subtitle: Text(GenesisLanguage.copy(
                 'Informacje o graniu bez internetu i zapisie wyników.',
                 'Learn about playing without internet and saving scores.')),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => setState(() => selected = 2),
+              onTap: () => setState(() => selected = 3),
             ),
           ),
         ],
