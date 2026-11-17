@@ -78,6 +78,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         final frame = html.IFrameElement()
           ..src = src
           ..title = title
+          ..allowFullscreen = true
+          ..setAttribute('allow', 'fullscreen')
           ..style.border = '0'
           ..style.width = '100%'
           ..style.height = '100%'
