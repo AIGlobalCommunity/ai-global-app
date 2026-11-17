@@ -31,11 +31,13 @@ canvas{width:100%;height:100%;display:block;touch-action:none}
 <div id="arena"><canvas id="board" aria-label="Gra Wilk i Jajka, wybierz ćwiartkę planszy"></canvas>
 <div id="overlay"><div class="panel"><div class="mascot">🐺🥚</div><h1 id="heading">WILK I JAJKA</h1><p id="message">Łap jajka z czterech stron! Dotykaj rogów planszy lub przycisków poniżej. Masz trzy życia.</p><button id="play">▶ ZAGRAJ TERAZ</button></div></div></div>
 <div id="controls"><button class="control active" data-lane="0">↖ LEWA GÓRA</button><button class="control" data-lane="1">PRAWA GÓRA ↗</button><button class="control" data-lane="2">↙ LEWA DÓŁ</button><button class="control" data-lane="3">PRAWA DÓŁ ↘</button></div>
-<div id="help">Telefon: dotknij ćwiartki planszy · Komputer: Q / E / A / D · Offline: lokalny rekord</div>
+<div id="help"><span id="device">Wykrywanie urządzenia…</span> · Telefon: dotknij ćwiartki planszy · Komputer: Q / E / A / D · Offline: lokalny rekord</div>
 </div><script>
 (function(){
 'use strict';
 const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
+const device=()=>{const w=Math.min(screen.width,screen.height),touch=navigator.maxTouchPoints>0;return !touch?'KOMPUTER':w<600?'TELEFON':w<1050?'TABLET':'KOMPUTER DOTYKOWY'};
+document.getElementById('device').textContent=device();
 const el=id=>document.getElementById(id),overlay=el('overlay');
 let width=800,height=480,active=0,playing=false,points=0,misses=0,level=1,eggs=[],last=0,elapsed=0,raf=0,best=0;
 try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best').textContent=best;
