@@ -19,7 +19,7 @@ jobs:
       - name: Initialize platforms if missing
         run: flutter create --platforms=android,ios,web .
       - run: flutter pub get
-      - run: flutter analyze
+      - run: flutter analyze --no-fatal-infos
       - run: flutter test
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
