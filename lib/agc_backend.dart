@@ -1,17 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'genesis_artwork.dart';
-import 'genesis_mission.dart';
-import 'agc_countdown.dart';
 import 'agc_registration.dart';
 import 'agc_social_buttons.dart';
-import 'genesis_invites.dart';
 import 'genesis_language.dart';
-import 'genesis_social_profile.dart';
 import 'genesis_password_change.dart';
-import 'genesis_rank_simulator.dart';
-import 'genesis_status_guide.dart';
-import 'genesis_support.dart';
 import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -172,7 +164,6 @@ class AgcAccountPage extends StatefulWidget {
 class _AgcAccountPageState extends State<AgcAccountPage> {
   final email = TextEditingController();
   final password = TextEditingController();
-  final invite = TextEditingController();
   String status = '';
   bool busy = false;
   bool loginExpanded = false;
@@ -193,7 +184,6 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
   void dispose() {
     email.dispose();
     password.dispose();
-    invite.dispose();
     authListener?.cancel();
     super.dispose();
   }
@@ -261,51 +251,22 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           ),
           const Align(alignment: Alignment.centerRight,
             child: GenesisLanguagePicker()),
-          const AgcCountdownBanner(),
-          const SizedBox(height: 8),
-          Center(child: LayoutBuilder(builder: (context, constraints) =>
-            GenesisArtwork(size: constraints.maxWidth < 350 ? 204 : 246))),
           const SizedBox(height: 12),
-          const Row(children: [
-            Expanded(child: Divider(color: AgcLuxury.mutedGold)),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14),
-              child: Text('THE GENESIS ERA',
-                style: TextStyle(
-                  color: AgcLuxury.champagne,
-                  fontFamily: 'Georgia',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 2.0,
-                )),
-            ),
-            Expanded(child: Divider(color: AgcLuxury.mutedGold)),
-          ]),
-          const SizedBox(height: 15),
-          const Text('WE ARE NOT WAITING FOR GOD.',
+          const Center(child: Icon(Icons.sports_esports_rounded,
+            size: 76, color: AgcLuxury.champagne)),
+          const SizedBox(height: 12),
+          Text(GenesisLanguage.copy('KONTO GRACZA', 'PLAYER ACCOUNT'),
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AgcLuxury.ivory,
-              fontSize: 12,
-              letterSpacing: 2,
-              height: 1.65,
-              fontWeight: FontWeight.w500,
-            )),
-          const SizedBox(height: 3),
-          const Text('WE ARE WAITING FOR AN ANSWER.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AgcLuxury.ivory,
-              fontSize: 12,
-              letterSpacing: 2,
-              height: 1.65,
-              fontWeight: FontWeight.w500,
-            )),
+            style: const TextStyle(fontSize: 24,
+              fontWeight: FontWeight.bold, color: AgcLuxury.champagne)),
+          const SizedBox(height: 8),
+          Text(GenesisLanguage.copy(
+            'Zaloguj się, aby korzystać z funkcji konta i rankingów online.',
+            'Sign in to use account features and online leaderboards.'),
+            textAlign: TextAlign.center),
           const SizedBox(height: 20),
         ],
         if (AgcBackend.user == null) ...[
-          // A visible compact entry point keeps the emblem and manifesto
-          // prominent on mobile. The full login opens on demand.
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 380),
@@ -364,7 +325,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(GenesisLanguage.copy('WEJDŹ DO SPOŁECZNOŚCI GENESIS', 'ENTER THE GENESIS COMMUNITY'),
+                        Text(GenesisLanguage.copy('ZALOGUJ SIĘ DO GRY', 'SIGN IN TO PLAY'),
                           textAlign: TextAlign.center,
                           style: TextStyle(color: AgcLuxury.champagne,
                             fontSize: 11, letterSpacing: 1.4)),
@@ -394,7 +355,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                           onPressed: busy ? null : () => execute(
                             () => AgcBackend.signIn(
                               email.text, password.text)),
-                          child: Text(GenesisLanguage.copy('WEJDŹ DO GENESIS  →', 'ENTER GENESIS  →'))),
+                          child: Text(GenesisLanguage.copy('ZALOGUJ SIĘ  →', 'SIGN IN  →'))),
                       ],
                     ),
                   ),
@@ -402,8 +363,6 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               : const SizedBox.shrink(),
           ),
           const SizedBox(height: 14),
-          const GenesisMission(compact: true),
-          const SizedBox(height: 12),
           Center(
             child: TextButton.icon(
               onPressed: busy ? null : () => setState(
@@ -437,21 +396,12 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             ),
           ),
         ] else ...[
-          const GenesisSocialProfile(),
-          const SizedBox(height: 12),
-          FutureBuilder<Map<String, dynamic>?>(
-            future: AgcBackend.myProfile(),
-            builder: (context, profile) {
-              final code = profile.data?['referral_code'] as String?;
-              if (code == null || code.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return FutureBuilder<int>(
-                future: AgcBackend.myConfirmedReferrals(),
-                builder: (context, count) => GenesisInvitePanel(
-                  code: code, confirmedCount: count.data ?? 0));
-            },
-          ),
+          Card(child: ListTile(
+            leading: const Icon(Icons.account_circle_outlined,
+              color: AgcLuxury.champagne),
+            title: Text(GenesisLanguage.copy('Moje konto gracza', 'My player account')),
+            subtitle: Text(AgcBackend.user!.email ?? '—'),
+          )),
           const SizedBox(height: 12),
           Card(child: ExpansionTile(
             key: const Key('account_login_details'),
@@ -470,82 +420,6 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             ],
           )),
           const SizedBox(height: 16),
-          Card(
-            child: ExpansionTile(
-              key: const Key('account_rules_and_points'),
-              leading: const Icon(Icons.menu_book_outlined,
-                color: AgcLuxury.champagne),
-              title: Text(GenesisLanguage.copy(
-                'Zasady, punkty GP i rangi', 'Rules, GP points and tiers'),
-                style: const TextStyle(
-                  color: AgcLuxury.champagne,
-                  fontWeight: FontWeight.bold)),
-              subtitle: Text(GenesisLanguage.copy(
-                'Jak działa społeczność, ranking i harmonogram',
-                'How the community, ranking and timeline work')),
-              childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
-              children: [
-                const GenesisStatusGuide(),
-                const SizedBox(height: 10),
-                GenesisPanel(
-                  icon: Icons.auto_awesome_outlined,
-                  title: GenesisLanguage.copy(
-                    'HARMONOGRAM I MANIFEST', 'TIMELINE AND MANIFESTO'),
-                  body: GenesisLanguage.copy(
-                    'Oficjalny start: 1 listopada 2026 r. o 00:00 UTC. '
-                    'Rozwinięcie manifestu planowane jest na 1 sierpnia 2027 r. '
-                    'Era założycielska trwa do 1 listopada 2029 r. '
-                    'To okres budowania społeczności i zdobywania GP.',
-                    'Official launch: 1 November 2026 at 00:00 UTC. '
-                    'The expanded manifesto is planned for 1 August 2027. '
-                    'The founding era lasts until 1 November 2029. '
-                    'This is a period for building the community and earning GP.')),
-                const SizedBox(height: 10),
-                GenesisPanel(
-                  icon: Icons.lock_outline,
-                  title: GenesisLanguage.copy(
-                    'DOSTĘP I PRYWATNOŚĆ', 'ACCESS AND PRIVACY'),
-                  body: GenesisLanguage.copy(
-                    'Dostęp wymaga logowania. Publiczny ranking pokazuje '
-                    'pseudonimy lub anonimowe identyfikatory i punkty, '
-                    'nie adresy e-mail. Punkty i rangi są symboliczne, '
-                    'nie stanowią inwestycji ani obietnicy wynagrodzenia.',
-                    'Sign-in is required. Public rankings show nicknames '
-                    'or anonymous identifiers and points, not email addresses. '
-                    'Points and tiers are symbolic, not investments '
-                    'or promises of compensation.')),
-                const SizedBox(height: 10),
-                const GenesisSupport(),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Card(child: ListTile(
-            leading: const Icon(Icons.tune,
-              color: AgcLuxury.champagne),
-            title: Text(GenesisLanguage.copy(
-              'Symulator rang Genesis', 'Genesis tier simulator')),
-            subtitle: Text(GenesisLanguage.copy(
-              'Sprawdź rangi i punkty GP',
-              'Explore membership tiers and GP points')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => Scaffold(
-                appBar: AppBar(title: Text(GenesisLanguage.copy(
-                  'Symulator rang', 'Tier simulator'))),
-                body: const SafeArea(child: GenesisRankSimulator()),
-              ))),
-          )),
-          const SizedBox(height: 16),
-          TextField(controller: invite, textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(labelText: GenesisLanguage.copy('Kod polecającego', 'Referral code'))),
-          FilledButton(
-            onPressed: busy ? null : () => execute(() async {
-              final awarded = await AgcBackend.claimInvite(invite.text);
-              if (!awarded) throw StateError('Kod jest nieważny lub został już użyty.');
-            }),
-            child: Text(GenesisLanguage.t('confirm')),
-          ),
           OutlinedButton(onPressed: busy ? null : () => execute(AgcBackend.signOut),
             child: Text(GenesisLanguage.t('logout'))),
         ],
@@ -553,9 +427,6 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           padding: const EdgeInsets.only(top: 12),
           child: Text(status),
         ),
-        const SizedBox(height: 12),
-        const Text('Punkty i zaproszenia podlegają weryfikacji. Brak rzeczywistych wpłat w tej wersji.',
-          style: TextStyle(color: Colors.white70)),
       ],
     )));
   }
