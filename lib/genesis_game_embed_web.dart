@@ -23,6 +23,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static bool registered = false;
   static const signalView = 'genesis-signal-html5-iframe';
   static const defenderView = 'genesis-defender-html5-iframe';
+  static const wolfView = 'genesis-wolf-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
@@ -31,6 +32,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
+  String categoryFilter = 'all';
   bool diagnosticsOpen = false;
   String lastBridgeStatus = 'Brak zdarzeń z gry';
   String lastDatabaseStatus = 'Nie sprawdzono';
@@ -44,7 +46,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   bool saving = false;
   final Map<String, (int, int)> pendingScores = {};
 
-  String get gameKey => game == 0 ? 'signal' : 'defender';
+  String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : 'wolf';
 
   @override
   void initState() {
@@ -52,6 +54,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     if (!registered) {
       _register(signalView, 'genesis-game.html?embed=1&version=$buildVersion', 'GENESIS SIGNAL');
       _register(defenderView, 'genesis-defender.html?embed=1&version=$buildVersion', 'GENESIS DEFENDER');
+      _register(wolfView, 'genesis-wolf-eggs.html?embed=1&version=$buildVersion', 'WILK I JAJKA');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
@@ -91,7 +94,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         event.data is! String) {
       return;
     }
-    final activeFrame = frames[game == 0 ? signalView : defenderView];
+    final activeFrame = frames[game == 0 ? signalView : game == 1 ? defenderView : wolfView];
     if (activeFrame == null || event.source != activeFrame.contentWindow) {
       return;
     }
@@ -143,7 +146,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _recoverPendingScores() {
     if (!mounted || AgcBackend.user == null) return;
-    for (final key in ['signal', 'defender']) {
+    for (final key in ['signal', 'defender', 'wolf']) {
       try {
         final raw = html.window.localStorage['$scoreStoragePrefix$key'];
         if (raw == null) continue;
@@ -240,7 +243,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               scoreNotice = GenesisLanguage.copy(
                 '✓ Wynik zapisany w rankingu! 🏆',
                 '✓ Score saved to leaderboard! 🏆');
-              if (rankingGame == (key == 'signal' ? 0 : 1)) {
+              if (rankingGame == (key == 'signal' ? 0 : key == 'defender' ? 1 : 2)) {
                 rankingFuture = _leaders(key);
               }
             });
@@ -307,7 +310,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     _recoverPendingScores();
     setState(() {
       rankingGame = selectedGame;
-      rankingFuture = _loadRanking(selectedGame == 0 ? 'signal' : 'defender');
+      rankingFuture = _loadRanking(selectedGame == 0 ? 'signal' : selectedGame == 1 ? 'defender' : 'wolf');
     });
   }
 
@@ -328,7 +331,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   Widget _rankingPage(int selectedGame) {
-    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER';
+    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : 'WILK I JAJKA';
     return SafeArea(
       child: Column(children: [
         Padding(
@@ -860,6 +863,43 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
+  Widget _wolfCard() => Card(
+    clipBehavior: Clip.antiAlias,
+    child: Padding(
+      padding: const EdgeInsets.all(18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const Center(child: Text('🐺 🥚', style: TextStyle(fontSize: 66))),
+        const SizedBox(height: 8),
+        const Text('WILK I JAJKA',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Text(GenesisLanguage.copy(
+          'ZRĘCZNOŚCIOWA · RETRO · OFFLINE',
+          'ARCADE · RETRO · OFFLINE'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: gold)),
+        const SizedBox(height: 10),
+        Text(GenesisLanguage.copy(
+          'Zbieraj jajka z czterech stron. Złap jak najwięcej i pobij rekord!',
+          'Catch eggs from four sides and beat your high score!'),
+          textAlign: TextAlign.center),
+        const SizedBox(height: 14),
+        Row(children: [
+          Expanded(child: FilledButton.icon(
+            onPressed: () => setState(() { game = 2; scoreNotice = null; }),
+            icon: const Icon(Icons.play_arrow),
+            label: Text(GenesisLanguage.copy('ZAGRAJ', 'PLAY')))),
+          const SizedBox(width: 10),
+          Expanded(child: OutlinedButton.icon(
+            onPressed: () => _showRanking(2),
+            icon: const Icon(Icons.emoji_events_outlined),
+            label: const Text('RANKING'))),
+        ]),
+      ]),
+    ),
+  );
+
   Widget _gameLibrary() => Center(
     child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1050),
@@ -885,6 +925,21 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             label: const Text('DIAGNOSTYKA RANKINGU'),
           ),
           const SizedBox(height: 10),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final entry in [
+              ('all', GenesisLanguage.copy('Wszystkie', 'All')),
+              ('puzzle', GenesisLanguage.copy('Łamigłówki', 'Puzzles')),
+              ('shooter', GenesisLanguage.copy('Strzelanki', 'Shooters')),
+              ('arcade', GenesisLanguage.copy('Zręcznościowe', 'Arcade')),
+              ('offline', 'Offline'),
+            ])
+              ChoiceChip(
+                label: Text(entry.$2),
+                selected: categoryFilter == entry.$1,
+                onSelected: (_) => setState(() => categoryFilter = entry.$1),
+              ),
+          ]),
+          const SizedBox(height: 14),
           LayoutBuilder(builder: (context, constraints) {
             final cards = [
               _gameCard(
@@ -908,19 +963,24 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   'Defend the Genesis station, survive waves and beat the high score.'),
               ),
             ];
+            final visible = <Widget>[
+              if (categoryFilter == 'all' || categoryFilter == 'puzzle') cards[0],
+              if (categoryFilter == 'all' || categoryFilter == 'shooter') cards[1],
+              if (categoryFilter == 'all' || categoryFilter == 'arcade' ||
+                  categoryFilter == 'offline') _wolfCard(),
+            ];
             if (constraints.maxWidth < 700) {
               return Column(children: [
-                cards[0],
-                const SizedBox(height: 12),
-                cards[1],
+                for (final card in visible) ...[
+                  card, const SizedBox(height: 12),
+                ],
               ]);
             }
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            return Wrap(
+              spacing: 12, runSpacing: 12,
               children: [
-                Expanded(child: cards[0]),
-                const SizedBox(width: 12),
-                Expanded(child: cards[1]),
+                for (final card in visible)
+                  SizedBox(width: (constraints.maxWidth - 12) / 2, child: card),
               ],
             );
           }),
@@ -993,7 +1053,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         ),
       Expanded(child: SizedBox.expand(child: HtmlElementView(
         key: ValueKey(selectedGame),
-        viewType: selectedGame == 0 ? signalView : defenderView,
+        viewType: selectedGame == 0 ? signalView : selectedGame == 1 ? defenderView : wolfView,
       ))),
     ]);
   }
