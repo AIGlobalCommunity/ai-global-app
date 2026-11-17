@@ -5,7 +5,6 @@ import 'genesis_feed.dart';
 import 'genesis_community_statistics.dart';
 import 'genesis_financial_support.dart';
 import 'genesis_founder_account.dart';
-import 'genesis_founder_directory.dart';
 import 'genesis_chat.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
