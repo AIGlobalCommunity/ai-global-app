@@ -1,46 +1,74 @@
 <!doctype html>
-<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Wilk i Jajka • Genesis Arcade</title>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#071525;color:#f5e9cb;font:600 16px system-ui,sans-serif;display:grid;place-items:center;min-height:100dvh;overflow-x:hidden}
-main{width:min(100%,720px);padding:12px;text-align:center}h1{font-size:clamp(20px,4vw,30px);margin:4px;color:#eec875}
-.hud{display:flex;justify-content:space-around;gap:6px;margin:8px 0;font-size:14px}.stage{position:relative;width:100%;aspect-ratio: 1.6;background:radial-gradient(ellipse at center,#1d4252,#091626 75%);border:2px solid #bd9850;border-radius:20px;overflow:hidden}
-canvas{width:100%;height:100%;display:block;touch-action:none}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px auto;max-width:440px}
-button{border:1px solid #d7b16c;background:#203b51;color:white;border-radius:13px;min-height:48px;font:700 16px system-ui;cursor:pointer;touch-action:manipulation}button:active{background:#be9147;color:#071525}
-#start{background:#e6ba6d;color:#071525;width:100%;max-width:440px}.hint{font-size:12px;color:#abc2cf;margin:8px}
-@media(max-width:600px){main{padding:4px 7px}h1{font-size:18px;margin:2px}.hud{font-size:11px;margin:3px 0}.stage{aspect-ratio:1.75}.controls{gap:5px;margin:5px auto}.controls button{min-height:43px;font-size:12px;padding:3px}#start{min-height:40px;font-size:13px}.hint{font-size:10px;margin:4px}}@media(max-height:550px){.hint{display:none}h1{font-size:16px}.controls button{min-height:38px}.stage{aspect-ratio:2.1}}</style></head><body><main>
-<h1>🐺 WILK I JAJKA 🥚</h1>
-<div class="hud"><span>Wynik: <b id="score">0</b></span><span>Życia: <b id="lives">3</b></span><span>Poziom: <b id="level">1</b></span><span>Rekord: <b id="best">0</b></span></div>
-<div class="stage"><canvas id="board" width="720" height="530" aria-label="Plansza gry Wilk i Jajka"></canvas></div>
-<div class="controls"><button data-lane="0">↖ LEWA GÓRA</button><button data-lane="1">PRAWA GÓRA ↗</button><button data-lane="2">↙ LEWA DÓŁ</button><button data-lane="3">PRAWA DÓŁ ↘</button></div>
-<button id="start">▶ START / NOWA GRA</button>
-<div class="hint">Sterowanie: dotknij odpowiedniego rogu planszy lub użyj przycisków (Q / E / A / D). Złap jajka, zanim spadną! Gra działa też jako samodzielny plik HTML offline.</div>
-</main><script>
-(()=>{'use strict';
-const c=document.querySelector('#board'),ctx=c.getContext('2d'),$=id=>document.getElementById(id);
-let running=false,score=0,lives=3,level=1,lane=0,eggs=[],last=0,spawn=0,frame=0;
-let best=0;try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(e){}$('best').textContent=best;
-const tracks=[{x:0,y:125,tx:290,ty:215},{x:720,y:125,tx:430,ty:215},{x:0,y:395,tx:290,ty:315},{x:720,y:395,tx:430,ty:315}];
-function update(){level=1+Math.floor(score/120);$('score').textContent=score;$('lives').textContent=lives;$('level').textContent=level}
-function choose(n){lane=n;draw()}
-c.addEventListener('pointerdown',e=>{e.preventDefault();const rect=c.getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width;const y=(e.clientY-rect.top)/rect.height;choose((y<.5?0:2)+(x>=.5?1:0))});
-document.querySelectorAll('[data-lane]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();choose(Number(b.dataset.lane))}));
-document.addEventListener('keydown',e=>{const keys={q:0,e:1,a:2,d:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
-function start(){running=true;score=0;lives=3;level=1;lane=0;eggs=[];spawn=0;last=0;update();cancelAnimationFrame(frame);frame=requestAnimationFrame(tick)}
-$('start').addEventListener('click',start);
-function finish(){running=false;cancelAnimationFrame(frame);if(score>best){best=score;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(e){}$('best').textContent=best}
-if(score>0){try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:score,level:level}),location.origin)}catch(e){}}
-draw();ctx.fillStyle='#061422dc';ctx.fillRect(145,185,430,160);ctx.fillStyle='#f4d18a';ctx.textAlign='center';ctx.font='bold 38px system-ui';ctx.fillText('KONIEC GRY',360,245);ctx.font='24px system-ui';ctx.fillText('Wynik: '+score+' pkt',360,285)}
-function tick(t){if(!running)return;const dt=Math.min((t-last)||16,45);last=t;spawn+=dt;const interval=Math.max(380,1350-level*95);if(spawn>=interval){spawn=0;eggs.push({lane:Math.floor(Math.random()*4),p:0})}
-const speed=(.00018+level*.000024)*dt;for(const egg of eggs)egg.p+=speed;
-const remaining=[];for(const egg of eggs){if(egg.p>=.94){if(egg.lane===lane){score+=10}else{lives--}update()}else remaining.push(egg)}eggs=remaining;draw();if(lives<=0){finish();return}frame=requestAnimationFrame(t)}
-function draw(){ctx.clearRect(0,0,720,530);ctx.fillStyle='#0b2430';ctx.fillRect(0,0,720,530);
-ctx.strokeStyle='#668b8d';ctx.lineWidth=14;ctx.lineCap='round';tracks.forEach(t=>{ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.lineTo(t.tx,t.ty);ctx.stroke()});
-ctx.font='68px serif';ctx.textAlign='center';ctx.fillText('🐺',360,274);
-tracks.forEach((t,i)=>{const p=.92;const x=t.x+(t.tx-t.x)*p,y=t.y+(t.ty-t.y)*p;ctx.fillStyle=i===lane?'#f7cb72':'#3a5660';ctx.beginPath();ctx.arc(x,y,36,0,Math.PI*2);ctx.fill();ctx.font='36px serif';ctx.fillText(i===lane?'🧺':'·',x,y+12)});
-for(const egg of eggs){const t=tracks[egg.lane],x=t.x+(t.tx-t.x)*egg.p,y=t.y+(t.ty-t.y)*egg.p;ctx.font='32px serif';ctx.fillText('🥚',x,y+10)}
-ctx.fillStyle='#b8d1d5';ctx.font='bold 17px system-ui';ctx.textAlign='left';ctx.fillText('LEWA',22,40);ctx.textAlign='right';ctx.fillText('PRAWA',698,40);
-if(!running){ctx.fillStyle='#f3dca2';ctx.textAlign='center';ctx.font='bold 23px system-ui';ctx.fillText('Naciśnij START, aby grać',360,480)}}
-draw();
+:root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
+#app{width:100%;height:100%;height:100dvh;display:flex;flex-direction:column;align-items:center;gap:5px;padding: max(4px,env(safe-area-inset-top)) max(5px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(5px,env(safe-area-inset-left));background:radial-gradient(ellipse at 50% 30%,#163c55 0%,#071323 70%)}
+header{display:flex;align-items:center;justify-content:space-between;width:min(100%,1100px);gap:8px;flex-shrink:0}
+.brand{font-size:clamp(13px,2.5vw,22px);font-weight:900;letter-spacing:.04em;color:var(--gold);white-space:nowrap}
+.actions{display:flex;gap:5px}.small{font-size:12px;padding:7px 9px;min-height:36px}
+button{border:1px solid #5a7890;background:#152e45;color:#fff;border-radius:12px;font-weight:800;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:active{transform:scale(.97);background:#27617c}
+.stats{width:min(100%,1100px);display:grid;grid-template-columns:repeat(4,1fr);gap:5px;flex-shrink:0}
+.stat{background:#10263c;border:1px solid #2d5067;border-radius:10px;text-align:center;padding:4px 2px}
+.stat span{display:block;color:#9fc1d3;font-size:clamp(9px,1.5vw,12px);letter-spacing:.08em}.stat strong{font-size:clamp(15px,3vw,24px);color:#fff}
+#arena{position:relative;flex:1 1 auto;min-height:0;width:min(100%,1100px);border:2px solid #b58a50;border-radius:18px;overflow:hidden;box-shadow:0 0 35px #1b83ae35,inset 0 0 50px #031321;background:#061b2a}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+#overlay{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;background:#041322c9;z-index:3;padding:16px}
+#overlay.hidden{display:none}.panel{width:min(90%,420px);padding:22px 18px;text-align:center;background:linear-gradient(145deg,#17364d,#0a1b30);border:1px solid #dfb56d;border-radius:22px;box-shadow:0 18px 65px #0009}
+.panel .mascot{font-size:clamp(48px,10vh,82px)}.panel h1{font-size:clamp(22px,4vw,32px);margin:6px 0;color:var(--gold)}.panel p{font-size:14px;color:#d2e1e9;line-height:1.4}
+#play{width:100%;min-height:55px;background:linear-gradient(135deg,#ffe39d,#e7a84e);color:#102235;border:0;font-size:19px;margin-top:10px;box-shadow:0 6px 20px #f3b75633}
+#controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:min(100%,1100px);flex-shrink:0}
+.control{min-height:clamp(45px,9vh,72px);font-size:clamp(12px,2vw,18px);background:linear-gradient(#1b4a65,#0c263e);border-color:#4f98b5}
+.control.active{background:linear-gradient(#ffe29a,#e7a448);color:#142b3d;border-color:#ffe9b8}
+#help{font-size:10px;color:#a9c1d0;text-align:center;flex-shrink:0}
+@media(max-width:650px){#app{gap:4px}.small{font-size:11px;padding:5px 7px;min-height:32px}.control{font-size:12px;min-height:52px}.brand{font-size:13px}#help{display:none}.panel{padding:15px}}
+@media(orientation:landscape) and (max-height:500px){.stats{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:min(55%,400px);z-index:2;pointer-events:none}.stat{padding:1px}.stat strong{font-size:14px}#arena{flex:1}#controls{width:min(100%,800px)}.control{min-height:36px}.brand{font-size:12px}header{min-height:30px}}
+</style></head><body><div id="app">
+<header><div class="brand">🐺 WILK I JAJKA <span style="color:#77c5db">/ GENESIS</span></div><div class="actions"><button class="small" id="restart">↻ NOWA</button><button class="small" id="fullscreen">⛶ PEŁNY EKRAN</button></div></header>
+<div class="stats"><div class="stat"><span>PUNKTY</span><strong id="score">0</strong></div><div class="stat"><span>ŻYCIA</span><strong id="lives">❤️❤️❤️</strong></div><div class="stat"><span>POZIOM</span><strong id="level">1</strong></div><div class="stat"><span>REKORD</span><strong id="best">0</strong></div></div>
+<div id="arena"><canvas id="board" aria-label="Gra Wilk i Jajka, wybierz ćwiartkę planszy"></canvas>
+<div id="overlay"><div class="panel"><div class="mascot">🐺🥚</div><h1 id="heading">WILK I JAJKA</h1><p id="message">Łap jajka z czterech stron! Dotykaj rogów planszy lub przycisków poniżej. Masz trzy życia.</p><button id="play">▶ ZAGRAJ TERAZ</button></div></div></div>
+<div id="controls"><button class="control active" data-lane="0">↖ LEWA GÓRA</button><button class="control" data-lane="1">PRAWA GÓRA ↗</button><button class="control" data-lane="2">↙ LEWA DÓŁ</button><button class="control" data-lane="3">PRAWA DÓŁ ↘</button></div>
+<div id="help">Telefon: dotknij ćwiartki planszy · Komputer: Q / E / A / D · Offline: lokalny rekord</div>
+</div><script>
+(function(){
+'use strict';
+const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
+const el=id=>document.getElementById(id),overlay=el('overlay');
+let width=800,height=480,active=0,playing=false,points=0,misses=0,level=1,eggs=[],last=0,elapsed=0,raf=0,best=0;
+try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best').textContent=best;
+const rand=(a,b)=>a+Math.random()*(b-a);
+function resize(){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);width=Math.max(1,rect.width);height=Math.max(1,rect.height);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);render()}
+new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);
+function stats(){level=1+Math.floor(points/100);el('score').textContent=points;el('lives').textContent='❤️'.repeat(Math.max(0,3-misses));el('level').textContent=level}
+function choose(n){active=n;document.querySelectorAll('[data-lane]').forEach((b,i)=>b.classList.toggle('active',i===n));render()}
+document.querySelectorAll('[data-lane]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();choose(Number(b.dataset.lane))})});
+canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;choose((y>=.5?2:0)+(x>=.5?1:0))});
+document.addEventListener('keydown',e=>{const keys={q:0,Q:0,e:1,E:1,a:2,A:2,d:3,D:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
+function start(){cancelAnimationFrame(raf);points=0;misses=0;level=1;eggs=[];elapsed=0;last=0;playing=true;stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
+el('play').addEventListener('click',start);el('restart').addEventListener('click',start);
+el('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement){await document.exitFullscreen()}else if(el('app').requestFullscreen){await el('app').requestFullscreen()}else{el('fullscreen').textContent='⛶ OBRÓĆ TELEFON'}}catch(_){el('fullscreen').textContent='⛶ OBRÓĆ TELEFON'}resize()});
+function lanePoints(n){const left=n%2===0,top=n<2;return {sx:left?width*.05:width*.95,sy:top?height*.17:height*.83,ex:left?width*.40:width*.60,ey:top?height*.42:height*.58}}
+function end(){playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
+if(points>0){try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(_){}}
+el('heading').textContent='KONIEC GRY';el('message').textContent='Zdobyte punkty: '+points+' · Rekord: '+best+'. Spróbuj jeszcze raz!';el('play').textContent='↻ ZAGRAJ PONOWNIE';overlay.classList.remove('hidden')}
+function tick(t){if(!playing)return;if(!last)last=t;const dt=Math.min(t-last,50);last=t;elapsed+=dt;
+const interval=Math.max(370,1250-level*75);if(elapsed>=interval){elapsed-=interval;eggs.push({lane:Math.floor(Math.random()*4),p:0,spin:rand(-.4,.4)})}
+const speed=(.00017+level*.000022)*dt;
+for(const egg of eggs)egg.p+=speed;
+const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active){points+=10}else{misses++}stats()}else remaining.push(egg)}eggs=remaining;render();if(misses>=3){end();return}raf=requestAnimationFrame(tick)}
+function roundRect(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function render(){if(!width||!height)return;ctx.clearRect(0,0,width,height);
+const g=ctx.createLinearGradient(0,0,width,height);g.addColorStop(0,'#12394e');g.addColorStop(.5,'#0b2339');g.addColorStop(1,'#133a4e');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);
+ctx.strokeStyle='#ffffff0d';ctx.lineWidth=1;for(let x=0;x<width;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke()}for(let y=0;y<height;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke()}
+for(let n=0;n<4;n++){const p=lanePoints(n);ctx.strokeStyle=n===active?'#ffd17a':'#508aa4';ctx.lineWidth=Math.max(8,width*.015);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.lineTo(p.ex,p.ey);ctx.stroke();
+ctx.beginPath();ctx.arc(p.ex,p.ey,Math.max(18,Math.min(width,height)*.065),0,Math.PI*2);ctx.fillStyle=n===active?'#e6a94b':'#1c4b62';ctx.fill();ctx.strokeStyle=n===active?'#fff0c6':'#5e94a8';ctx.lineWidth=2;ctx.stroke();
+ctx.font=Math.max(19,Math.min(width,height)*.065)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n===active?'🧺':'○',p.ex,p.ey)}
+ctx.font=Math.max(55,Math.min(width,height)*.22)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='#50c9ef';ctx.shadowBlur=18;ctx.fillText('🐺',width/2,height/2);ctx.shadowBlur=0;
+for(const egg of eggs){const p=lanePoints(egg.lane),x=p.sx+(p.ex-p.sx)*egg.p,y=p.sy+(p.ey-p.sy)*egg.p;ctx.font=Math.max(19,Math.min(width,height)*.065)+'px serif';ctx.fillText('🥚',x,y)}
+roundRect(width*.02,height*.025,width*.16,Math.max(20,height*.06),8,'#061a2b99');ctx.font=Math.max(10,Math.min(width,height)*.035)+'px system-ui';ctx.fillStyle='#bde9f6';ctx.textAlign='center';ctx.fillText('GENESIS',width*.10,height*.055)}
+resize();
 })();
 </script></body></html>
