@@ -88,12 +88,13 @@ jobs:
         run: |
           test -s build/web/genesis-game.html
           test -s build/web/genesis-defender.html
+          test -s build/web/genesis-wolf-eggs.html
           test -s build/web/assets/assets/genesis_signal_cinematic.jpg
           test -s build/web/assets/assets/genesis_defender_cinematic.jpg
           python3 - <<'PY'
           from pathlib import Path
           import re
-          for name in ('genesis-game', 'genesis-defender'):
+          for name in ('genesis-game', 'genesis-defender', 'genesis-wolf-eggs'):
               page = Path(f'build/web/{name}.html').read_text(encoding='utf-8')
               scripts = re.findall(r'<script>(.*?)</script>', page, re.DOTALL)
               if len(scripts) != 1:
@@ -102,6 +103,7 @@ jobs:
           PY
           node --check /tmp/genesis-game-check.js
           node --check /tmp/genesis-defender-check.js
+          node --check /tmp/genesis-wolf-eggs-check.js
           echo "Both HTML5 games bundled and JavaScript syntax verified"
       - name: Verify bundled AGC artwork
         run: |
