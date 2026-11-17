@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Wilk i Jajka • Genesis Arcade</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#071525;color:#f5e9cb;font:600 16px system-ui,sans-serif;display:grid;place-items:center;min-height:100dvh}
+main{width:min(100%,720px);padding:12px;text-align:center}h1{font-size:clamp(20px,4vw,30px);margin:4px;color:#eec875}
+.hud{display:flex;justify-content:space-around;gap:6px;margin:8px 0;font-size:14px}.stage{position:relative;width:100%;aspect-ratio: 1.35;background:radial-gradient(ellipse at center,#1d4252,#091626 75%);border:2px solid #bd9850;border-radius:20px;overflow:hidden}
+canvas{width:100%;height:100%;display:block;touch-action:none}.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px auto;max-width:440px}
+button{border:1px solid #d7b16c;background:#203b51;color:white;border-radius:13px;min-height:56px;font:700 16px system-ui;cursor:pointer;touch-action:manipulation}button:active{background:#be9147;color:#071525}
+#start{background:#e6ba6d;color:#071525;width:100%;max-width:440px}.hint{font-size:12px;color:#abc2cf;margin:8px}
+</style></head><body><main>
+<h1>🐺 WILK I JAJKA 🥚</h1>
+<div class="hud"><span>Wynik: <b id="score">0</b></span><span>Życia: <b id="lives">3</b></span><span>Poziom: <b id="level">1</b></span><span>Rekord: <b id="best">0</b></span></div>
+<div class="stage"><canvas id="board" width="720" height="530" aria-label="Plansza gry Wilk i Jajka"></canvas></div>
+<div class="controls"><button data-lane="0">↖ LEWA GÓRA</button><button data-lane="1">PRAWA GÓRA ↗</button><button data-lane="2">↙ LEWA DÓŁ</button><button data-lane="3">PRAWA DÓŁ ↘</button></div>
+<button id="start">▶ START / NOWA GRA</button>
+<div class="hint">Sterowanie: Q / E / A / D lub strzałki ukośne. Złap jajka, zanim spadną! Gra działa też jako samodzielny plik HTML offline.</div>
+</main><script>
+(()=>{'use strict';
+const c=document.querySelector('#board'),ctx=c.getContext('2d'),$=id=>document.getElementById(id);
+let running=false,score=0,lives=3,level=1,lane=0,eggs=[],last=0,spawn=0,frame=0;
+let best=0;try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(e){}$('best').textContent=best;
+const tracks=[{x:0,y:125,tx:290,ty:215},{x:720,y:125,tx:430,ty:215},{x:0,y:395,tx:290,ty:315},{x:720,y:395,tx:430,ty:315}];
+function update(){level=1+Math.floor(score/120);$('score').textContent=score;$('lives').textContent=lives;$('level').textContent=level}
+function choose(n){lane=n;draw()}
+document.querySelectorAll('[data-lane]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();choose(Number(b.dataset.lane))}));
+document.addEventListener('keydown',e=>{const keys={q:0,e:1,a:2,d:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
+function start(){running=true;score=0;lives=3;level=1;lane=0;eggs=[];spawn=0;last=0;update();cancelAnimationFrame(frame);frame=requestAnimationFrame(tick)}
+$('start').addEventListener('click',start);
+function finish(){running=false;cancelAnimationFrame(frame);if(score>best){best=score;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(e){}$('best').textContent=best}
+if(score>0){try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:score,level:level}),location.origin)}catch(e){}}
+draw();ctx.fillStyle='#061422dc';ctx.fillRect(145,185,430,160);ctx.fillStyle='#f4d18a';ctx.textAlign='center';ctx.font='bold 38px system-ui';ctx.fillText('KONIEC GRY',360,245);ctx.font='24px system-ui';ctx.fillText('Wynik: '+score+' pkt',360,285)}
+function tick(t){if(!running)return;const dt=Math.min((t-last)||16,45);last=t;spawn+=dt;const interval=Math.max(380,1350-level*95);if(spawn>=interval){spawn=0;eggs.push({lane:Math.floor(Math.random()*4),p:0})}
+const speed=(.00018+level*.000024)*dt;for(const egg of eggs)egg.p+=speed;
+const remaining=[];for(const egg of eggs){if(egg.p>=.94){if(egg.lane===lane){score+=10}else{lives--}update()}else remaining.push(egg)}eggs=remaining;draw();if(lives<=0){finish();return}frame=requestAnimationFrame(t)}
+function draw(){ctx.clearRect(0,0,720,530);ctx.fillStyle='#0b2430';ctx.fillRect(0,0,720,530);
+ctx.strokeStyle='#668b8d';ctx.lineWidth=14;ctx.lineCap='round';tracks.forEach(t=>{ctx.beginPath();ctx.moveTo(t.x,t.y);ctx.lineTo(t.tx,t.ty);ctx.stroke()});
+ctx.font='68px serif';ctx.textAlign='center';ctx.fillText('🐺',360,274);
+tracks.forEach((t,i)=>{const p=.92;const x=t.x+(t.tx-t.x)*p,y=t.y+(t.ty-t.y)*p;ctx.fillStyle=i===lane?'#f7cb72':'#3a5660';ctx.beginPath();ctx.arc(x,y,36,0,Math.PI*2);ctx.fill();ctx.font='36px serif';ctx.fillText(i===lane?'🧺':'·',x,y+12)});
+for(const egg of eggs){const t=tracks[egg.lane],x=t.x+(t.tx-t.x)*egg.p,y=t.y+(t.ty-t.y)*egg.p;ctx.font='32px serif';ctx.fillText('🥚',x,y+10)}
+ctx.fillStyle='#b8d1d5';ctx.font='bold 17px system-ui';ctx.textAlign='left';ctx.fillText('LEWA',22,40);ctx.textAlign='right';ctx.fillText('PRAWA',698,40);
+if(!running){ctx.fillStyle='#f3dca2';ctx.textAlign='center';ctx.font='bold 23px system-ui';ctx.fillText('Naciśnij START, aby grać',360,480)}}
+draw();
+})();
+</script></body></html>
