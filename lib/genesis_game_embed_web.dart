@@ -159,12 +159,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       var storedBest = 0;
       if (storedRaw != null) {
         final previous = jsonDecode(storedRaw);
-        if (previous is Map && previous['score'] is int) storedBest = previous['score'] as int;
+        if (previous is Map && previous['score'] is int) {
+          storedBest = previous['score'] as int;
+        }
       }
-      if (points >= storedBest) html.window.localStorage['$scoreStoragePrefix$key'] = jsonEncode({
-        'game': key, 'score': points, 'level': stage,
-        'at': DateTime.now().millisecondsSinceEpoch,
-      });
+      if (points >= storedBest) {
+        html.window.localStorage['$scoreStoragePrefix$key'] = jsonEncode({
+          'game': key, 'score': points, 'level': stage,
+          'at': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
       html.window.localStorage['agc-game-owner-$key'] = AgcBackend.user!.id;
     } catch (_) {}
     if (!saving) {
@@ -286,8 +290,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         } on PostgrestException catch (error) {
           lastSaveStatus = 'BŁĄD BAZY: ${error.message}';
           final newer = pendingScores[key];
-          if (newer == null || newer.$1 < points) final newer = pendingScores[key];
-          if (newer == null || newer.$1 < points) pendingScores[key] = pending;
+          if (newer == null || newer.$1 < points) {
+            pendingScores[key] = pending;
+          }
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
             'Błąd zapisu: ${error.message}. Ponowię automatycznie.',
