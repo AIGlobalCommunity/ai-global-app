@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE VECTOR v2026.11.18i</title>
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE VECTOR v2026.11.18j</title>
 <style>
 :root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
@@ -32,14 +32,14 @@ body.game-fullscreen #arena{width:100%;height:100%;height:100dvh;flex:1 1 100%;b
 body.game-fullscreen .stats{position:absolute;z-index:5;top:max(4px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(86%,480px);pointer-events:none}
 body.game-fullscreen .stat{background:#081b2bd9;padding:2px}
 body.game-fullscreen .stat span{font-size:9px}body.game-fullscreen .stat strong{font-size:14px}
-#exit-fullscreen{display:none;position:absolute;right:max(6px,env(safe-area-inset-right));top:max(6px,env(safe-area-inset-top));z-index:7;padding:9px;background:#0a213ddc}
+#open-ranking{display:none;position:absolute;left:max(6px,env(safe-area-inset-left));bottom:max(8px,env(safe-area-inset-bottom));z-index:7;padding:10px 14px;background:#132d48ed;border-color:#d6aa5e;color:#ffe3a0}body.game-fullscreen #open-ranking{display:block}#exit-fullscreen{display:none;position:absolute;right:max(6px,env(safe-area-inset-right));top:max(6px,env(safe-area-inset-top));z-index:7;padding:9px;background:#0a213ddc}
 body.game-fullscreen #exit-fullscreen{display:block;opacity:.72}
 @media (orientation:portrait) and (pointer:coarse){#app{padding:0;gap:0}header,#help{display:none!important}.stats{position:absolute;top:0;left:0;width:100%;z-index:5;pointer-events:none;gap:2px}.stat{background:#081b2bc9;padding:2px 0}.stat span{font-size:9px}.stat strong{font-size:15px}#arena{width:100%;height:100%;height:100dvh;flex:1 1 100%;border:0;border-radius:0}#exit-fullscreen{display:block;z-index:7;top:48px;opacity:.65}}
 @media(max-width:600px){body.game-fullscreen .stats{width:min(77%,340px);left:42%}}
 </style></head><body><div id="app">
 <header><div class="brand">🐺 WILK I JAJKA <span style="color:#77c5db">/ GENESIS</span></div><div class="actions"><button class="small" id="music">♫ MUZYKA: WYŁ.</button><button class="small" id="restart">↻ NOWA</button><button class="small" id="fullscreen">⛶ PEŁNY EKRAN</button></div></header>
 <div class="stats"><div class="stat"><span>PUNKTY</span><strong id="score">0</strong></div><div class="stat"><span>ŻYCIA</span><strong id="lives">❤️❤️❤️</strong></div><div class="stat"><span>POZIOM</span><strong id="level">1</strong></div><div class="stat"><span>REKORD</span><strong id="best">0</strong></div></div>
-<div id="arena"><button id="exit-fullscreen" type="button">✕ WYJDŹ</button><canvas id="board" aria-label="Gra Wilk i Jajka, wybierz ćwiartkę planszy"></canvas>
+<div id="arena"><button id="open-ranking" type="button">🏆 RANKING</button><button id="exit-fullscreen" type="button">✕ WYJDŹ</button><canvas id="board" aria-label="Gra Wilk i Jajka, wybierz ćwiartkę planszy"></canvas>
 <div id="overlay"><div class="panel"><div class="mascot">🐺🥚</div><h1 id="heading">WILK I JAJKA</h1><p id="message">Łap jajka z czterech stron! Dotknij odpowiedniej ćwiartki planszy, aby złapać jajko. Masz trzy życia.</p><div class="ranking-warning" id="ranking-warning">🏆 Ranking online wymaga zalogowania na konto THE GENESIS ERA przed grą. Bez logowania wynik pozostaje lokalny.</div><button id="play">▶ ZAGRAJ TERAZ</button></div></div></div>
 <div id="controls"><button class="control active" data-lane="0">↖ LEWA GÓRA</button><button class="control" data-lane="1">PRAWA GÓRA ↗</button><button class="control" data-lane="2">↙ LEWA DÓŁ</button><button class="control" data-lane="3">PRAWA DÓŁ ↘</button></div>
 <div id="help"><span id="device">Wykrywanie urządzenia…</span> · Telefon: dotknij ćwiartki planszy · Komputer: Q / E / A / D · Offline: lokalny rekord</div>
@@ -225,6 +225,11 @@ function setGameFullscreen(on){
  requestAnimationFrame(resize);
 }
 el('fullscreen').addEventListener('click',async()=>{setGameFullscreen(true);try{if(window.parent===window && el('app').requestFullscreen)await el('app').requestFullscreen()}catch(_){/* CSS immersive fallback */}});
+el('open-ranking').addEventListener('click',async()=>{
+ reportScore();setGameFullscreen(false);
+ try{if(document.fullscreenElement)await document.exitFullscreen();else if(window.parent!==window&&window.parent.document.fullscreenElement)await window.parent.document.exitFullscreen()}catch(_){}
+ try{window.parent.postMessage(JSON.stringify({type:'genesis-open-ranking',game:'wolf'}),location.origin)}catch(_){}
+});
 el('exit-fullscreen').addEventListener('click',async()=>{reportScore();setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen();else if(window.parent!==window&&window.parent.document.fullscreenElement)await window.parent.document.exitFullscreen()}catch(_){}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)reportScore()});window.addEventListener('pagehide',reportScore);document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&window.parent===window&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)});
 try{if(window.parent!==window&&window.parent.location.origin===location.origin)window.parent.document.addEventListener('fullscreenchange',()=>{if(!window.parent.document.fullscreenElement&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)})}catch(_){}
