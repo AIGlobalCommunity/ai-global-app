@@ -27,6 +27,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
+  StreamSubscription<AuthState>? authChanges;
+  bool rulesOpen = false;
   static const scoreStoragePrefix = 'agc-game-pending-';
   static const buildVersion = String.fromEnvironment(
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
@@ -58,6 +60,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
+    if (AgcBackend.configured) {
+      authChanges = AgcBackend.client.auth.onAuthStateChange.listen((_) {
+        if (!mounted) return;
+        setState(() {});
+        if (AgcBackend.user != null) _recoverPendingScores();
+      });
+    }
     scoreRetryTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       _recoverPendingScores();
     });
@@ -67,6 +76,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   @override
   void dispose() {
     messages?.cancel();
+    authChanges?.cancel();
     scoreRetryTimer?.cancel();
     super.dispose();
   }
@@ -168,7 +178,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         final stage = decoded['level'] as int;
         final age = DateTime.now().millisecondsSinceEpoch -
           (decoded['at'] as int);
-        if (points < 1 || points > 10000000 ||
+        if (points < 10 || points > 10000000 ||
             stage < 1 || stage > 1000 ||
             age < -60000 || age > 86400000) {
           continue;
@@ -264,6 +274,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         } on PostgrestException catch (error) {
           lastSaveStatus = 'BŁĄD BAZY: ${error.message}';
           final newer = pendingScores[key];
+          if (newer == null || newer.$1 < points) final newer = pendingScores[key];
           if (newer == null || newer.$1 < points) pendingScores[key] = pending;
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
@@ -943,6 +954,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             'CHOOSE A GAME AND DISCOVER NEW CHALLENGES'),
             textAlign: TextAlign.center),
           _versionLabel(),
+          if (AgcBackend.user == null) const Card(child: Padding(padding: EdgeInsets.all(12), child: Text('⚠ TRYB GOŚCIA — możesz grać, ale punkty NIE są zapisywane w rankingu online. Zaloguj się w zakładce KONTO przed grą.', textAlign: TextAlign.center))),
+          TextButton.icon(onPressed: () => setState(() => rulesOpen = true), icon: const Icon(Icons.gavel_outlined), label: const Text('REGULAMIN GIER I RANKINGÓW')),
           TextButton.icon(
             onPressed: _openDiagnostics,
             icon: const Icon(Icons.bug_report_outlined, size: 17),
@@ -1013,8 +1026,41 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     ),
   );
 
+  Widget _rulesPage() => SafeArea(child: Column(children: [
+    ListTile(
+      leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => setState(() => rulesOpen = false)),
+      title: const Text('REGULAMIN GIER I RANKINGÓW', style: TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: const Text('THE GENESIS ERA · 18.11.2026'),
+    ),
+    Expanded(child: ListView(padding: const EdgeInsets.all(18), children: const [
+      Text('1. Udział w grach', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Gry są dostępne bez opłat. Można grać bez logowania, ale wynik niezalogowanego gracza nie jest dodawany do rankingu online.'),
+      SizedBox(height: 14),
+      Text('2. Konto i zapis wyniku', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Aby uczestniczyć w rankingu, zaloguj się na swoje konto THE GENESIS ERA przed rozpoczęciem gry. Zapis wymaga połączenia z internetem oraz potwierdzenia przez serwer. Wynik widoczny wyłącznie w grze lub na urządzeniu nie oznacza zapisu online.'),
+      SizedBox(height: 14),
+      Text('3. Punktacja', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Wyniki od 10 punktów mogą zostać zgłoszone do rankingu. Ranking pojedynczej gry pokazuje najlepszy potwierdzony wynik danego gracza. Ranking globalny sumuje najlepsze potwierdzone wyniki tego gracza z poszczególnych gier. Punkty w grach nie są punktami GP platformy.'),
+      SizedBox(height: 14),
+      Text('4. Uczciwa gra', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Zabronione jest manipulowanie wynikami, automatyzowanie rozgrywki, wykorzystywanie błędów i podszywanie się pod innych graczy. Podejrzane wyniki mogą zostać zweryfikowane lub usunięte po sprawdzeniu.'),
+      SizedBox(height: 14),
+      Text('5. Dostępność i błędy', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Działanie gier i rankingu zależy od urządzenia, przeglądarki i usług sieciowych. W przypadku błędu sprawdź status logowania oraz diagnostykę rankingu. Zapis nie jest gwarantowany podczas awarii lub gry offline.'),
+      SizedBox(height: 14),
+      Text('6. Dane i widoczność', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Ranking może prezentować pseudonim gracza, jego pozycję, wyniki i gry. Obsługa konta i danych podlega zasadom prywatności platformy.'),
+      SizedBox(height: 14),
+      Text('7. Zmiany zasad', style: TextStyle(fontWeight: FontWeight.bold)),
+      Text('Zasady mogą być aktualizowane wraz z rozwojem gier. Data aktualizacji jest podana powyżej.'),
+      SizedBox(height: 18),
+      Text('Dokument informacyjny do zatwierdzenia przez operatora platformy przed uznaniem go za oficjalny regulamin.', style: TextStyle(fontSize: 12, color: Colors.amber)),
+    ])),
+  ]));
+
   @override
   Widget build(BuildContext context) {
+    if (rulesOpen) return _rulesPage();
     if (diagnosticsOpen) {
       return _diagnosticsPage();
     }
@@ -1040,7 +1086,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ),
           const SizedBox(width: 8),
           Expanded(child: Text(
-            selectedGame == 0 ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER',
+            selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : 'WILK I JAJKA',
             maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.bold, color: gold, fontSize: 16),
@@ -1059,6 +1105,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         ]),
       ),
       _versionLabel(),
+      TextButton.icon(onPressed: () => setState(() => rulesOpen = true), icon: const Icon(Icons.gavel_outlined), label: const Text('REGULAMIN')),
       if (AgcBackend.user == null)
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 5),
