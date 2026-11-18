@@ -166,9 +166,30 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     if (AgcBackend.user == null) {
+      // Keep the guest's best result until the account is signed in.
+      // Do not attribute it to another previously signed-in account.
+      try {
+        final key = decoded['game'] as String;
+        final storageKey = '$scoreStoragePrefix$key';
+        final oldRaw = html.window.localStorage[storageKey];
+        var oldBest = 0;
+        if (oldRaw != null) {
+          final previous = jsonDecode(oldRaw);
+          if (previous is Map && previous['score'] is int) {
+            oldBest = previous['score'] as int;
+          }
+        }
+        if (points >= oldBest) {
+          html.window.localStorage[storageKey] = jsonEncode({
+            'game': key, 'score': points, 'level': stage,
+            'at': DateTime.now().millisecondsSinceEpoch,
+          });
+          html.window.localStorage.remove('agc-game-owner-$key');
+        }
+      } catch (_) {}
       setState(() => scoreNotice = GenesisLanguage.copy(
-        'Wynik jest na urządzeniu. Zaloguj się w KONTO, aby trafić do rankingu.',
-        'Score saved locally. Sign in under ACCOUNT to join the leaderboard.'));
+        'Wynik zachowany na urządzeniu. Zaloguj się w KONTO, aby przesłać go do rankingu.',
+        'Score kept on device. Sign in under ACCOUNT to submit it.'));
       return;
     }
     final key = decoded['game'] as String;
@@ -222,7 +243,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           continue;
         }
         final owner = html.window.localStorage['agc-game-owner-$key'];
-        if (owner != AgcBackend.user!.id) continue;
+        // Unowned scores were earned as a guest and can be claimed on sign-in.
+        if (owner != null && owner != AgcBackend.user!.id) continue;
+        if (owner == null) html.window.localStorage['agc-game-owner-$key'] = AgcBackend.user!.id;
         final current = pendingScores[key];
         if (current == null || points > current.$1) {
           pendingScores[key] = (points, stage);
