@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE VECTOR v2026.11.18h</title>
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE VECTOR v2026.11.18i</title>
 <style>
 :root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
@@ -113,7 +113,7 @@ function drawRamp(p,u){
 }
 function drawWolf(cx,cy,u,lane,bounce){
  const dir=lane%2===0?-1:1,top=lane<2;
- const size=Math.max(36,u*.19),s=size/100;
+ const size=Math.max(36,u*.22),s=size/100;
  ctx.save();ctx.translate(cx,cy-bounce);ctx.scale(s*dir,s);
  // Tail, animated legs and boots.
  polygon([[-25,18],[-59,3],[-66,-21],[-41,-13],[-17,4]],'#657e91','#24364a',3);
@@ -139,8 +139,27 @@ function drawWolf(cx,cy,u,lane,bounce){
  polygon([[-26,-28],[0,-10],[27,-29],[16,-15],[-15,-14]],'#e8e5d9');
  ellipse(0,-29,11,8,'#283344');ellipse(-3,-32,3,2,'#fff');
  line(-10,-17,10,-17,'#374457',3);
+ // Woven catching basket: a wide open mouth, rim, handles and cross-hatched wicker.
+ const basketY=top?-2:32;
+ ctx.save();ctx.translate(0,basketY);
+ // Basket rests between both paws and tilts slightly toward the selected ramp.
+ ctx.rotate(top?-.12:.12);
+ ctx.shadowColor='#0008';ctx.shadowBlur=7;ctx.shadowOffsetY=4;
+ polygon([[-34,-9],[34,-9],[26,28],[17,37],[-17,37],[-26,28]],'#b97938','#60391f',3);
+ ctx.shadowBlur=0;
+ const wicker=ctx.createLinearGradient(-30,0,30,35);
+ wicker.addColorStop(0,'#f6c87b');wicker.addColorStop(.45,'#c78742');wicker.addColorStop(1,'#8c4c29');
+ polygon([[-31,-5],[31,-5],[24,27],[15,33],[-15,33],[-24,27]],wicker,'#754222',2);
+ ctx.save();ctx.beginPath();ctx.moveTo(-30,-5);ctx.lineTo(30,-5);ctx.lineTo(24,27);ctx.lineTo(15,33);ctx.lineTo(-15,33);ctx.lineTo(-24,27);ctx.closePath();ctx.clip();
+ for(let k=-50;k<=50;k+=9){line(k,-12,k+25,44,'#f4cf85',2);line(k+22,-12,k-7,44,'#915326',2)}
+ for(let y=5;y<=29;y+=10)line(-40,y,40,y,'#a56a35',3);
+ ctx.restore();
+ ellipse(0,-8,34,9,'#6e3f24','#f6c97d',4);
+ ellipse(0,-10,27,5,'#3b2c26');
+ line(-33,-7,-19,-25,'#e6b56a',5);line(33,-7,19,-25,'#e6b56a',5);
+ ctx.restore();
  // Reaching arms change angle with active upper/lower lane.
- const reach=top?-43:17;
+ const reach=top?-12:24;
  line(-22,0,-46,reach,'#2a648a',15);line(23,0,48,reach,'#2a648a',15);
  ellipse(-47,reach,13,11,'#dce5df','#4c6172',2);
  ellipse(49,reach,13,11,'#dce5df','#4c6172',2);
@@ -174,7 +193,16 @@ document.querySelectorAll('[data-lane]').forEach(b=>{b.addEventListener('pointer
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;choose((y>=.5?2:0)+(x>=.5?1:0))});
 document.addEventListener('keydown',e=>{const keys={q:0,Q:0,e:1,E:1,a:2,A:2,d:3,D:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
 function start(){wolfX=.5;wolfY=.56;wolfFromX=.5;wolfFromY=.56;wolfToX=.5;wolfToY=.56;wolfMotion=1;cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
-el('play').addEventListener('click',()=>{start();if(navigator.maxTouchPoints>0){setGameFullscreen(true);try{if(window.parent!==window&&window.parent.document.documentElement.requestFullscreen)window.parent.document.documentElement.requestFullscreen().catch(()=>{});else if(el('app').requestFullscreen)el('app').requestFullscreen().catch(()=>{})}catch(_){}}});el('restart').addEventListener('click',start);
+el('play').addEventListener('click',()=>{
+ setGameFullscreen(true);
+ start();
+ // Fullscreen must be requested synchronously from the user's click.
+ try {
+  const frame=window.frameElement;
+  const target=frame&&frame.requestFullscreen?frame:el('app');
+  if(target.requestFullscreen)target.requestFullscreen().catch(()=>{});
+ } catch(_) { /* fixed-position immersive fallback */ }
+});el('restart').addEventListener('click',()=>{setGameFullscreen(true);start()});
 let embeddedFrame=null,frameStyle=null;
 function setGameFullscreen(on){
  document.body.classList.toggle('game-fullscreen',on);
@@ -197,8 +225,9 @@ function setGameFullscreen(on){
  requestAnimationFrame(resize);
 }
 el('fullscreen').addEventListener('click',async()=>{setGameFullscreen(true);try{if(window.parent===window && el('app').requestFullscreen)await el('app').requestFullscreen()}catch(_){/* CSS immersive fallback */}});
-el('exit-fullscreen').addEventListener('click',async()=>{reportScore();setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen()}catch(_){}});
+el('exit-fullscreen').addEventListener('click',async()=>{reportScore();setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen();else if(window.parent!==window&&window.parent.document.fullscreenElement)await window.parent.document.exitFullscreen()}catch(_){}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)reportScore()});window.addEventListener('pagehide',reportScore);document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&window.parent===window&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)});
+try{if(window.parent!==window&&window.parent.location.origin===location.origin)window.parent.document.addEventListener('fullscreenchange',()=>{if(!window.parent.document.fullscreenElement&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)})}catch(_){}
 function moveWolf(dt){
  if(wolfMotion>=1)return;
  wolfMotion=Math.min(1,wolfMotion+dt/260);
