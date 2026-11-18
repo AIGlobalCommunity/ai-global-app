@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE</title>
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18</title>
 <style>
 :root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
@@ -64,7 +64,7 @@ function setGameFullscreen(on){document.body.classList.toggle('game-fullscreen',
 el('fullscreen').addEventListener('click',async()=>{setGameFullscreen(true);try{if(el('app').requestFullscreen)await el('app').requestFullscreen()}catch(_){/* iOS Safari uses CSS immersive fullscreen */}});
 el('exit-fullscreen').addEventListener('click',async()=>{setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen()}catch(_){}});
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)});
-function lanePoints(n){const left=n%2===0,top=n<2;return {sx:left?width*.05:width*.95,sy:top?height*.17:height*.83,ex:left?width*.40:width*.60,ey:top?height*.42:height*.58}}
+function lanePoints(n){const left=n%2===0,top=n<2;return {sx:left?width*.20:width*.80,sy:top?height*.29:height*.71,ex:left?width*.39:width*.61,ey:top?height*.43:height*.57}}
 function end(){playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
 if(points>0){try{localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}))}catch(_){}
 try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(_){}}
@@ -84,35 +84,55 @@ function roundRect(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roun
 function render(){if(!width||!height)return;ctx.clearRect(0,0,width,height);
 const g=ctx.createLinearGradient(0,0,width,height);g.addColorStop(0,'#12394e');g.addColorStop(.5,'#0b2339');g.addColorStop(1,'#133a4e');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);
 ctx.strokeStyle='#ffffff0d';ctx.lineWidth=1;for(let x=0;x<width;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke()}for(let y=0;y<height;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke()}
-for(let n=0;n<4;n++){const p=lanePoints(n);ctx.strokeStyle=n===active?'#ffd17a':'#508aa4';ctx.lineWidth=Math.max(8,width*.015);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.lineTo(p.ex,p.ey);ctx.stroke();
+for(let n=0;n<4;n++){const p=lanePoints(n);ctx.strokeStyle=n===active?'#ffcf6c':'#a86a32';ctx.lineWidth=Math.max(7,width*.012);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.lineTo(p.ex,p.ey);ctx.stroke();
 ctx.beginPath();ctx.arc(p.ex,p.ey,Math.max(18,Math.min(width,height)*.065),0,Math.PI*2);ctx.fillStyle=n===active?'#e6a94b':'#1c4b62';ctx.fill();ctx.strokeStyle=n===active?'#fff0c6':'#5e94a8';ctx.lineWidth=2;ctx.stroke();
 ctx.font=Math.max(19,Math.min(width,height)*.065)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n===active?'🧺':'○',p.ex,p.ey)}
 
+
+// Pixel-style four wooden chicken houses with red roofs and hay.
+for(let n=0;n<4;n++){
+ const p=lanePoints(n),left=n%2===0,top=n<2;
+ const cw=Math.min(width*.21,height*.29),ch=Math.min(height*.19,width*.15);
+ const x=left?width*.018:width*.982-cw,y=top?height*.13:height*.87-ch;
+ ctx.save();ctx.translate(x,y);
+ ctx.fillStyle='#8a471d';ctx.fillRect(0,ch*.27,cw,ch*.73);
+ ctx.fillStyle='#d98b35';ctx.fillRect(cw*.09,ch*.35,cw*.82,ch*.55);
+ ctx.fillStyle='#522a17';ctx.fillRect(cw*.24,ch*.40,cw*.52,ch*.48);
+ ctx.fillStyle='#e64832';ctx.beginPath();ctx.moveTo(-cw*.05,ch*.32);ctx.lineTo(cw*.5,-ch*.10);ctx.lineTo(cw*1.05,ch*.32);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#381e1b';ctx.lineWidth=3;ctx.stroke();
+ ctx.fillStyle='#f4c54e';for(let i=0;i<9;i++){ctx.fillRect(cw*(.19+i*.07),ch*.83,cw*.09,ch*.045)}
+ ctx.fillStyle='#fff5dd';ctx.beginPath();ctx.ellipse(cw*.50,ch*.66,cw*.20,ch*.17,0,0,Math.PI*2);ctx.fill();
+ ctx.beginPath();ctx.arc(cw*.62,ch*.53,ch*.105,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#e43d32';ctx.beginPath();ctx.arc(cw*.60,ch*.42,ch*.052,0,Math.PI*2);ctx.arc(cw*.67,ch*.44,ch*.045,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#f4b12f';ctx.beginPath();ctx.moveTo(cw*.72,ch*.55);ctx.lineTo(cw*.85,ch*.59);ctx.lineTo(cw*.72,ch*.63);ctx.fill();
+ ctx.fillStyle='#182533';ctx.beginPath();ctx.arc(cw*.66,ch*.53,Math.max(1.4,cw*.012),0,Math.PI*2);ctx.fill();
+ ctx.restore();
+}
+// Rustic farm fence and grass accents.
+ctx.fillStyle='#194c36';ctx.fillRect(0,height*.94,width,height*.06);
+ctx.fillStyle='#7fbf4b';ctx.fillRect(0,height*.945,width,height*.012);
+for(let x=0;x<width;x+=Math.max(26,width*.07)){
+ ctx.fillStyle='#a66b32';ctx.fillRect(x,height*.91,Math.max(5,width*.009),height*.07);
+ ctx.fillStyle='#d99a4a';ctx.fillRect(x,height*.925,Math.max(28,width*.075),Math.max(4,height*.012));
+}
+
 // Four laying hens above the conveyor entrances.
-for(let n=0;n<4;n++){const p=lanePoints(n),left=n%2===0,top=n<2;
-const hx=p.sx+(left?width*.055:-width*.055),hy=p.sy+(top?-height*.09:height*.09);
-ctx.save();ctx.translate(hx,hy);ctx.scale(left?1:-1,1);
-ctx.fillStyle='#fff4dd';ctx.beginPath();ctx.ellipse(0,0,width*.036,height*.052,0,0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(width*.019,-height*.025,Math.max(8,width*.017),0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#ec5157';ctx.beginPath();ctx.arc(width*.018,-height*.048,Math.max(4,width*.008),0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#ffbe4f';ctx.beginPath();ctx.moveTo(width*.034,-height*.022);ctx.lineTo(width*.056,-height*.012);ctx.lineTo(width*.032,-height*.005);ctx.fill();
-ctx.fillStyle='#142332';ctx.beginPath();ctx.arc(width*.026,-height*.03,Math.max(1.5,width*.0028),0,Math.PI*2);ctx.fill();ctx.restore()}
 // Animated wolf: body, moving head and arms reach toward selected basket.
 const cx=width*.5,cy=height*.5,unit=Math.min(width,height),bounce=Math.sin(jump*Math.PI)*unit*.055;
 const p=lanePoints(active),dx=p.ex-cx,dy=p.ey-cy,dist=Math.hypot(dx,dy)||1;
 const handX=cx+dx*.77,handY=cy+dy*.77-bounce;
 ctx.save();ctx.translate(0,-bounce);
-ctx.fillStyle='#4d657a';ctx.beginPath();ctx.ellipse(cx,cy+unit*.072,unit*.078,unit*.13,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#1451b7';ctx.beginPath();ctx.ellipse(cx,cy+unit*.072,unit*.078,unit*.13,0,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#8d9ca7';ctx.lineWidth=unit*.055;ctx.lineCap='round';
 ctx.beginPath();ctx.moveTo(cx,cy+unit*.005);ctx.lineTo(cx+dx*.40,cy+dy*.39);ctx.lineTo(handX,handY+bounce);ctx.stroke();
 ctx.strokeStyle='#5c7184';ctx.lineWidth=unit*.038;ctx.beginPath();ctx.moveTo(cx,cy+unit*.02);ctx.lineTo(cx-dx*.23,cy-dy*.22);ctx.stroke();
-ctx.fillStyle='#6f8596';ctx.beginPath();ctx.arc(cx,cy-unit*.055,unit*.077,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#73869d';ctx.beginPath();ctx.arc(cx,cy-unit*.055,unit*.077,0,Math.PI*2);ctx.fill();
 ctx.beginPath();ctx.moveTo(cx-unit*.068,cy-unit*.092);ctx.lineTo(cx-unit*.076,cy-unit*.18);ctx.lineTo(cx-unit*.018,cy-unit*.115);ctx.fill();
 ctx.beginPath();ctx.moveTo(cx+unit*.068,cy-unit*.092);ctx.lineTo(cx+unit*.076,cy-unit*.18);ctx.lineTo(cx+unit*.018,cy-unit*.115);ctx.fill();
-ctx.fillStyle='#dce5e7';ctx.beginPath();ctx.ellipse(cx,cy-unit*.025,unit*.047,unit*.039,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#f2f3ef';ctx.beginPath();ctx.ellipse(cx,cy-unit*.025,unit*.047,unit*.039,0,0,Math.PI*2);ctx.fill();
 ctx.fillStyle='#1c2937';ctx.beginPath();ctx.arc(cx-unit*.028,cy-unit*.07,unit*.008,0,Math.PI*2);ctx.arc(cx+unit*.028,cy-unit*.07,unit*.008,0,Math.PI*2);ctx.fill();
 ctx.fillStyle='#273541';ctx.beginPath();ctx.arc(cx,cy-unit*.035,unit*.016,0,Math.PI*2);ctx.fill();
-ctx.restore();
+ctx.fillStyle='#e53b34';ctx.beginPath();ctx.moveTo(cx-unit*.04,cy+unit*.015);ctx.lineTo(cx+unit*.04,cy+unit*.015);ctx.lineTo(cx,cy+unit*.065);ctx.fill();ctx.restore();
 ctx.fillStyle='#eab86c';ctx.beginPath();ctx.ellipse(handX,handY,unit*.055,unit*.031,Math.atan2(dy,dx),0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#ffe5a5';ctx.lineWidth=2;ctx.stroke();
 for(const egg of eggs){const p=lanePoints(egg.lane),x=p.sx+(p.ex-p.sx)*egg.p,y=p.sy+(p.ey-p.sy)*egg.p;ctx.save();ctx.translate(x,y);ctx.rotate(egg.spin*egg.p);ctx.fillStyle='#fff5d9';ctx.beginPath();ctx.ellipse(0,0,Math.max(7,unit*.025),Math.max(10,unit*.035),0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#dfc5a0';ctx.lineWidth=2;ctx.stroke();ctx.restore()}
