@@ -114,6 +114,19 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ..style.height = '100%'
           ..setAttribute('loading', 'lazy');
         frames[type] = frame;
+        // The iframe may request auth before the Flutter message listener is ready.
+        // Send the current state again whenever the game document finishes loading.
+        frame.onLoad.listen((_) {
+          frame.contentWindow?.postMessage(
+            jsonEncode({
+              'type': 'genesis-auth-status',
+              'signedIn': AgcBackend.user != null,
+              'displayName': AgcBackend.user?.userMetadata?['handle']?.toString()
+                  ?? AgcBackend.user?.email ?? '',
+            }),
+            html.window.location.origin,
+          );
+        });
         return frame;
       },
     );
