@@ -49,6 +49,22 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   final Map<String, (int, int)> pendingScores = {};
 
   String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : 'wolf';
+  Map<String, dynamic> get gameAuthStatus {
+    final user = AgcBackend.user;
+    final handle = user?.userMetadata?['handle']?.toString().trim();
+    final identity = (handle != null && handle.isNotEmpty)
+        ? handle
+        : (user?.email ?? 'Gracz');
+    return {'type': 'genesis-auth-status',
+      'signedIn': user != null,
+      'displayName': user == null ? '' : identity};
+  }
+
+  void sendGameAuthStatus(html.IFrameElement frame) {
+    frame.contentWindow?.postMessage(
+      jsonEncode(gameAuthStatus), html.window.location.origin);
+  }
+
 
   @override
   void initState() {
@@ -65,7 +81,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (!mounted) return;
         setState(() {});
         for (final frame in frames.values) {
-          frame.contentWindow?.postMessage(jsonEncode({'type':'genesis-auth-status','signedIn':AgcBackend.user != null}), html.window.location.origin);
+          sendGameAuthStatus(frame);
         }
         if (AgcBackend.user != null) _recoverPendingScores();
       });
