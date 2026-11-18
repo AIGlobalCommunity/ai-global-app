@@ -17,7 +17,7 @@ button:active{transform:scale(.97);background:#27617c}
 canvas{width:100%;height:100%;display:block;touch-action:none}
 #overlay{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;background:#041322c9;z-index:3;padding:16px}
 #overlay.hidden{display:none}.panel{width:min(90%,420px);padding:22px 18px;text-align:center;background:linear-gradient(145deg,#17364d,#0a1b30);border:1px solid #dfb56d;border-radius:22px;box-shadow:0 18px 65px #0009}
-.panel .mascot{font-size:clamp(48px,10vh,82px)}.panel h1{font-size:clamp(22px,4vw,32px);margin:6px 0;color:var(--gold)}.panel p{font-size:14px;color:#d2e1e9;line-height:1.4}
+.panel .mascot{font-size:clamp(48px,10vh,82px)}.panel h1{font-size:clamp(22px,4vw,32px);margin:6px 0;color:var(--gold)}.panel .ranking-warning{margin-top:10px;font-size:12px;color:#ffd17a;border:1px solid #bd9957;border-radius:9px;padding:8px;background:#172c3b}.panel p{font-size:14px;color:#d2e1e9;line-height:1.4}
 #play{width:100%;min-height:55px;background:linear-gradient(135deg,#ffe39d,#e7a84e);color:#102235;border:0;font-size:19px;margin-top:10px;box-shadow:0 6px 20px #f3b75633}
 #controls{display:none!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;width:min(100%,1100px);flex-shrink:0}
 .control{min-height:clamp(45px,9vh,72px);font-size:clamp(12px,2vw,18px);background:linear-gradient(#1b4a65,#0c263e);border-color:#4f98b5}
@@ -40,7 +40,7 @@ body.game-fullscreen #exit-fullscreen{display:block;opacity:.72}
 <header><div class="brand">🐺 WILK I JAJKA <span style="color:#77c5db">/ GENESIS</span></div><div class="actions"><button class="small" id="music">♫ MUZYKA: WYŁ.</button><button class="small" id="restart">↻ NOWA</button><button class="small" id="fullscreen">⛶ PEŁNY EKRAN</button></div></header>
 <div class="stats"><div class="stat"><span>PUNKTY</span><strong id="score">0</strong></div><div class="stat"><span>ŻYCIA</span><strong id="lives">❤️❤️❤️</strong></div><div class="stat"><span>POZIOM</span><strong id="level">1</strong></div><div class="stat"><span>REKORD</span><strong id="best">0</strong></div></div>
 <div id="arena"><button id="exit-fullscreen" type="button">✕ WYJDŹ</button><canvas id="board" aria-label="Gra Wilk i Jajka, wybierz ćwiartkę planszy"></canvas>
-<div id="overlay"><div class="panel"><div class="mascot">🐺🥚</div><h1 id="heading">WILK I JAJKA</h1><p id="message">Łap jajka z czterech stron! Dotknij odpowiedniej ćwiartki planszy, aby złapać jajko. Masz trzy życia.</p><button id="play">▶ ZAGRAJ TERAZ</button></div></div></div>
+<div id="overlay"><div class="panel"><div class="mascot">🐺🥚</div><h1 id="heading">WILK I JAJKA</h1><p id="message">Łap jajka z czterech stron! Dotknij odpowiedniej ćwiartki planszy, aby złapać jajko. Masz trzy życia.</p><div class="ranking-warning" id="ranking-warning">🏆 Ranking online wymaga zalogowania na konto THE GENESIS ERA przed grą. Bez logowania wynik pozostaje lokalny.</div><button id="play">▶ ZAGRAJ TERAZ</button></div></div></div>
 <div id="controls"><button class="control active" data-lane="0">↖ LEWA GÓRA</button><button class="control" data-lane="1">PRAWA GÓRA ↗</button><button class="control" data-lane="2">↙ LEWA DÓŁ</button><button class="control" data-lane="3">PRAWA DÓŁ ↘</button></div>
 <div id="help"><span id="device">Wykrywanie urządzenia…</span> · Telefon: dotknij ćwiartki planszy · Komputer: Q / E / A / D · Offline: lokalny rekord</div>
 </div><script>
@@ -50,6 +50,9 @@ const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
 const device=()=>{const w=Math.min(screen.width,screen.height),touch=navigator.maxTouchPoints>0;return !touch?'KOMPUTER':w<600?'TELEFON':w<1050?'TABLET':'KOMPUTER DOTYKOWY'};
 document.getElementById('device').textContent=device();
 const el=id=>document.getElementById(id),overlay=el('overlay');
+let signedIn=false;
+window.addEventListener('message',e=>{if(e.origin!==location.origin)return;let msg=e.data;try{if(typeof msg==='string')msg=JSON.parse(msg)}catch(_){return}if(msg&&msg.type==='genesis-auth-status'){signedIn=msg.signedIn===true;el('ranking-warning').textContent=signedIn?'✓ Zalogowano — wyniki od 10 pkt będą wysyłane do rankingu online.':'🏆 Tryb gościa — bez zalogowania punkty nie są zapisywane w rankingu online.'}});
+try{window.parent.postMessage(JSON.stringify({type:'genesis-auth-request'}),location.origin)}catch(_){}
 let wolfX=.5,wolfY=.56,wolfFromX=.5,wolfFromY=.56,wolfToX=.5,wolfToY=.56,wolfMotion=1;
 let width=800,height=480,active=0,playing=false,points=0,misses=0,level=1,eggs=[],effects=[],last=0,elapsed=0,raf=0,best=0,jump=0,clock=0,musicOn=false,audio=null,nextNote=0,noteIndex=0;
 try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best').textContent=best;
