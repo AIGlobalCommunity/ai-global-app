@@ -51,8 +51,19 @@ const device=()=>{const w=Math.min(screen.width,screen.height),touch=navigator.m
 document.getElementById('device').textContent=device();
 const el=id=>document.getElementById(id),overlay=el('overlay');
 let signedIn=false;
-window.addEventListener('message',e=>{if(e.origin!==location.origin)return;let msg=e.data;try{if(typeof msg==='string')msg=JSON.parse(msg)}catch(_){return}if(msg&&msg.type==='genesis-auth-status'){signedIn=msg.signedIn===true;const banner=el('ranking-warning');banner.textContent=signedIn?'✓ Zalogowano jako: '+(typeof msg.displayName==='string'&&msg.displayName.trim()?msg.displayName.trim():'Gracz'):'🏆 Ranking online wymaga zalogowania na konto THE GENESIS ERA przed grą. Bez logowania wynik pozostaje lokalny.';banner.style.display='block'}});
-try{window.parent.postMessage(JSON.stringify({type:'genesis-auth-request'}),location.origin)}catch(_){}
+window.addEventListener('message',e=>{if(e.origin!==location.origin)return;let msg=e.data;try{if(typeof msg==='string')msg=JSON.parse(msg)}catch(_){return}if(msg&&msg.type==='genesis-auth-status'){signedIn=msg.signedIn===true;authConfirmed=true;const banner=el('ranking-warning');banner.textContent=signedIn?'✓ Zalogowano jako: '+(typeof msg.displayName==='string'&&msg.displayName.trim()?msg.displayName.trim():'Gracz'):'🏆 Ranking online wymaga zalogowania na konto THE GENESIS ERA przed grą. Bez logowania wynik pozostaje lokalny.';banner.style.display='block'}});
+let authConfirmed=false;
+function requestGameAuth(){
+ if(window.parent===window)return;
+ try{window.parent.postMessage(JSON.stringify({type:'genesis-auth-request'}),location.origin)}catch(_){}
+}
+requestGameAuth();
+window.addEventListener('load',requestGameAuth);
+let authRequestCount=0;
+const authRetry=setInterval(()=>{
+ if(authConfirmed||authRequestCount++>=20){clearInterval(authRetry);return}
+ requestGameAuth();
+},750);
 let wolfX=.5,wolfY=.56,wolfFromX=.5,wolfFromY=.56,wolfToX=.5,wolfToY=.56,wolfMotion=1;
 let width=800,height=480,active=0,playing=false,points=0,misses=0,level=1,eggs=[],effects=[],last=0,elapsed=0,raf=0,best=0,jump=0,clock=0,musicOn=false,audio=null,nextNote=0,noteIndex=0;
 try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best').textContent=best;
