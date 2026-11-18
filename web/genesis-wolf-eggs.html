@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18e</title>
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18f</title>
 <style>
 :root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
@@ -34,6 +34,7 @@ body.game-fullscreen .stat{background:#081b2bd9;padding:2px}
 body.game-fullscreen .stat span{font-size:9px}body.game-fullscreen .stat strong{font-size:14px}
 #exit-fullscreen{display:none;position:absolute;right:max(6px,env(safe-area-inset-right));top:max(6px,env(safe-area-inset-top));z-index:7;padding:9px;background:#0a213ddc}
 body.game-fullscreen #exit-fullscreen{display:block;opacity:.72}
+@media (orientation:portrait) and (pointer:coarse){#app{padding:0;gap:0}header,#help{display:none!important}.stats{position:absolute;top:0;left:0;width:100%;z-index:5;pointer-events:none;gap:2px}.stat{background:#081b2bc9;padding:2px 0}.stat span{font-size:9px}.stat strong{font-size:15px}#arena{width:100%;height:100%;height:100dvh;flex:1 1 100%;border:0;border-radius:0}#exit-fullscreen{display:block;z-index:7;top:48px;opacity:.65}}
 @media(max-width:600px){body.game-fullscreen .stats{width:min(77%,340px);left:42%}}
 </style></head><body><div id="app">
 <header><div class="brand">🐺 WILK I JAJKA <span style="color:#77c5db">/ GENESIS</span></div><div class="actions"><button class="small" id="music">♫ MUZYKA: WYŁ.</button><button class="small" id="restart">↻ NOWA</button><button class="small" id="fullscreen">⛶ PEŁNY EKRAN</button></div></header>
@@ -60,6 +61,9 @@ for(const name of ['farm-scene','wolf-left-up','wolf-right-up','wolf-left-down',
 function imageReady(im){return im&&im.complete&&im.naturalWidth>0}
 function farmGeometry(){
  const im=artwork['farm-scene'];if(!imageReady(im))return {x:0,y:0,w:width,h:height};
+ // Portrait screens must use the entire playfield, not a tiny landscape strip.
+ // Keep all four coops visible while adapting the artwork to the viewport.
+ if(width<height*.9)return {x:0,y:0,w:width,h:height};
  const scale=Math.min(width/im.width,height/im.height),w=im.width*scale,h=im.height*scale;
  return {x:(width-w)/2,y:(height-h)/2,w,h};
 }
@@ -72,7 +76,7 @@ document.querySelectorAll('[data-lane]').forEach(b=>{b.addEventListener('pointer
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;choose((y>=.5?2:0)+(x>=.5?1:0))});
 document.addEventListener('keydown',e=>{const keys={q:0,Q:0,e:1,E:1,a:2,A:2,d:3,D:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
 function start(){wolfX=.5;wolfY=.56;wolfFromX=.5;wolfFromY=.56;wolfToX=.5;wolfToY=.56;wolfMotion=1;cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
-el('play').addEventListener('click',()=>{start();if(navigator.maxTouchPoints>0)setGameFullscreen(true)});el('restart').addEventListener('click',start);
+el('play').addEventListener('click',()=>{start();if(navigator.maxTouchPoints>0){setGameFullscreen(true);try{if(window.parent!==window&&window.parent.document.documentElement.requestFullscreen)window.parent.document.documentElement.requestFullscreen().catch(()=>{});else if(el('app').requestFullscreen)el('app').requestFullscreen().catch(()=>{})}catch(_){}}});el('restart').addEventListener('click',start);
 let embeddedFrame=null,frameStyle=null;
 function setGameFullscreen(on){
  document.body.classList.toggle('game-fullscreen',on);
@@ -82,8 +86,12 @@ function setGameFullscreen(on){
    if(on && frame && !embeddedFrame){
     embeddedFrame=frame;frameStyle=frame.getAttribute('style');
     Object.assign(frame.style,{position:'fixed',left:'0',top:'0',width:'100vw',height:'100dvh',maxWidth:'none',maxHeight:'none',zIndex:'2147483647',border:'0',margin:'0',padding:'0',background:'#061b2a'});
+    // Remove ancestor clipping and stacking contexts while the game is active.
+    frame._genesisAncestorStyles=[];
+    for(let p=frame.parentElement;p&&p!==window.parent.document.body;p=p.parentElement){frame._genesisAncestorStyles.push([p,p.getAttribute('style')]);Object.assign(p.style,{overflow:'visible',transform:'none',filter:'none',contain:'none',isolation:'auto',zIndex:'auto'})}
    }else if(!on && embeddedFrame){
     if(frameStyle===null)embeddedFrame.removeAttribute('style');else embeddedFrame.setAttribute('style',frameStyle);
+    if(embeddedFrame._genesisAncestorStyles){for(const [p,style] of embeddedFrame._genesisAncestorStyles){if(style===null)p.removeAttribute('style');else p.setAttribute('style',style)}delete embeddedFrame._genesisAncestorStyles}
     embeddedFrame=null;
    }
   }
