@@ -870,15 +870,26 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     child: Padding(
       padding: const EdgeInsets.all(18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Center(child: Text('🐺 🥚', style: TextStyle(fontSize: 66))),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            height: 180,
+            child: Image.network(
+              'wolfart/farm-scene.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                const Center(child: Icon(Icons.pets, size: 76, color: gold)),
+            ),
+          ),
+        ),
         const SizedBox(height: 8),
         const Text('WILK I JAJKA',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Text(GenesisLanguage.copy(
-          'ZRĘCZNOŚCIOWA · RETRO · OFFLINE',
-          'ARCADE · RETRO · OFFLINE'),
+          'ZRĘCZNOŚCIOWA · RETRO · ONLINE / OFFLINE',
+          'ARCADE · RETRO · ONLINE / OFFLINE'),
           textAlign: TextAlign.center,
           style: const TextStyle(color: gold)),
         const SizedBox(height: 10),
