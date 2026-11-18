@@ -64,6 +64,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       authChanges = AgcBackend.client.auth.onAuthStateChange.listen((_) {
         if (!mounted) return;
         setState(() {});
+        for (final frame in frames.values) {
+          frame.contentWindow?.postMessage(jsonEncode({'type':'genesis-auth-status','signedIn':AgcBackend.user != null}), html.window.location.origin);
+        }
         if (AgcBackend.user != null) _recoverPendingScores();
       });
     }
@@ -112,6 +115,15 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     try {
       decoded = jsonDecode(event.data as String);
     } catch (_) {
+      return;
+    }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-auth-request') {
+      for (final frame in frames.values) {
+        if (event.source == frame.contentWindow) {
+          frame.contentWindow?.postMessage(jsonEncode({'type':'genesis-auth-status','signedIn':AgcBackend.user != null}), html.window.location.origin);
+          break;
+        }
+      }
       return;
     }
     if (decoded is! Map<String, dynamic> ||
