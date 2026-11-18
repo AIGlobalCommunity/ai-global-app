@@ -91,15 +91,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   Future<void> _onMessage(html.MessageEvent event) async {
-    if (!mounted || game == null ||
+    if (!mounted ||
         event.origin != html.window.location.origin ||
         event.data is! String) {
       return;
     }
-    final activeFrame = frames[game == 0 ? signalView : game == 1 ? defenderView : wolfView];
-    if (activeFrame == null || event.source != activeFrame.contentWindow) {
-      return;
-    }
+    final isKnownFrame = frames.values.any((frame) => event.source == frame.contentWindow);
+    if (!isKnownFrame) return;
     dynamic decoded;
     try {
       decoded = jsonDecode(event.data as String);
@@ -108,7 +106,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     if (decoded is! Map<String, dynamic> ||
         decoded['type'] != 'genesis-game-score' ||
-        decoded['game'] != gameKey ||
+        !['signal', 'defender', 'wolf'].contains(decoded['game']) ||
         decoded['score'] is! int ||
         decoded['level'] is! int) {
       return;
@@ -120,7 +118,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     lastBridgeStatus = 'Odebrano ${decoded['game']}: $points pkt · poziom $stage';
     if (mounted) setState(() {});
 
-    if (points < 1 || points > 10000000 || stage < 1 || stage > 1000) {
+    if (points < 10 || points > 10000000 || stage < 1 || stage > 1000) {
       return;
     }
     if (AgcBackend.user == null) {
@@ -135,7 +133,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       pendingScores[key] = (points, stage);
     }
     try {
-      html.window.localStorage['$scoreStoragePrefix$key'] = jsonEncode({
+      final storedRaw = html.window.localStorage['$scoreStoragePrefix$key'];
+      var storedBest = 0;
+      if (storedRaw != null) {
+        final previous = jsonDecode(storedRaw);
+        if (previous is Map && previous['score'] is int) storedBest = previous['score'] as int;
+      }
+      if (points >= storedBest) html.window.localStorage['$scoreStoragePrefix$key'] = jsonEncode({
         'game': key, 'score': points, 'level': stage,
         'at': DateTime.now().millisecondsSinceEpoch,
       });
@@ -250,7 +254,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               }
             });
           } else {
-            pendingScores[key] = pending;
+            final newer = pendingScores[key];
+            if (newer == null || newer.$1 < points) pendingScores[key] = pending;
             lastSaveStatus = 'OCZEKUJE: $key · $points pkt';
             setState(() => scoreNotice = GenesisLanguage.copy(
               'Wynik oczekuje na zapis. Ponowię automatycznie.',
@@ -258,7 +263,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           }
         } on PostgrestException catch (error) {
           lastSaveStatus = 'BŁĄD BAZY: ${error.message}';
-          pendingScores[key] = pending;
+          final newer = pendingScores[key];
+          if (newer == null || newer.$1 < points) pendingScores[key] = pending;
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
             'Błąd zapisu: ${error.message}. Ponowię automatycznie.',
@@ -273,7 +279,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         }
       }
     } finally {
-      if (mounted) setState(() => saving = false);
+      if (mounted) {
+        setState(() => saving = false);
+        if (pendingScores.isNotEmpty) {
+          // Next periodic retry handles RPC throttling and transient failures.
+        }
+      }
     }
   }
 
