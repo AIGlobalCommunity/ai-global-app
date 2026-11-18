@@ -99,7 +99,10 @@ class AgcBackend {
     if (email.trim().isEmpty || password.isEmpty) {
       throw const FormatException('Wpisz e-mail i hasło.');
     }
-    await client.auth.signInWithPassword(email: email.trim(), password: password);
+    final response = await client.auth.signInWithPassword(email: email.trim(), password: password);
+    if (response.user == null || response.session == null) {
+      throw StateError('Nie uzyskano aktywnej sesji. Spróbuj ponownie.');
+    }
   }
 
   static Future<void> signInWithSocial(OAuthProvider provider) async {
@@ -188,11 +191,14 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
     super.dispose();
   }
 
-  Future<void> execute(Future<void> Function() action) async {
+  Future<void> execute(Future<void> Function() action, {String? successMessage}) async {
     setState(() { busy = true; status = ''; });
     try {
       await action();
-      if (mounted) setState(() => status = 'Operacja zakończona. Jeżeli utworzono konto, potwierdź adres e-mail.');
+      if (mounted) setState(() => status = successMessage ??
+          (AgcBackend.user != null
+            ? '✅ Zalogowano jako: ${AgcBackend.user!.userMetadata?['handle'] ?? AgcBackend.user!.email ?? 'Gracz'}'
+            : 'Operacja zakończona. Sprawdź pocztę e-mail, jeśli wymagane jest potwierdzenie konta.'));
     } on AuthException catch (e) {
       final hint = e.code == 'anonymous_provider_disabled'
           ? 'Podaj adres e-mail i hasło; rejestracja anonimowa w THE GENESIS ERA jest wyłączona.'
@@ -343,7 +349,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                           onSubmitted: (_) {
                             if (!busy) {
                               execute(() => AgcBackend.signIn(
-                                email.text, password.text));
+                                email.text, password.text), successMessage: '✅ Logowanie zakończone pomyślnie.');
                             }
                           },
                           autofillHints: const [AutofillHints.password],
@@ -354,7 +360,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
                         FilledButton(
                           onPressed: busy ? null : () => execute(
                             () => AgcBackend.signIn(
-                              email.text, password.text)),
+                              email.text, password.text), successMessage: '✅ Logowanie zakończone pomyślnie.'),
                           child: Text(GenesisLanguage.copy('ZALOGUJ SIĘ  →', 'SIGN IN  →'))),
                       ],
                     ),
@@ -399,8 +405,8 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
           Card(child: ListTile(
             leading: const Icon(Icons.account_circle_outlined,
               color: AgcLuxury.champagne),
-            title: Text(GenesisLanguage.copy('Moje konto gracza', 'My player account')),
-            subtitle: Text(AgcBackend.user!.email ?? '—'),
+            title: Text('✅ Zalogowano jako: ${AgcBackend.user!.userMetadata?['handle'] ?? AgcBackend.user!.email ?? 'Gracz'}'),
+            subtitle: Text('Aktywna sesja · ${AgcBackend.user!.email ?? '—'}'),
           )),
           const SizedBox(height: 12),
           Card(child: ExpansionTile(
@@ -420,7 +426,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
             ],
           )),
           const SizedBox(height: 16),
-          OutlinedButton(onPressed: busy ? null : () => execute(AgcBackend.signOut),
+          OutlinedButton(onPressed: busy ? null : () => execute(AgcBackend.signOut, successMessage: 'Wylogowano z konta.'),
             child: Text(GenesisLanguage.t('logout'))),
         ],
         if (status.isNotEmpty) Padding(
