@@ -51,7 +51,14 @@ const device=()=>{const w=Math.min(screen.width,screen.height),touch=navigator.m
 document.getElementById('device').textContent=device();
 const el=id=>document.getElementById(id),overlay=el('overlay');
 let signedIn=false;
-window.addEventListener('message',e=>{if(e.origin!==location.origin)return;let msg=e.data;try{if(typeof msg==='string')msg=JSON.parse(msg)}catch(_){return}if(msg&&msg.type==='genesis-auth-status'){signedIn=msg.signedIn===true;authConfirmed=true;const banner=el('ranking-warning');banner.textContent=signedIn?'✓ Zalogowano jako: '+(typeof msg.displayName==='string'&&msg.displayName.trim()?msg.displayName.trim():'Gracz'):'🏆 Ranking online wymaga zalogowania na konto THE GENESIS ERA przed grą. Bez logowania wynik pozostaje lokalny.';banner.style.display='block'}});
+window.addEventListener('message',e=>{if(e.origin!==location.origin)return;let msg=e.data;try{if(typeof msg==='string')msg=JSON.parse(msg)}catch(_){return}if(msg&&msg.type==='genesis-score-status'&&msg.game==='wolf'){
+ const banner=el('ranking-warning');
+ if(msg.state==='saved'){banner.textContent='🏆 Wynik '+msg.score+' pkt zapisany w rankingu online!';banner.style.color='#a5ffd2'}
+ else if(msg.state==='pending'){banner.textContent='⏳ Wynik '+msg.score+' pkt oczekuje na potwierdzenie zapisu';banner.style.color='#ffe39d'}
+ else if(msg.state==='error'){banner.textContent='⚠ Nie zapisano wyniku w rankingu: '+String(msg.detail||'błąd bazy').slice(0,160);banner.style.color='#ffb2a8'}
+ banner.style.display='block';
+}
+if(msg&&msg.type==='genesis-auth-status'){signedIn=msg.signedIn===true;authConfirmed=true;const banner=el('ranking-warning');banner.textContent=signedIn?'✓ Zalogowano jako: '+(typeof msg.displayName==='string'&&msg.displayName.trim()?msg.displayName.trim():'Gracz'):'🏆 Ranking online wymaga zalogowania na konto THE GENESIS ERA przed grą. Bez logowania wynik pozostaje lokalny.';banner.style.display='block'}});
 let authConfirmed=false;
 function requestGameAuth(){
  if(window.parent===window)return;
