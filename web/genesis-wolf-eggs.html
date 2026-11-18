@@ -116,7 +116,15 @@ function setWolfLane(n){
  wolfMotion=0;jump=1;
 }
 let lastReportedScore=0;
-function reportScore(){if(points<=0||points<=lastReportedScore)return;lastReportedScore=points;try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(e){}}
+function reportScore(){
+ if(points<10||points<=lastReportedScore)return;
+ try{
+  const payload=JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level});
+  window.parent.postMessage(payload,location.origin);
+  lastReportedScore=points;
+  localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}));
+ }catch(e){console.warn('Score bridge unavailable',e)}
+}
 function end(){reportScore();playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
 if(points>0){try{localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}))}catch(_){}
 try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(_){}}
@@ -126,7 +134,7 @@ function tick(t){if(!playing)return;if(!last)last=t;const dt=Math.min(t-last,50)
 const interval=Math.max(370,1250-level*75);if(elapsed>=interval){elapsed-=interval;eggs.push({lane:Math.floor(Math.random()*4),p:0,spin:rand(-.4,.4)})}
 clock+=dt;moveWolf(dt);jump=Math.max(0,jump-dt/260);effects=effects.filter(e=>(e.life-=dt)>0);if(musicOn)musicTick(t);const speed=(.00017+level*.000022)*dt;
 for(const egg of eggs)egg.p+=speed;
-const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active&&wolfMotion>=.78){points+=10;jump=1;beep(620,.09,'sine',.055);effects.push({lane:egg.lane,kind:'catch',life:550})}else{misses++;beep(170,.21,'sawtooth',.06);effects.push({lane:egg.lane,kind:'break',life:850})}stats();if(points>=lastReportedScore+50)reportScore()}else remaining.push(egg)}eggs=remaining;render();if(misses>=3){end();return}raf=requestAnimationFrame(tick)}
+const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active&&wolfMotion>=.78){points+=10;jump=1;beep(620,.09,'sine',.055);effects.push({lane:egg.lane,kind:'catch',life:550})}else{misses++;beep(170,.21,'sawtooth',.06);effects.push({lane:egg.lane,kind:'break',life:850})}stats();if(points>=lastReportedScore+10)reportScore()}else remaining.push(egg)}eggs=remaining;render();if(misses>=3){end();return}raf=requestAnimationFrame(tick)}
 function ensureAudio(){try{if(!audio){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audio=new AC()}if(audio&&audio.state==='suspended')audio.resume()}catch(_){}}
 function beep(freq,duration,type,volume){if(!audio||audio.state!=='running')return;try{const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+duration+.01)}catch(_){}}
 const melody=[392,523,587,523,440,523,659,523,392,494,587,494,349,440,523,440];
