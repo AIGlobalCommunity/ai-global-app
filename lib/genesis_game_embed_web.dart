@@ -142,6 +142,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       }
       return;
     }
+    if (decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-open-ranking' &&
+        decoded['game'] == 'wolf') {
+      _showRanking(2);
+      return;
+    }
     if (decoded is! Map<String, dynamic> ||
         decoded['type'] != 'genesis-game-score' ||
         !['signal', 'defender', 'wolf'].contains(decoded['game']) ||
