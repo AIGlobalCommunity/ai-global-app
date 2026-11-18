@@ -24,6 +24,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const signalView = 'genesis-signal-html5-iframe';
   static const defenderView = 'genesis-defender-html5-iframe';
   static const wolfView = 'genesis-wolf-html5-iframe';
+  static const blocksView = 'genesis-blocks-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
@@ -50,7 +51,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   bool saving = false;
   final Map<String, (int, int)> pendingScores = {};
 
-  String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : 'wolf';
+  String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : game == 3 ? 'blocks' : 'wolf';
   Map<String, dynamic> get gameAuthStatus {
     final user = AgcBackend.user;
     final handle = user?.userMetadata?['handle']?.toString().trim();
@@ -75,6 +76,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(signalView, 'genesis-game.html?embed=1&version=$buildVersion', 'GENESIS SIGNAL');
       _register(defenderView, 'genesis-defender.html?embed=1&version=$buildVersion', 'GENESIS DEFENDER');
       _register(wolfView, 'genesis-wolf-eggs.html?embed=1&version=$buildVersion', 'WILK I JAJKA');
+      _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
@@ -207,7 +209,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     if (decoded is! Map<String, dynamic> ||
         decoded['type'] != 'genesis-game-score' ||
-        !['signal', 'defender', 'wolf'].contains(decoded['game']) ||
+        !['signal', 'defender', 'wolf', 'blocks'].contains(decoded['game']) ||
         decoded['score'] is! int ||
         decoded['level'] is! int) {
       return;
@@ -278,7 +280,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _recoverPendingScores() {
     if (!mounted || AgcBackend.user == null) return;
-    for (final key in ['signal', 'defender', 'wolf']) {
+    for (final key in ['signal', 'defender', 'wolf', 'blocks']) {
       try {
         final raw = html.window.localStorage['$scoreStoragePrefix$key'];
         if (raw == null) continue;
@@ -377,7 +379,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               scoreNotice = GenesisLanguage.copy(
                 '✓ Wynik zapisany w rankingu! 🏆',
                 '✓ Score saved to leaderboard! 🏆');
-              if (rankingGame == (key == 'signal' ? 0 : key == 'defender' ? 1 : 2)) {
+              if (rankingGame == (key == 'signal' ? 0 : key == 'defender' ? 1 : key == 'blocks' ? 3 : 2)) {
                 rankingFuture = _leaders(key);
               }
             });
@@ -453,7 +455,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     _recoverPendingScores();
     setState(() {
       rankingGame = selectedGame;
-      rankingFuture = _loadRanking(selectedGame == 0 ? 'signal' : selectedGame == 1 ? 'defender' : 'wolf');
+      rankingFuture = _loadRanking(selectedGame == 0 ? 'signal' : selectedGame == 1 ? 'defender' : selectedGame == 3 ? 'blocks' : 'wolf');
     });
   }
 
@@ -474,7 +476,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   Widget _rankingPage(int selectedGame) {
-    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : 'WILK I JAJKA';
+    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : selectedGame == 3 ? 'GENESIS BLOCKS' : 'WILK I JAJKA';
     return SafeArea(
       child: Column(children: [
         Padding(
@@ -1119,8 +1121,33 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   'Defend the Genesis station, survive waves and beat the high score.'),
               ),
             ];
+            final blocksCard = Card(
+              color: const Color(0xFF14254B),
+              child: InkWell(
+                onTap: () => setState(() { game = 3; scoreNotice = null; }),
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.grid_view_rounded, color: Color(0xFFFFD477), size: 44),
+                      const SizedBox(height: 12),
+                      const Text('GENESIS BLOCKS', style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Color(0xFFFFD477))),
+                      const SizedBox(height: 5),
+                      const Text('ŁAMIGŁÓWKA · ONLINE / OFFLINE', style: TextStyle(fontSize: 11, color: Color(0xFF9DDCFF))),
+                      const SizedBox(height: 9),
+                      const Text('Układaj klocki na planszy 8×8, czyść rzędy i kolumny, zdobywaj punkty!'),
+                      const SizedBox(height: 14),
+                      const Align(alignment: Alignment.centerRight, child: Chip(label: Text('▶ ZAGRAJ'))),
+                    ],
+                  ),
+                ),
+              ),
+            );
             final visible = <Widget>[
               if (categoryFilter == 'all' || categoryFilter == 'puzzle') cards[0],
+              if (categoryFilter == 'all' || categoryFilter == 'puzzle' || categoryFilter == 'offline') blocksCard,
               if (categoryFilter == 'all' || categoryFilter == 'shooter') cards[1],
               if (categoryFilter == 'all' || categoryFilter == 'arcade' ||
                   categoryFilter == 'offline') _wolfCard(),
@@ -1243,7 +1270,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         ),
       Expanded(child: SizedBox.expand(child: HtmlElementView(
         key: ValueKey(selectedGame),
-        viewType: selectedGame == 0 ? signalView : selectedGame == 1 ? defenderView : wolfView,
+        viewType: selectedGame == 0 ? signalView : selectedGame == 1 ? defenderView : selectedGame == 3 ? blocksView : wolfView,
       ))),
     ]);
   }
