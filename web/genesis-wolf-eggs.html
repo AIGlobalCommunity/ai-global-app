@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18</title>
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE raster-ready</title>
 <style>
 :root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
@@ -51,6 +51,12 @@ const el=id=>document.getElementById(id),overlay=el('overlay');
 let width=800,height=480,active=0,playing=false,points=0,misses=0,level=1,eggs=[],effects=[],last=0,elapsed=0,raf=0,best=0,jump=0,clock=0,musicOn=false,audio=null,nextNote=0,noteIndex=0;
 try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best').textContent=best;
 const rand=(a,b)=>a+Math.random()*(b-a);
+const artwork={};
+for(const name of ['farm-scene','wolf-left-up','wolf-right-up','wolf-left-down','wolf-right-down']){
+ const im=new Image();im.src='wolf-art/'+name+(name==='farm-scene'?'.jpg':'.png');im.onload=render;artwork[name]=im;
+}
+function imageReady(im){return im&&im.complete&&im.naturalWidth>0}
+
 function resize(){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);width=Math.max(1,rect.width);height=Math.max(1,rect.height);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);render()}
 new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);
 function stats(){level=1+Math.floor(points/100);el('score').textContent=points;el('lives').textContent='❤️'.repeat(Math.max(0,3-misses));el('level').textContent=level}
@@ -99,6 +105,7 @@ el('music').addEventListener('click',()=>{ensureAudio();musicOn=!musicOn;nextNot
 function roundRect(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);ctx.fill()}
 function render(){if(!width||!height)return;ctx.clearRect(0,0,width,height);
 const g=ctx.createLinearGradient(0,0,width,height);g.addColorStop(0,'#12394e');g.addColorStop(.5,'#0b2339');g.addColorStop(1,'#133a4e');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);
+if(imageReady(artwork['farm-scene'])){const im=artwork['farm-scene'];const scale=Math.max(width/im.width,height/im.height),sw=width/scale,sh=height/scale;ctx.drawImage(im,(im.width-sw)/2,(im.height-sh)/2,sw,sh,0,0,width,height)}
 ctx.strokeStyle='#ffffff0d';ctx.lineWidth=1;for(let x=0;x<width;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke()}for(let y=0;y<height;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke()}
 for(let n=0;n<4;n++){const p=lanePoints(n);ctx.strokeStyle=n===active?'#ffcf6c':'#a86a32';ctx.lineWidth=Math.max(7,width*.012);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.lineTo(p.ex,p.ey);ctx.stroke();
 ctx.beginPath();ctx.arc(p.ex,p.ey,Math.max(18,Math.min(width,height)*.065),0,Math.PI*2);ctx.fillStyle=n===active?'#e6a94b':'#1c4b62';ctx.fill();ctx.strokeStyle=n===active?'#fff0c6':'#5e94a8';ctx.lineWidth=2;ctx.stroke();
@@ -137,6 +144,11 @@ for(let x=0;x<width;x+=Math.max(26,width*.07)){
 const cx=width*.5,cy=height*.5,unit=Math.min(width,height),bounce=Math.sin(jump*Math.PI)*unit*.055;
 const p=lanePoints(active),dx=p.ex-cx,dy=p.ey-cy,dist=Math.hypot(dx,dy)||1;
 const handX=cx+dx*.77,handY=cy+dy*.77-bounce;
+const wolfArt=artwork[['wolf-left-up','wolf-right-up','wolf-left-down','wolf-right-down'][active]];
+if(imageReady(wolfArt)){
+ const spriteSize=Math.min(width*.38,height*.78),spriteHeight=spriteSize*.86;
+ ctx.drawImage(wolfArt,cx-spriteSize/2,cy-spriteHeight*.50-bounce,spriteSize,spriteHeight);
+}else{
 ctx.save();ctx.translate(0,-bounce);
 ctx.fillStyle='#1451b7';ctx.beginPath();ctx.ellipse(cx,cy+unit*.072,unit*.078,unit*.13,0,0,Math.PI*2);ctx.fill();
 ctx.strokeStyle='#8d9ca7';ctx.lineWidth=unit*.055;ctx.lineCap='round';
@@ -150,7 +162,7 @@ ctx.fillStyle='#1c2937';ctx.beginPath();ctx.arc(cx-unit*.028,cy-unit*.07,unit*.0
 ctx.fillStyle='#273541';ctx.beginPath();ctx.arc(cx,cy-unit*.035,unit*.016,0,Math.PI*2);ctx.fill();
 ctx.fillStyle='#e53b34';ctx.beginPath();ctx.moveTo(cx-unit*.04,cy+unit*.015);ctx.lineTo(cx+unit*.04,cy+unit*.015);ctx.lineTo(cx,cy+unit*.065);ctx.fill();ctx.restore();
 ctx.fillStyle='#eab86c';ctx.beginPath();ctx.ellipse(handX,handY,unit*.055,unit*.031,Math.atan2(dy,dx),0,Math.PI*2);ctx.fill();
-ctx.strokeStyle='#ffe5a5';ctx.lineWidth=2;ctx.stroke();
+ctx.strokeStyle='#ffe5a5';ctx.lineWidth=2;ctx.stroke();}
 for(const egg of eggs){const p=lanePoints(egg.lane),x=p.sx+(p.ex-p.sx)*egg.p,y=p.sy+(p.ey-p.sy)*egg.p;ctx.save();ctx.translate(x,y);ctx.rotate(egg.spin*egg.p);ctx.fillStyle='#fff5d9';ctx.beginPath();ctx.ellipse(0,0,Math.max(7,unit*.025),Math.max(10,unit*.035),0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#dfc5a0';ctx.lineWidth=2;ctx.stroke();ctx.restore()}
 for(const e of effects){const p=lanePoints(e.lane),x=p.ex,y=p.ey;ctx.save();ctx.globalAlpha=Math.min(1,e.life/280);if(e.kind==='break'){ctx.fillStyle='#ffe9b7';ctx.beginPath();ctx.ellipse(x,y+unit*.06,unit*.065,unit*.019,0,0,Math.PI*2);ctx.fill();ctx.font=Math.max(18,unit*.07)+'px serif';ctx.textAlign='center';ctx.fillText('💥',x,y)}else{ctx.fillStyle='#ffe07b';ctx.font='bold '+Math.max(14,unit*.052)+'px system-ui';ctx.textAlign='center';ctx.fillText('+10 ✨',x,y-unit*.055-(550-e.life)*.05)}ctx.restore()}
 roundRect(width*.02,height*.025,width*.16,Math.max(20,height*.06),8,'#061a2b99');ctx.font=Math.max(10,Math.min(width,height)*.035)+'px system-ui';ctx.fillStyle='#bde9f6';ctx.textAlign='center';ctx.fillText('GENESIS',width*.10,height*.055)}
