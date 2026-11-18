@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 
@@ -13,14 +15,26 @@ class GenesisGlobalRanking extends StatefulWidget {
 
 class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
   late Future<List<_PlayerTotal>> future;
+  StreamSubscription<AuthState>? authSubscription;
 
   @override
   void initState() {
     super.initState();
     future = _load();
+    if (AgcBackend.configured) {
+      authSubscription = AgcBackend.client.auth.onAuthStateChange.listen((_) {
+        if (mounted) _refresh();
+      });
+    }
   }
 
   void _refresh() => setState(() => future = _load());
+
+  @override
+  void dispose() {
+    authSubscription?.cancel();
+    super.dispose();
+  }
 
   Future<List<_PlayerTotal>> _load() async {
     if (!AgcBackend.configured) {
@@ -89,6 +103,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
   String _gameName(String key) => switch (key) {
     'signal' => 'GENESIS SIGNAL',
     'defender' => 'GENESIS DEFENDER',
+    'wolf' => 'WILK I JAJKA',
     _ => key.replaceAll('_', ' ').toUpperCase(),
   };
 
@@ -158,6 +173,10 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
               'Sum of personal best scores across all games. '
               'Tap a player to see their game-by-game scores.'),
               textAlign: TextAlign.center),
+            if (AgcBackend.user == null)
+              Padding(padding: const EdgeInsets.only(top: 10), child: Text(
+                GenesisLanguage.copy('⚠ Tryb gościa: możesz oglądać ranking, ale Twoje punkty nie są zapisywane. Zaloguj się w KONTO przed grą.', '⚠ Guest mode: you can view rankings, but your scores are not saved. Sign in before playing.'),
+                textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFFFC777), fontSize: 12))),
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
@@ -181,6 +200,8 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
                     'Nie udało się pobrać rankingu. Sprawdź połączenie i spróbuj ponownie.',
                     'Could not load leaderboard. Check connection and retry.'),
                     textAlign: TextAlign.center),
+                  const SizedBox(height: 8),
+                  SelectableText('${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Color(0xFFFFC777))),
                   const SizedBox(height: 12),
                   FilledButton.icon(onPressed: _refresh,
                     icon: const Icon(Icons.refresh),
@@ -191,8 +212,8 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
             final players = snapshot.data ?? [];
             if (players.isEmpty) {
               return Center(child: Text(GenesisLanguage.copy(
-                'Brak zapisanych wyników. Zagraj i zdobądź pierwsze punkty!',
-                'No scores yet. Play a game to get on the leaderboard!'),
+                'Brak wyników widocznych w bazie. Jeśli zdobyto już punkty, sprawdź logowanie, zapis wyników i uprawnienia Supabase.',
+                'No scores are visible in the database. If scores were earned, check sign-in, score submission and Supabase permissions.'),
                 textAlign: TextAlign.center));
             }
             return ListView.builder(
