@@ -29,6 +29,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   Timer? scoreRetryTimer;
   StreamSubscription<AuthState>? authChanges;
   bool rulesOpen = false;
+  OverlayEntry? wolfFullscreenOverlay;
+
   static const scoreStoragePrefix = 'agc-game-pending-';
   static const buildVersion = String.fromEnvironment(
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
@@ -94,6 +96,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   void dispose() {
+    wolfFullscreenOverlay?.remove();
+    wolfFullscreenOverlay?.dispose();
+    wolfFullscreenOverlay = null;
     messages?.cancel();
     authChanges?.cancel();
     scoreRetryTimer?.cancel();
@@ -132,6 +137,37 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
+  void _showWolfFullscreen() {
+    if (!mounted || wolfFullscreenOverlay != null) return;
+    final overlay = Overlay.of(context, rootOverlay: true);
+    wolfFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
+      child: Material(
+        color: const Color(0xFF061B2A),
+        child: SafeArea(
+          top: false, bottom: false,
+          child: Stack(children: [
+            const Positioned.fill(child: HtmlElementView(viewType: wolfView)),
+            Positioned(
+              right: 8, top: MediaQuery.of(context).padding.top + 8,
+              child: IconButton.filled(
+                onPressed: _hideWolfFullscreen,
+                tooltip: 'Zamknij grę',
+                icon: const Icon(Icons.close),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    ));
+    overlay.insert(wolfFullscreenOverlay!);
+  }
+
+  void _hideWolfFullscreen() {
+    wolfFullscreenOverlay?.remove();
+    wolfFullscreenOverlay?.dispose();
+    wolfFullscreenOverlay = null;
+  }
+
   Future<void> _onMessage(html.MessageEvent event) async {
     if (!mounted ||
         event.origin != html.window.location.origin ||
@@ -144,6 +180,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     try {
       decoded = jsonDecode(event.data as String);
     } catch (_) {
+      return;
+    }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-fullscreen') {
+      _showWolfFullscreen();
+      return;
+    }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-exit-fullscreen') {
+      _hideWolfFullscreen();
       return;
     }
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-auth-request') {
