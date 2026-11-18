@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18b</title>
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18c</title>
 <style>
 :root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
@@ -53,9 +53,26 @@ try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best
 const rand=(a,b)=>a+Math.random()*(b-a);
 const artwork={};
 for(const name of ['farm-scene','wolf-left-up','wolf-right-up','wolf-left-down','wolf-right-down']){
- const im=new Image();im.src='wolfart/'+name+'.png?v=20261118b';im.onload=render;artwork[name]=im;
+ const im=new Image();im.src='wolfart/'+name+'.png?v=20261118b';im.onload=()=>{if(name!=='farm-scene')repairSpriteAlpha(name,im);render()};artwork[name]=im;
 }
 function imageReady(im){return im&&im.complete&&im.naturalWidth>0}
+const repairedSprites={};
+function repairSpriteAlpha(name,im){
+ try{
+ const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;
+ const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0);
+ const image=x.getImageData(0,0,c.width,c.height),d=image.data;
+ // Preserve transparent exterior and antialiased edges, restore opaque painted interiors.
+ for(let i=0;i<d.length;i+=4){const a=d[i+3];if(a<12)d[i+3]=0;else if(a>=90)d[i+3]=255;else d[i+3]=Math.round((a-12)/78*255)}
+ x.putImageData(image,0,0);repairedSprites[name]=c;
+ }catch(e){console.warn('Could not normalize sprite opacity',e)}
+}
+function farmGeometry(){
+ const im=artwork['farm-scene'];if(!imageReady(im))return {x:0,y:0,w:width,h:height};
+ const scale=Math.min(width/im.width,height/im.height),w=im.width*scale,h=im.height*scale;
+ return {x:(width-w)/2,y:(height-h)/2,w,h};
+}
+
 function resize(){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);width=Math.max(1,rect.width);height=Math.max(1,rect.height);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);render()}
 if(window.ResizeObserver)new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);
 function stats(){level=1+Math.floor(points/100);el('score').textContent=points;el('lives').textContent='❤️'.repeat(Math.max(0,3-misses));el('level').textContent=level}
@@ -85,7 +102,12 @@ function setGameFullscreen(on){
 el('fullscreen').addEventListener('click',async()=>{setGameFullscreen(true);try{if(window.parent===window && el('app').requestFullscreen)await el('app').requestFullscreen()}catch(_){/* CSS immersive fallback */}});
 el('exit-fullscreen').addEventListener('click',async()=>{reportScore();setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen()}catch(_){}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)reportScore()});window.addEventListener('pagehide',reportScore);document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&window.parent===window&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)});
-function lanePoints(n){const left=n%2===0,top=n<2;return {sx:left?width*.26:width*.74,sy:top?height*.33:height*.72,ex:left?width*.39:width*.61,ey:top?height*.44:height*.61}}
+function lanePoints(n){
+ const g=farmGeometry(),left=n%2===0,top=n<2;
+ // Egg paths are calibrated to the four actual wooden ramps in farm-scene.png.
+ return {sx:g.x+g.w*(left?.205:.795),sy:g.y+g.h*(top?.395:.865),
+         ex:g.x+g.w*(left?.305:.695),ey:g.y+g.h*(top?.515:.795)};
+}
 let lastReportedScore=0;
 function reportScore(){if(points<=0||points<=lastReportedScore)return;lastReportedScore=points;try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(e){}}
 function end(){reportScore();playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
@@ -106,18 +128,18 @@ el('music').addEventListener('click',()=>{ensureAudio();musicOn=!musicOn;nextNot
 function roundRect(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);ctx.fill()}
 function render(){if(!width||!height)return;ctx.clearRect(0,0,width,height);
 const g=ctx.createLinearGradient(0,0,width,height);g.addColorStop(0,'#12394e');g.addColorStop(.5,'#0b2339');g.addColorStop(1,'#133a4e');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);
-if(imageReady(artwork['farm-scene'])){const im=artwork['farm-scene'];const scale=Math.min(width/im.width,height/im.height),dw=im.width*scale,dh=im.height*scale;ctx.drawImage(im,(width-dw)/2,(height-dh)/2,dw,dh)}
+if(imageReady(artwork['farm-scene'])){const im=artwork['farm-scene'];const g=farmGeometry();ctx.drawImage(im,g.x,g.y,g.w,g.h)}
 ctx.strokeStyle='#ffffff00';ctx.lineWidth=1;for(let x=0;x<width;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke()}for(let y=0;y<height;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke()}
 // The raster farm illustration already contains all four coops and ramps.
 // Do not draw duplicate vector coops, rails, hens, or fences.
 // Animated wolf: body, moving head and arms reach toward selected basket.
-const cx=width*.5,cy=height*.53,unit=Math.min(width,height),bounce=Math.sin(jump*Math.PI)*unit*.055;
+const cx=width*.5,cy=height*.55,unit=Math.min(width,height),bounce=Math.sin(jump*Math.PI)*unit*.055;
 const p=lanePoints(active),dx=p.ex-cx,dy=p.ey-cy,dist=Math.hypot(dx,dy)||1;
 const handX=cx+dx*.77,handY=cy+dy*.77-bounce;
 const wolfArt=artwork[['wolf-left-up','wolf-right-up','wolf-left-down','wolf-right-down'][active]];
 if(imageReady(wolfArt)){
- const sprite=wolfArt;
- const spriteSize=Math.min(width*.29,height*.70),spriteHeight=spriteSize*(sprite.naturalHeight/sprite.naturalWidth);
+ const sprite=repairedSprites[['wolf-left-up','wolf-right-up','wolf-left-down','wolf-right-down'][active]]||wolfArt;
+ const spriteSize=Math.min(width*.255,height*.66),spriteHeight=spriteSize*(sprite.height/sprite.width);
  ctx.drawImage(sprite,cx-spriteSize/2,cy-spriteHeight*.50-bounce,spriteSize,spriteHeight);
 }
 for(const egg of eggs){const p=lanePoints(egg.lane),x=p.sx+(p.ex-p.sx)*egg.p,y=p.sy+(p.ey-p.sy)*egg.p;ctx.save();ctx.translate(x,y);ctx.rotate(egg.spin*egg.p);ctx.fillStyle='#fff5d9';ctx.beginPath();ctx.ellipse(0,0,Math.max(7,unit*.025),Math.max(10,unit*.035),0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#dfc5a0';ctx.lineWidth=2;ctx.stroke();ctx.restore()}
