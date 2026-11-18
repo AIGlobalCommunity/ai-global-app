@@ -205,6 +205,13 @@ canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getB
 document.addEventListener('keydown',e=>{const keys={q:0,Q:0,e:1,E:1,a:2,A:2,d:3,D:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
 function start(){wolfX=.5;wolfY=.56;wolfFromX=.5;wolfFromY=.56;wolfToX=.5;wolfToY=.56;wolfMotion=1;cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
 el('play').addEventListener('click',()=>{
+ if(window.parent!==window && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
+   try{
+     sessionStorage.setItem('genesis-wolf-auto-start','1');
+     window.parent.postMessage(JSON.stringify({type:'genesis-wolf-fullscreen'}),location.origin);
+     return;
+   }catch(_){}
+ }
  setGameFullscreen(true);
  start();
  // Fullscreen must be requested synchronously from the user's click.
@@ -241,7 +248,7 @@ el('open-ranking').addEventListener('click',async()=>{
  try{if(document.fullscreenElement)await document.exitFullscreen();else if(window.parent!==window&&window.parent.document.fullscreenElement)await window.parent.document.exitFullscreen()}catch(_){}
  try{window.parent.postMessage(JSON.stringify({type:'genesis-open-ranking',game:'wolf'}),location.origin)}catch(_){}
 });
-el('exit-fullscreen').addEventListener('click',async()=>{reportScore();setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen();else if(window.parent!==window&&window.parent.document.fullscreenElement)await window.parent.document.exitFullscreen()}catch(_){}});
+el('exit-fullscreen').addEventListener('click',async()=>{reportScore();try{window.parent.postMessage(JSON.stringify({type:'genesis-wolf-exit-fullscreen'}),location.origin)}catch(_){}setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen();else if(window.parent!==window&&window.parent.document.fullscreenElement)await window.parent.document.exitFullscreen()}catch(_){}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)reportScore()});window.addEventListener('pagehide',reportScore);document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&window.parent===window&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)});
 try{if(window.parent!==window&&window.parent.location.origin===location.origin)window.parent.document.addEventListener('fullscreenchange',()=>{if(!window.parent.document.fullscreenElement&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)})}catch(_){}
 function moveWolf(dt){
@@ -301,5 +308,12 @@ function render(){if(!width||!height)return;ctx.clearRect(0,0,width,height);
  ctx.font='800 '+Math.max(10,u*.032)+'px system-ui';ctx.fillStyle='#c7eafa';ctx.textAlign='left';ctx.fillText('GENESIS',width*.04,height*.025+Math.max(16,u*.04));
 }
 resize();
+try{
+ if(sessionStorage.getItem('genesis-wolf-auto-start')==='1'){
+   sessionStorage.removeItem('genesis-wolf-auto-start');
+   setGameFullscreen(true);
+   start();
+ }
+}catch(_){}
 })();
 </script></body></html>
