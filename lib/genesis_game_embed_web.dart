@@ -273,6 +273,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       }
       html.window.localStorage['agc-game-owner-$key'] = AgcBackend.user!.id;
     } catch (_) {}
+    _notifyGameScoreStatus(key, 'pending', points);
     if (!saving) {
       await _savePendingScores();
     }
@@ -332,6 +333,22 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     } catch (_) {}
   }
 
+  void _notifyGameScoreStatus(String key, String state, int points, [String detail = '']) {
+    final view = key == 'wolf' ? wolfView : key == 'blocks' ? blocksView
+      : key == 'signal' ? signalView : defenderView;
+    final frame = frames[view];
+    if (frame == null) return;
+    try {
+      frame.contentWindow?.postMessage(jsonEncode({
+        'type': 'genesis-score-status',
+        'game': key,
+        'state': state,
+        'score': points,
+        'detail': detail,
+      }), html.window.location.origin);
+    } catch (_) {}
+  }
+
   Future<void> _savePendingScores() async {
     if (saving || !mounted || pendingScores.isEmpty ||
         AgcBackend.user == null) {
@@ -374,6 +391,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           }
           if (confirmed) {
             _clearConfirmedScore(key, points);
+            _notifyGameScoreStatus(key, 'saved', points);
             lastSaveStatus = 'POTWIERDZONE: $key · $points pkt';
             setState(() {
               scoreNotice = GenesisLanguage.copy(
@@ -387,12 +405,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             final newer = pendingScores[key];
             if (newer == null || newer.$1 < points) pendingScores[key] = pending;
             lastSaveStatus = 'OCZEKUJE: $key · $points pkt';
+            _notifyGameScoreStatus(key, 'pending', points);
             setState(() => scoreNotice = GenesisLanguage.copy(
               'Wynik oczekuje na zapis. Ponowię automatycznie.',
               'Score pending. I will retry automatically.'));
           }
         } on PostgrestException catch (error) {
           lastSaveStatus = 'BŁĄD BAZY: ${error.message}';
+          _notifyGameScoreStatus(key, 'error', points, error.message);
           final newer = pendingScores[key];
           if (newer == null || newer.$1 < points) {
             pendingScores[key] = pending;
@@ -403,6 +423,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             'Save error: ${error.message}. Retrying automatically.'));
         } catch (error) {
           lastSaveStatus = 'BŁĄD POŁĄCZENIA: $error';
+          _notifyGameScoreStatus(key, 'error', points, '$error');
           pendingScores[key] = pending;
           if (!mounted) return;
           setState(() => scoreNotice = GenesisLanguage.copy(
