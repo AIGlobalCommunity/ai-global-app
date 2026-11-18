@@ -53,7 +53,7 @@ try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best
 const rand=(a,b)=>a+Math.random()*(b-a);
 const artwork={};
 for(const name of ['farm-scene','wolf-left-up','wolf-right-up','wolf-left-down','wolf-right-down']){
- const im=new Image();im.src='wolf-art/'+name+(name==='farm-scene'?'.jpg':'.png');im.onload=render;artwork[name]=im;
+ const im=new Image();im.src='wolfart/'+name+(name==='farm-scene'?'.jpg':'.png');im.onload=render;artwork[name]=im;
 }
 function imageReady(im){return im&&im.complete&&im.naturalWidth>0}
 
