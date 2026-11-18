@@ -87,7 +87,7 @@ function choose(n){if(active!==n){jump=1;beep(330,.06,'triangle',.025)}active=n;
 document.querySelectorAll('[data-lane]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();choose(Number(b.dataset.lane))})});
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;choose((y>=.5?2:0)+(x>=.5?1:0))});
 document.addEventListener('keydown',e=>{const keys={q:0,Q:0,e:1,E:1,a:2,A:2,d:3,D:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
-function start(){cancelAnimationFrame(raf);points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
+function start(){cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
 el('play').addEventListener('click',()=>{start();if(navigator.maxTouchPoints>0)setGameFullscreen(true)});el('restart').addEventListener('click',start);
 let embeddedFrame=null,frameStyle=null;
 function setGameFullscreen(on){
@@ -107,10 +107,12 @@ function setGameFullscreen(on){
  requestAnimationFrame(resize);
 }
 el('fullscreen').addEventListener('click',async()=>{setGameFullscreen(true);try{if(window.parent===window && el('app').requestFullscreen)await el('app').requestFullscreen()}catch(_){/* CSS immersive fallback */}});
-el('exit-fullscreen').addEventListener('click',async()=>{setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen()}catch(_){}});
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&window.parent===window&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)});
+el('exit-fullscreen').addEventListener('click',async()=>{reportScore();setGameFullscreen(false);try{if(document.fullscreenElement)await document.exitFullscreen()}catch(_){}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)reportScore()});window.addEventListener('pagehide',reportScore);document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&window.parent===window&&document.body.classList.contains('game-fullscreen'))setGameFullscreen(false)});
 function lanePoints(n){const left=n%2===0,top=n<2;return {sx:left?width*.26:width*.74,sy:top?height*.33:height*.72,ex:left?width*.39:width*.61,ey:top?height*.44:height*.61}}
-function end(){playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
+let lastReportedScore=0;
+function reportScore(){if(points<=0||points<=lastReportedScore)return;lastReportedScore=points;try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(e){}}
+function end(){reportScore();playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
 if(points>0){try{localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}))}catch(_){}
 try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(_){}}
 
@@ -119,7 +121,7 @@ function tick(t){if(!playing)return;if(!last)last=t;const dt=Math.min(t-last,50)
 const interval=Math.max(370,1250-level*75);if(elapsed>=interval){elapsed-=interval;eggs.push({lane:Math.floor(Math.random()*4),p:0,spin:rand(-.4,.4)})}
 clock+=dt;jump=Math.max(0,jump-dt/210);effects=effects.filter(e=>(e.life-=dt)>0);if(musicOn)musicTick(t);const speed=(.00017+level*.000022)*dt;
 for(const egg of eggs)egg.p+=speed;
-const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active){points+=10;jump=1;beep(620,.09,'sine',.055);effects.push({lane:egg.lane,kind:'catch',life:550})}else{misses++;beep(170,.21,'sawtooth',.06);effects.push({lane:egg.lane,kind:'break',life:850})}stats()}else remaining.push(egg)}eggs=remaining;render();if(misses>=3){end();return}raf=requestAnimationFrame(tick)}
+const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active){points+=10;jump=1;beep(620,.09,'sine',.055);effects.push({lane:egg.lane,kind:'catch',life:550})}else{misses++;beep(170,.21,'sawtooth',.06);effects.push({lane:egg.lane,kind:'break',life:850})}stats();if(points>=lastReportedScore+50)reportScore()}else remaining.push(egg)}eggs=remaining;render();if(misses>=3){end();return}raf=requestAnimationFrame(tick)}
 function ensureAudio(){try{if(!audio){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audio=new AC()}if(audio&&audio.state==='suspended')audio.resume()}catch(_){}}
 function beep(freq,duration,type,volume){if(!audio||audio.state!=='running')return;try{const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+duration+.01)}catch(_){}}
 const melody=[392,523,587,523,440,523,659,523,392,494,587,494,349,440,523,440];
