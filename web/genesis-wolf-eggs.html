@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18d</title>
+<meta name="theme-color" content="#071323"><title>WILK I JAJKA | GENESIS ARCADE v2026.11.18e</title>
 <style>
 :root{color-scheme:dark;--gold:#ffd17a;--blue:#48d7f5}*{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#060f1d;color:#f4f7ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:manipulation}
@@ -23,7 +23,8 @@ canvas{width:100%;height:100%;display:block;touch-action:none}
 .control{min-height:clamp(45px,9vh,72px);font-size:clamp(12px,2vw,18px);background:linear-gradient(#1b4a65,#0c263e);border-color:#4f98b5}
 .control.active{background:linear-gradient(#ffe29a,#e7a448);color:#142b3d;border-color:#ffe9b8}
 #help{font-size:10px;color:#a9c1d0;text-align:center;flex-shrink:0}
-@media(pointer:coarse){#controls{display:none!important}#help{display:none!important}#arena{flex:1 1 auto}}\n@media(max-width:650px){#app{gap:4px}.small{font-size:11px;padding:5px 7px;min-height:32px}.control{font-size:12px;min-height:52px}.brand{font-size:13px}#help{display:none}.panel{padding:15px}}
+@media(pointer:coarse){#controls{display:none!important}#help{display:none!important}#arena{flex:1 1 auto}}
+@media(max-width:650px){#app{gap:4px}.small{font-size:11px;padding:5px 7px;min-height:32px}.control{font-size:12px;min-height:52px}.brand{font-size:13px}#help{display:none}.panel{padding:15px}}
 @media(orientation:landscape) and (max-height:500px){.stats{position:absolute;top:4px;left:50%;transform:translateX(-50%);width:min(55%,400px);z-index:2;pointer-events:none}.stat{padding:1px}.stat strong{font-size:14px}#arena{flex:1}#controls{width:min(100%,800px)}.control{min-height:36px}.brand{font-size:12px}header{min-height:30px}}
 body.game-fullscreen header,body.game-fullscreen #help,body.game-fullscreen #controls{display:none!important}
 body.game-fullscreen #app{padding:0;gap:0;background:#061b2a;height:100dvh}
@@ -48,6 +49,7 @@ const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
 const device=()=>{const w=Math.min(screen.width,screen.height),touch=navigator.maxTouchPoints>0;return !touch?'KOMPUTER':w<600?'TELEFON':w<1050?'TABLET':'KOMPUTER DOTYKOWY'};
 document.getElementById('device').textContent=device();
 const el=id=>document.getElementById(id),overlay=el('overlay');
+let wolfX=.5,wolfY=.56,wolfFromX=.5,wolfFromY=.56,wolfToX=.5,wolfToY=.56,wolfMotion=1;
 let width=800,height=480,active=0,playing=false,points=0,misses=0,level=1,eggs=[],effects=[],last=0,elapsed=0,raf=0,best=0,jump=0,clock=0,musicOn=false,audio=null,nextNote=0,noteIndex=0;
 try{best=Number(localStorage.getItem('genesis-wolf-best')||0)}catch(_){}el('best').textContent=best;
 const rand=(a,b)=>a+Math.random()*(b-a);
@@ -62,14 +64,14 @@ function farmGeometry(){
  return {x:(width-w)/2,y:(height-h)/2,w,h};
 }
 
-function resize(){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);width=Math.max(1,rect.width);height=Math.max(1,rect.height);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);render()}
+function resize(){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);width=Math.max(1,rect.width);height=Math.max(1,rect.height);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);if(wolfMotion>=1){const t=wolfTarget(active);wolfX=t.x;wolfY=t.y;wolfToX=t.x;wolfToY=t.y}render()}
 if(window.ResizeObserver)new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);
 function stats(){level=1+Math.floor(points/100);el('score').textContent=points;el('lives').textContent='❤️'.repeat(Math.max(0,3-misses));el('level').textContent=level}
-function choose(n){if(active!==n){jump=1;beep(330,.06,'triangle',.025)}active=n;document.querySelectorAll('[data-lane]').forEach((b,i)=>b.classList.toggle('active',i===n));render()}
+function choose(n){if(active!==n){setWolfLane(n);beep(330,.06,'triangle',.025)}document.querySelectorAll('[data-lane]').forEach((b,i)=>b.classList.toggle('active',i===n));render()}
 document.querySelectorAll('[data-lane]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();choose(Number(b.dataset.lane))})});
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;choose((y>=.5?2:0)+(x>=.5?1:0))});
 document.addEventListener('keydown',e=>{const keys={q:0,Q:0,e:1,E:1,a:2,A:2,d:3,D:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
-function start(){cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
+function start(){wolfX=.5;wolfY=.56;wolfFromX=.5;wolfFromY=.56;wolfToX=.5;wolfToY=.56;wolfMotion=1;cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
 el('play').addEventListener('click',()=>{start();if(navigator.maxTouchPoints>0)setGameFullscreen(true)});el('restart').addEventListener('click',start);
 let embeddedFrame=null,frameStyle=null;
 function setGameFullscreen(on){
@@ -97,6 +99,22 @@ function lanePoints(n){
  return {sx:g.x+g.w*(left?.205:.795),sy:g.y+g.h*(top?.385:.84),
          ex:g.x+g.w*(left?.305:.695),ey:g.y+g.h*(top?.49:.77)};
 }
+function wolfTarget(n){
+ const g=farmGeometry(),left=n%2===0,top=n<2;
+ return {x:(g.x+g.w*(left?.405:.595))/width,y:(g.y+g.h*(top?.59:.71))/height};
+}
+function moveWolf(dt){
+ if(wolfMotion>=1)return;
+ wolfMotion=Math.min(1,wolfMotion+dt/260);
+ const t=1-Math.pow(1-wolfMotion,3);
+ wolfX=wolfFromX+(wolfToX-wolfFromX)*t;
+ wolfY=wolfFromY+(wolfToY-wolfFromY)*t;
+}
+function setWolfLane(n){
+ active=n;wolfFromX=wolfX;wolfFromY=wolfY;
+ const target=wolfTarget(n);wolfToX=target.x;wolfToY=target.y;
+ wolfMotion=0;jump=1;
+}
 let lastReportedScore=0;
 function reportScore(){if(points<=0||points<=lastReportedScore)return;lastReportedScore=points;try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(e){}}
 function end(){reportScore();playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
@@ -106,9 +124,9 @@ try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wo
 el('heading').textContent='KONIEC GRY';el('message').textContent='Zdobyte punkty: '+points+' · Rekord: '+best+'. Spróbuj jeszcze raz!';el('play').textContent='↻ ZAGRAJ PONOWNIE';overlay.classList.remove('hidden')}
 function tick(t){if(!playing)return;if(!last)last=t;const dt=Math.min(t-last,50);last=t;elapsed+=dt;
 const interval=Math.max(370,1250-level*75);if(elapsed>=interval){elapsed-=interval;eggs.push({lane:Math.floor(Math.random()*4),p:0,spin:rand(-.4,.4)})}
-clock+=dt;jump=Math.max(0,jump-dt/210);effects=effects.filter(e=>(e.life-=dt)>0);if(musicOn)musicTick(t);const speed=(.00017+level*.000022)*dt;
+clock+=dt;moveWolf(dt);jump=Math.max(0,jump-dt/260);effects=effects.filter(e=>(e.life-=dt)>0);if(musicOn)musicTick(t);const speed=(.00017+level*.000022)*dt;
 for(const egg of eggs)egg.p+=speed;
-const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active){points+=10;jump=1;beep(620,.09,'sine',.055);effects.push({lane:egg.lane,kind:'catch',life:550})}else{misses++;beep(170,.21,'sawtooth',.06);effects.push({lane:egg.lane,kind:'break',life:850})}stats();if(points>=lastReportedScore+50)reportScore()}else remaining.push(egg)}eggs=remaining;render();if(misses>=3){end();return}raf=requestAnimationFrame(tick)}
+const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active&&wolfMotion>=.78){points+=10;jump=1;beep(620,.09,'sine',.055);effects.push({lane:egg.lane,kind:'catch',life:550})}else{misses++;beep(170,.21,'sawtooth',.06);effects.push({lane:egg.lane,kind:'break',life:850})}stats();if(points>=lastReportedScore+50)reportScore()}else remaining.push(egg)}eggs=remaining;render();if(misses>=3){end();return}raf=requestAnimationFrame(tick)}
 function ensureAudio(){try{if(!audio){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audio=new AC()}if(audio&&audio.state==='suspended')audio.resume()}catch(_){}}
 function beep(freq,duration,type,volume){if(!audio||audio.state!=='running')return;try{const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+duration+.01)}catch(_){}}
 const melody=[392,523,587,523,440,523,659,523,392,494,587,494,349,440,523,440];
@@ -122,13 +140,13 @@ ctx.strokeStyle='#ffffff00';ctx.lineWidth=1;for(let x=0;x<width;x+=32){ctx.begin
 // The raster farm illustration already contains all four coops and ramps.
 // Do not draw duplicate vector coops, rails, hens, or fences.
 // Animated wolf: body, moving head and arms reach toward selected basket.
-const cx=width*.5,cy=height*.56,unit=Math.min(width,height),bounce=Math.sin(jump*Math.PI)*unit*.055;
+const cx=width*wolfX,cy=height*wolfY,unit=Math.min(width,height),bounce=Math.sin(jump*Math.PI)*unit*.085;
 const p=lanePoints(active),dx=p.ex-cx,dy=p.ey-cy,dist=Math.hypot(dx,dy)||1;
 const handX=cx+dx*.77,handY=cy+dy*.77-bounce;
 const wolfArt=artwork[['wolf-left-up','wolf-right-up','wolf-left-down','wolf-right-down'][active]];
 if(imageReady(wolfArt)){
  const sprite=wolfArt;
- const spriteSize=Math.min(width*.22,height*.61),spriteHeight=spriteSize*(sprite.height/sprite.width);
+ const spriteSize=Math.min(farmGeometry().w*.235,farmGeometry().h*.66),spriteHeight=spriteSize*(sprite.height/sprite.width);
  ctx.drawImage(sprite,cx-spriteSize/2,cy-spriteHeight*.50-bounce,spriteSize,spriteHeight);
 }
 for(const egg of eggs){const p=lanePoints(egg.lane),x=p.sx+(p.ex-p.sx)*egg.p,y=p.sy+(p.ey-p.sy)*egg.p;ctx.save();ctx.translate(x,y);ctx.rotate(egg.spin*egg.p);ctx.fillStyle='#fff5d9';ctx.beginPath();ctx.ellipse(0,0,Math.max(7,unit*.025),Math.max(10,unit*.035),0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#dfc5a0';ctx.lineWidth=2;ctx.stroke();ctx.restore()}
