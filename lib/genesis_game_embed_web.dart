@@ -294,8 +294,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         }
       } catch (_) {}
       setState(() => scoreNotice = GenesisLanguage.copy(
-        'Wynik zachowany na urządzeniu. Zaloguj się w KONTO, aby przesłać go do rankingu.',
-        'Score kept on device. Sign in under ACCOUNT to submit it.'));
+        'Wynik zachowany. Tworzę automatyczny nick gościa do rankingu…',
+        'Score saved. Creating an automatic guest nickname…'));
+      await _ensureGuestIdentity();
       return;
     }
     final key = decoded['game'] as String;
@@ -394,6 +395,36 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         'detail': detail,
       }), html.window.location.origin);
     } catch (_) {}
+  }
+
+  bool guestSignInRunning = false;
+
+  Future<void> _ensureGuestIdentity() async {
+    if (!mounted || !AgcBackend.configured || AgcBackend.user != null ||
+        guestSignInRunning) return;
+    guestSignInRunning = true;
+    try {
+      final suffix = DateTime.now().microsecondsSinceEpoch
+          .remainder(1000000).toString().padLeft(6, '0');
+      final nick = 'Genesis_$suffix';
+      await AgcBackend.client.auth.signInAnonymously(data: {
+        'handle': nick,
+        'show_nick_publicly': true,
+        'game_guest': true,
+      });
+      if (mounted) {
+        _recoverPendingScores();
+        setState(() => scoreNotice = 'Grasz jako $nick · zapisuję wynik online.');
+      }
+    } on AuthException catch (error) {
+      if (mounted) setState(() => scoreNotice =
+        'Ranking gości niedostępny: ${error.message}. Wynik zapisany lokalnie.');
+    } catch (error) {
+      if (mounted) setState(() => scoreNotice =
+        'Nie udało się utworzyć profilu gościa. Wynik zapisany lokalnie.');
+    } finally {
+      guestSignInRunning = false;
+    }
   }
 
   Future<void> _savePendingScores() async {
@@ -518,7 +549,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     } catch (_) {}
     return rows.map((r) => {
       ...r,
-      'handle': handles[r['member_id']] ?? 'Gracz Genesis',
+      'handle': handles[r['member_id']] ?? 'Genesis_${r['member_id'].toString().substring(0, 6)}',
     }).toList();
   }
 
