@@ -685,18 +685,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     // Scores remain visible even if public nickname lookup is unavailable.
     final handles = <String, String>{};
     try {
-      final members = await AgcBackend.client
-        .from('agc_public_scores')
-        .select('id,handle')
-        .inFilter('id', ids);
+      final members = await AgcBackend.client.rpc(
+        'agc_game_ranking_names', params: {'p_ids': ids});
       for (final member in members) {
         handles[member['id'] as String] =
-          member['handle'] as String? ?? 'Genesis';
+          member['display_handle'] as String? ?? 'Gracz anonimowy';
       }
     } catch (_) {}
     return rows.map((r) => {
       ...r,
-      'handle': handles[r['member_id']] ?? 'Genesis_${r['member_id'].toString().substring(0, 6)}',
+      'handle': handles[r['member_id']] ?? 'Gracz anonimowy',
     }).toList();
   }
 
