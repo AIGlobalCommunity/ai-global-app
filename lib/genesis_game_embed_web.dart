@@ -1064,7 +1064,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         const SizedBox(height: 14),
         Row(children: [
           Expanded(child: FilledButton.icon(
-            onPressed: () => setState(() { game = 2; scoreNotice = null; }),
+            onPressed: () {
+              setState(() { game = 2; scoreNotice = null; });
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _showWolfFullscreen();
+              });
+            },
             icon: const Icon(Icons.play_arrow),
             label: Text(GenesisLanguage.copy('ZAGRAJ', 'PLAY')))),
           const SizedBox(width: 10),
