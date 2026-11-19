@@ -1710,7 +1710,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
-                if (categoryFilter == 'all' || categories[i].contains(categoryFilter))) i,
+                if (categoryFilter == 'all' || categories[i].contains(categoryFilter)) i,
             ]..sort(_compareRatings);
             final visible = [
               for (final i in indices)
