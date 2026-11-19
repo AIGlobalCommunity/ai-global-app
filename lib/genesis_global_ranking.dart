@@ -88,7 +88,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
         id: entry.key,
         handle: (handles[entry.key]?.trim().isNotEmpty ?? false)
             ? handles[entry.key]!
-            : 'Gracz ${entry.key.substring(0, entry.key.length < 6 ? entry.key.length : 6)}',
+            : 'Genesis_${entry.key.substring(0, entry.key.length < 6 ? entry.key.length : 6)}',
         scores: scores,
         total: scores.values.fold<int>(0, (sum, score) => sum + score),
       );
