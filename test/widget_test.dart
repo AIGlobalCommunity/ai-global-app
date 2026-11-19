@@ -198,14 +198,8 @@ void main() {
       )));
       expect(find.text('UTWÓRZ KONTO GENESIS'), findsOneWidget);
       expect(find.byKey(const Key('signup_nick')), findsOneWidget);
-      expect(find.byKey(const Key('signup_show_nick_publicly')), findsOneWidget);
-      final checkbox = tester.widget<CheckboxListTile>(
-        find.byKey(const Key('signup_show_nick_publicly')));
-      expect(checkbox.value, isTrue);
-      await tester.tap(find.byKey(const Key('signup_show_nick_publicly')));
-      await tester.pump();
-      expect(tester.widget<CheckboxListTile>(
-        find.byKey(const Key('signup_show_nick_publicly'))).value, isFalse);
+      // Nicknames are always shown; the visibility checkbox was removed.
+      expect(find.byKey(const Key('signup_show_nick_publicly')), findsNothing);
       await tester.scrollUntilVisible(
         find.byKey(const Key('signup_email_verification_info')),
         150,
