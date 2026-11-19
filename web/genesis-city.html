@@ -98,7 +98,7 @@ if(onFoot){
  player.s=clamp(player.s,-110,nitro?360:230);
  player.a+=turn*dt*2.25*clamp(Math.abs(player.s)/75,0,1)*(player.s<0?-1:1);
  const nx=clamp(player.x+Math.sin(player.a)*player.s*dt,20,world-20),ny=clamp(player.y-Math.cos(player.a)*player.s*dt,20,world-20);
- if(!roads(nx)&&!roads(ny)){player.s*=-.22;damage+=dt*.5.5}else{player.x=nx;player.y=ny}
+ if(!roads(nx)&&!roads(ny)){player.s*=-.22;damage+=dt*3.5}else{player.x=nx;player.y=ny}
  if(vehicleId===null){carPark.x=player.x;carPark.y=player.y;carPark.a=player.a}
 }
 for(const p of pickups)if(p.active&&Math.hypot(player.x-p.x,player.y-p.y)<30){p.active=false;ammo+=12}
