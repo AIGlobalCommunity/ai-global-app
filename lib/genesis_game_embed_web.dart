@@ -30,6 +30,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   Timer? scoreRetryTimer;
   StreamSubscription<AuthState>? authChanges;
   bool rulesOpen = false;
+  OverlayEntry? defenderFullscreenOverlay;
   OverlayEntry? signalFullscreenOverlay;
   OverlayEntry? wolfFullscreenOverlay;
   OverlayEntry? blocksFullscreenOverlay;
@@ -100,6 +101,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   void dispose() {
+    defenderFullscreenOverlay?.remove();
+    defenderFullscreenOverlay?.dispose();
+    defenderFullscreenOverlay = null;
     signalFullscreenOverlay?.remove();
     signalFullscreenOverlay?.dispose();
     signalFullscreenOverlay = null;
@@ -145,6 +149,34 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         return frame;
       },
     );
+  }
+
+  void _showDefenderFullscreen() {
+    if (!mounted || defenderFullscreenOverlay != null) return;
+    defenderFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
+      child: Material(
+        color: const Color(0xFF030817),
+        child: Stack(children: [
+          const Positioned.fill(child: HtmlElementView(viewType: defenderView)),
+          Positioned(
+            right: 8, top: MediaQuery.of(context).padding.top + 8,
+            child: IconButton.filled(
+              onPressed: _closeDefenderFullscreen,
+              tooltip: 'Zamknij grę',
+              icon: const Icon(Icons.close),
+            ),
+          ),
+        ]),
+      ),
+    ));
+    Overlay.of(context, rootOverlay: true).insert(defenderFullscreenOverlay!);
+  }
+
+  void _closeDefenderFullscreen() {
+    defenderFullscreenOverlay?.remove();
+    defenderFullscreenOverlay?.dispose();
+    defenderFullscreenOverlay = null;
+    if (mounted) setState(() { game = null; scoreNotice = null; });
   }
 
   void _showSignalFullscreen() {
@@ -249,6 +281,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     if (decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-defender-exit-fullscreen' &&
+        decoded['game'] == 'defender') {
+      _closeDefenderFullscreen();
+      return;
+    }
+    if (decoded is Map<String, dynamic> &&
         decoded['type'] == 'genesis-signal-exit-fullscreen' &&
         decoded['game'] == 'signal') {
       _closeSignalFullscreen();
@@ -269,7 +307,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     // The same-origin check above still applies to every score message.
     final fullscreenScore = decoded is Map<String, dynamic> &&
         decoded['type'] == 'genesis-game-score' &&
-        (decoded['game'] == 'wolf' || decoded['game'] == 'blocks' || decoded['game'] == 'signal');
+        (decoded['game'] == 'wolf' || decoded['game'] == 'blocks' || decoded['game'] == 'signal' || decoded['game'] == 'defender');
     if (!isKnownFrame && !fullscreenScore) return;
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-fullscreen') {
       _showWolfFullscreen();
@@ -1050,11 +1088,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         game = index;
         scoreNotice = null;
       });
-      if (signal) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showSignalFullscreen();
-        });
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (signal) { _showSignalFullscreen(); } else { _showDefenderFullscreen(); }
+      });
     }
     return SizedBox(height: 500, child: Container(
       decoration: BoxDecoration(
