@@ -234,8 +234,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     if (decoded is Map<String, dynamic> &&
         decoded['type'] == 'genesis-open-ranking' &&
-        decoded['game'] == 'wolf') {
-      _showRanking(2);
+        (decoded['game'] == 'wolf' || decoded['game'] == 'blocks')) {
+      final selected = decoded['game'] == 'blocks' ? 3 : 2;
+      if (selected == 3) _hideBlocksFullscreen();
+      if (selected == 2) _hideWolfFullscreen();
+      _showRanking(selected);
       return;
     }
     if (decoded is! Map<String, dynamic> ||
@@ -504,6 +507,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   void _showRanking(int selectedGame) {
+    if (selectedGame == 3) _hideBlocksFullscreen();
     _recoverPendingScores();
     setState(() {
       rankingGame = selectedGame;
@@ -1229,7 +1233,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                       const SizedBox(height: 9),
                       const Text('Układaj klocki na planszy 8×8, czyść rzędy i kolumny, zdobywaj punkty!'),
                       const SizedBox(height: 14),
-                      const Align(alignment: Alignment.centerRight, child: Chip(label: Text('▶ ZAGRAJ'))),
+                      Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                        OutlinedButton.icon(
+                          onPressed: () => _showRanking(3),
+                          icon: const Icon(Icons.emoji_events_outlined),
+                          label: const Text('RANKING')),
+                        const SizedBox(width: 8),
+                        const Chip(label: Text('▶ ZAGRAJ')),
+                      ]),
                     ],
                   ),
                 ),
@@ -1322,7 +1333,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ),
           const SizedBox(width: 8),
           Expanded(child: Text(
-            selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : 'WILK I JAJKA',
+            selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : selectedGame == 3 ? 'GENESIS BLOCKS' : 'WILK I JAJKA',
             maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.bold, color: gold, fontSize: 16),
