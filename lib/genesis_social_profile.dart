@@ -5,6 +5,7 @@ import 'agc_registration.dart';
 import 'agc_backend.dart';
 import 'agc_luxury_theme.dart';
 import 'genesis_language.dart';
+import 'genesis_global_ranking.dart';
 import 'genesis_chat.dart';
 import 'genesis_countries.dart';
 
@@ -194,7 +195,7 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       cover.text = row?['cover_url'] as String? ?? '';
       setState(() {
         handle = profile?['handle'] as String? ?? '';
-        nicknamePublic = profile?['show_nick_publicly'] == true;
+        nicknamePublic = profile?['show_nick_publicly'] != false;
         memberNumber = (profile?['member_number'] as num?)?.toInt();
         joined = profile?['created_at'] == null
           ? null : agcRegistrationDate(profile?['created_at']);
@@ -292,6 +293,7 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       if (mounted) {
         setState(() {
           handle = nickname.text.trim();
+          GenesisGlobalRanking.scoreRevision.value++;
           editing = false;
           notice = socialText('Karta Genesis zapisana.', 'Genesis card saved.');
         });
@@ -403,7 +405,9 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
                 },
               ),
             ),
-            SwitchListTile(
+            CheckboxListTile(
+              key: const Key('account_show_nick_in_rankings'),
+              controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero, value: nicknamePublic,
               onChanged: (value) => setState(() => nicknamePublic = value),
               title: Text(socialText(
