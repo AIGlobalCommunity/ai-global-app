@@ -29,6 +29,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const skiView = 'genesis-ski-html5-iframe';
   static const snakeView = 'genesis-snake-html5-iframe';
   static const cityView = 'genesis-city-html5-iframe';
+  static const city3dView = 'genesis-city-3d-html5-iframe';
+  static const cityMultiView = 'genesis-city-multiplayer-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
@@ -41,6 +43,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   OverlayEntry? skiOverlay;
   OverlayEntry? snakeFullscreenOverlay;
   OverlayEntry? cityFullscreenOverlay;
+  String activeCityView = cityView;
 
   static const scoreStoragePrefix = 'agc-game-pending-';
   static const buildVersion = String.fromEnvironment(
@@ -48,7 +51,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
   static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'city'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS CITY'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS CITY 2D'];
   static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, cityView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
@@ -206,7 +209,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
       _register(snakeView, 'genesis-snake.html?embed=1&version=$buildVersion', 'GENESIS SNAKE');
-      _register(cityView, 'genesis-city.html?embed=1&version=$buildVersion', 'GENESIS CITY');
+      _register(cityView, 'genesis-city.html?embed=1&version=$buildVersion', 'GENESIS CITY 2D');
+      _register(city3dView, 'genesis-city-3d.html?embed=1&version=$buildVersion', 'GENESIS CITY 3D');
+      _register(cityMultiView, 'genesis-city-multiplayer.html?embed=1&version=$buildVersion', 'GENESIS CITY Multiplayer');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
@@ -295,10 +300,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     Overlay.of(context, rootOverlay: true).insert(skiOverlay!);
   }
 
-  void _showCityFullscreen() {
+  void _showCityFullscreen([String view = cityView]) {
+    if (!_cityPreviewAllowed) return;
+    activeCityView = view;
     if (!mounted || cityFullscreenOverlay != null) return;
     cityFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
-      child: HtmlElementView(viewType: cityView),
+      child: HtmlElementView(viewType: activeCityView),
     ));
     Overlay.of(context, rootOverlay: true).insert(cityFullscreenOverlay!);
   }
@@ -1486,6 +1493,67 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
+  bool get _cityPreviewAllowed =>
+      AgcBackend.user?.email?.trim().toLowerCase() == 'mpiw123@gmail.com';
+
+  Widget _cityPreviewCard(String title, String subtitle, String view,
+      IconData icon, Color accent) => Container(
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(colors: [
+        Color(0xFF0C263D), Color(0xFF081522)]),
+      border: Border.all(color: accent, width: 1.4),
+      borderRadius: BorderRadius.circular(20)),
+    padding: const EdgeInsets.all(18),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Container(height: 142, decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(colors: [
+          accent.withValues(alpha: .36), const Color(0xFF091728)])),
+        child: Icon(icon, size: 76, color: accent)),
+      const SizedBox(height: 14),
+      Text(title, style: const TextStyle(fontWeight: FontWeight.w900,
+        fontSize: 19, color: Colors.white)),
+      const SizedBox(height: 8),
+      Text(subtitle, style: const TextStyle(color: Colors.white70)),
+      const SizedBox(height: 16),
+      FilledButton.icon(
+        onPressed: () => _showCityFullscreen(view),
+        icon: const Icon(Icons.play_arrow_rounded),
+        label: const Text('URUCHOM PROTOTYP')),
+    ]));
+
+  Widget _cityPreviews() {
+    if (!_cityPreviewAllowed) return const SizedBox.shrink();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const SizedBox(height: 24),
+      const Text('🔒 GENESIS CITY · PROTOTYPY PRYWATNE',
+        style: TextStyle(fontWeight: FontWeight.w900,
+          color: Color(0xFFF5C86C), fontSize: 18)),
+      const SizedBox(height: 8),
+      const Text('Widoczne tylko dla konta testowego. Multiplayer to obecnie symulacja botów, bez połączenia między graczami.'),
+      const SizedBox(height: 14),
+      LayoutBuilder(builder: (context, constraints) {
+        final cards = [
+          _cityPreviewCard('GENESIS CITY 2D',
+            'Miasto z góry, samochód, ruch uliczny i misje kurierskie.',
+            cityView, Icons.map_outlined, const Color(0xFF6AD8BD)),
+          _cityPreviewCard('GENESIS CITY 3D',
+            'Perspektywa zza auta, jazda i znaczniki misji. Prototyp pseudo-3D.',
+            city3dView, Icons.view_in_ar_outlined, const Color(0xFFFFC86D)),
+          _cityPreviewCard('GENESIS CITY Multiplayer',
+            'Prototyp wspólnego miasta z botami; sieciowy multiplayer w kolejnym etapie.',
+            cityMultiView, Icons.groups_outlined, const Color(0xFF9CAFFF)),
+        ];
+        if (constraints.maxWidth < 800) return Column(children: [
+          for (final card in cards) Padding(
+            padding: const EdgeInsets.only(bottom: 12), child: card)]);
+        return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          for (final card in cards) Expanded(child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 5), child: card))]);
+      }),
+    ]);
+  }
+
   Widget _gameLibrary() => Center(
     child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1050),
@@ -1512,6 +1580,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             icon: const Icon(Icons.bug_report_outlined, size: 17),
             label: const Text('DIAGNOSTYKA RANKINGU'),
           ),
+          _cityPreviews(),
           const SizedBox(height: 10),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final entry in [
@@ -1557,7 +1626,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
-                if (categoryFilter == 'all' || categories[i].contains(categoryFilter)) i,
+                if (i != 6 && (categoryFilter == 'all' || categories[i].contains(categoryFilter))) i,
             ]..sort(_compareRatings);
             final visible = [
               for (final i in indices)
