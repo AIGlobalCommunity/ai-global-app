@@ -234,15 +234,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _showSnakeFullscreen() {
     if (!mounted || snakeFullscreenOverlay != null) return;
-    snakeFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
-      child: Material(color: const Color(0xFF07140D), child: Stack(children: [
-        const Positioned.fill(child: HtmlElementView(viewType: snakeView)),
-        Positioned(right: 8, top: MediaQuery.of(context).padding.top + 8,
-          child: IconButton.filled(
-            onPressed: _closeSnakeFullscreen,
-            tooltip: 'Zamknij Snake',
-            icon: const Icon(Icons.close))),
-      ])),
+    snakeFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+      child: HtmlElementView(viewType: snakeView),
     ));
     Overlay.of(context, rootOverlay: true).insert(snakeFullscreenOverlay!);
   }
@@ -255,21 +248,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _showDefenderFullscreen() {
     if (!mounted || defenderFullscreenOverlay != null) return;
-    defenderFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
-      child: Material(
-        color: const Color(0xFF030817),
-        child: Stack(children: [
-          const Positioned.fill(child: HtmlElementView(viewType: defenderView)),
-          Positioned(
-            right: 8, top: MediaQuery.of(context).padding.top + 8,
-            child: IconButton.filled(
-              onPressed: _closeDefenderFullscreen,
-              tooltip: 'Zamknij grę',
-              icon: const Icon(Icons.close),
-            ),
-          ),
-        ]),
-      ),
+    defenderFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+      child: HtmlElementView(viewType: defenderView),
     ));
     Overlay.of(context, rootOverlay: true).insert(defenderFullscreenOverlay!);
   }
@@ -283,21 +263,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _showSignalFullscreen() {
     if (!mounted || signalFullscreenOverlay != null) return;
-    signalFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
-      child: Material(
-        color: const Color(0xFF030A17),
-        child: Stack(children: [
-          const Positioned.fill(child: HtmlElementView(viewType: signalView)),
-          Positioned(
-            right: 8, top: MediaQuery.of(context).padding.top + 8,
-            child: IconButton.filled(
-              onPressed: _closeSignalFullscreen,
-              tooltip: 'Zamknij grę',
-              icon: const Icon(Icons.close),
-            ),
-          ),
-        ]),
-      ),
+    signalFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+      child: HtmlElementView(viewType: signalView),
     ));
     Overlay.of(context, rootOverlay: true).insert(signalFullscreenOverlay!);
   }
@@ -312,24 +279,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   void _showWolfFullscreen() {
     if (!mounted || wolfFullscreenOverlay != null) return;
     final overlay = Overlay.of(context, rootOverlay: true);
-    wolfFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
-      child: Material(
-        color: const Color(0xFF061B2A),
-        child: SafeArea(
-          top: false, bottom: false,
-          child: Stack(children: [
-            const Positioned.fill(child: HtmlElementView(viewType: wolfView)),
-            Positioned(
-              right: 8, top: MediaQuery.of(context).padding.top + 8,
-              child: IconButton.filled(
-                onPressed: _hideWolfFullscreen,
-                tooltip: 'Zamknij grę',
-                icon: const Icon(Icons.close),
-              ),
-            ),
-          ]),
-        ),
-      ),
+    wolfFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+      child: HtmlElementView(viewType: wolfView),
     ));
     overlay.insert(wolfFullscreenOverlay!);
   }
@@ -342,24 +293,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _showBlocksFullscreen() {
     if (!mounted || blocksFullscreenOverlay != null) return;
-    blocksFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
-      child: Material(
-        color: const Color(0xFF070E23),
-        child: Stack(children: [
-          const Positioned.fill(child: HtmlElementView(viewType: blocksView)),
-          Positioned(
-            right: 8, top: MediaQuery.of(context).padding.top + 8,
-            child: IconButton.filled(
-              onPressed: () {
-                _hideBlocksFullscreen();
-                setState(() { game = null; scoreNotice = null; });
-              },
-              tooltip: 'Zamknij grę',
-              icon: const Icon(Icons.close),
-            ),
-          ),
-        ]),
-      ),
+    blocksFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+      child: HtmlElementView(viewType: blocksView),
     ));
     Overlay.of(context, rootOverlay: true).insert(blocksFullscreenOverlay!);
   }
@@ -410,6 +345,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       if (mounted) setState(() { game = null; scoreNotice = null; });
       return;
     }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-exit-fullscreen') {
+      _hideWolfFullscreen();
+      setState(() { game = null; scoreNotice = null; });
+      return;
+    }
     final isKnownFrame = frames.values.any((frame) => event.source == frame.contentWindow);
     // Fullscreen games can use a different iframe instance from the catalog.
     // The same-origin check above still applies to every score message.
@@ -421,10 +361,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _showWolfFullscreen();
       return;
     }
-    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-exit-fullscreen') {
-      _hideWolfFullscreen();
-      return;
-    }
+
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-auth-request') {
       for (final frame in frames.values) {
         if (event.source == frame.contentWindow) {

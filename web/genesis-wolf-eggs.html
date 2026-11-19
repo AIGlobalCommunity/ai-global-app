@@ -36,6 +36,15 @@ body.game-fullscreen .stat span{font-size:9px}body.game-fullscreen .stat strong{
 body.game-fullscreen #exit-fullscreen{display:block;opacity:.9;min-width:44px;min-height:44px;font-size:18px}
 @media (orientation:portrait) and (pointer:coarse){#app{padding:0;gap:0}header,#help{display:none!important}.stats{position:absolute;top:0;left:0;width:100%;z-index:5;pointer-events:none;gap:2px}.stat{background:#081b2bc9;padding:2px 0}.stat span{font-size:9px}.stat strong{font-size:15px}#arena{width:100%;height:100%;height:100dvh;flex:1 1 100%;border:0;border-radius:0}#exit-fullscreen{display:block;z-index:7;top:max(5px,env(safe-area-inset-top));right:max(5px,env(safe-area-inset-right));opacity:.88}}
 @media(max-width:600px){body.game-fullscreen .stats{width:calc(100% - 65px);max-width:480px;left:calc(50% - 22px)}}
+
+body > button.genesis-close-game{
+  position:fixed!important;top:max(8px,env(safe-area-inset-top))!important;
+  right:max(8px,env(safe-area-inset-right))!important;left:auto!important;
+  display:grid!important;place-items:center;z-index:2147483647;
+  width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+  background:#e4c98d;color:#101720;border:1px solid #ffe6ae;border-radius:50%;
+  font:500 30px/1 system-ui;cursor:pointer;touch-action:manipulation;
+}
 </style></head><body><div id="app">
 <header><div class="brand">🐺 WILK I JAJKA <span style="color:#77c5db">/ GENESIS</span></div><div class="actions"><button class="small" id="music">♫ MUZYKA: WYŁ.</button><button class="small" id="restart">↻ NOWA</button><button class="small" id="fullscreen">⛶ PEŁNY EKRAN</button></div></header>
 <div class="stats"><div class="stat"><span>PUNKTY</span><strong id="score">0</strong></div><div class="stat"><span>ŻYCIA</span><strong id="lives">❤️❤️❤️</strong></div><div class="stat"><span>POZIOM</span><strong id="level">1</strong></div><div class="stat"><span>REKORD</span><strong id="best">0</strong></div></div>
@@ -324,4 +333,13 @@ try{
  }
 }catch(_){}
 })();
+
+if (window.parent !== window && new URLSearchParams(location.search).has('embed')) {
+  const closeButton = document.getElementById('exit-fullscreen');
+  closeButton.setAttribute('aria-label', 'Zamknij grę');
+  closeButton.title = 'Zamknij grę';
+  closeButton.textContent = '×';
+  closeButton.classList.add('genesis-close-game');
+  document.body.appendChild(closeButton);
+}
 </script></body></html>

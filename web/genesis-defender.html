@@ -45,6 +45,15 @@ body.embedded .modal button{font-size:11px;min-height:35px;padding:7px}
 @media(max-height:500px){body.embedded .modal .emblem{display:none}body.embedded .modal p{font-size:10px}}
 body{background:radial-gradient(ellipse at 50% 0,#154267,#030817 70%)}h1{font-family:system-ui,sans-serif;font-weight:900;letter-spacing:.12em;text-shadow:0 0 22px #00d8ff55}.arena{border:1px solid #32a9dc;box-shadow:0 0 35px #00caff22,0 20px 60px #0009}.hud>div{background:linear-gradient(145deg,#123451,#071b32);border-color:#286c90}.command{display:flex;justify-content:space-between;align-items:center;gap:5px;color:#85eaff;font-size:11px;font-weight:800;max-width:680px;margin:0 auto 5px}.command button{min-height:30px;padding:6px 9px;background:#0c2d48;color:#e7faff;border-color:#388db3}
 body.defender-full{position:fixed;inset:0;overflow:hidden}body.defender-full main{max-width:none;height:100dvh;display:flex;flex-direction:column;padding:4px;overflow:hidden}body.defender-full .tag,body.defender-full .sub,body.defender-full .tip{display:none}body.defender-full h1{font-size:clamp(15px,2.8vh,26px);margin:0}body.defender-full .hud{width:100%;margin-bottom:3px}body.defender-full .hud>div{padding:3px}body.defender-full .hud strong{font-size:15px}body.defender-full .arena{width:min(calc(100vw - 12px),calc((100dvh - 153px)*.7),750px);min-width:0;margin:auto}body.defender-full .controls{margin:3px auto}body.defender-full .controls button{min-height:29px;padding:5px 8px}
+
+body > button.genesis-close-game{
+  position:fixed!important;top:max(8px,env(safe-area-inset-top))!important;
+  right:max(8px,env(safe-area-inset-right))!important;left:auto!important;
+  display:grid!important;place-items:center;z-index:2147483647;
+  width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+  background:#e4c98d;color:#101720;border:1px solid #ffe6ae;border-radius:50%;
+  font:500 30px/1 system-ui;cursor:pointer;touch-action:manipulation;
+}
 </style></head><body><main>
 <div class="tag">THE GENESIS ERA · ARCADE HTML5</div><h1>GENESIS DEFENDER</h1>
 <p class="sub">DEFENDER 2.0 · Bossowie, serie trafień, ulepszenia broni i dynamiczne sektory.</p>
@@ -225,4 +234,13 @@ document.getElementById('restart').onclick=()=>{reportScore(true);mode='menu';pa
 panel('GENESIS DEFENDER','DEFENDER 2.0: bossowie co 5 fal, potrójne działa ⚡, mnożnik punktów za serie i nowe efekty! Lataj do przodu, do tyłu i na boki: przeciągaj palcem lub użyj strzałek / W A S D. Statek strzela automatycznie. Zbieraj tarcze i naprawy, unikaj dronów!','ROZPOCZNIJ MISJĘ →',reset);
 last=performance.now();raf=requestAnimationFrame(frame);
 })();
+
+if (window.parent !== window && new URLSearchParams(location.search).has('embed')) {
+  const closeButton = document.getElementById('exitDefender');
+  closeButton.setAttribute('aria-label', 'Zamknij grę');
+  closeButton.title = 'Zamknij grę';
+  closeButton.textContent = '×';
+  closeButton.classList.add('genesis-close-game');
+  document.body.appendChild(closeButton);
+}
 </script></body></html>
