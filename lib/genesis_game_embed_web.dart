@@ -304,7 +304,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     if (!_cityPreviewAllowed) return;
     activeCityView = view;
     if (!mounted || cityFullscreenOverlay != null) return;
-    cityFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+    cityFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
       child: HtmlElementView(viewType: activeCityView),
     ));
     Overlay.of(context, rootOverlay: true).insert(cityFullscreenOverlay!);
@@ -1544,9 +1544,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             'Prototyp wspólnego miasta z botami; sieciowy multiplayer w kolejnym etapie.',
             cityMultiView, Icons.groups_outlined, const Color(0xFF9CAFFF)),
         ];
-        if (constraints.maxWidth < 800) return Column(children: [
-          for (final card in cards) Padding(
-            padding: const EdgeInsets.only(bottom: 12), child: card)]);
+        if (constraints.maxWidth < 800) {
+          return Column(children: [
+            for (final card in cards) Padding(
+              padding: const EdgeInsets.only(bottom: 12), child: card)]);
+        }
         return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           for (final card in cards) Expanded(child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 5), child: card))]);
