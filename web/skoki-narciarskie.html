@@ -7,7 +7,8 @@ header{gap:6px}header>div:first-child{min-width:0;flex:1}#hill{display:block;wid
 #action[data-cue="set"]{background:#abdfec}
 
 #view{position:relative;min-height:0}#wind{position:absolute;left:max(8px,env(safe-area-inset-left));bottom:8px;pointer-events:none;background:#0c2539ed;border:1px solid #6890a6;border-radius:8px;padding:6px 10px;color:#f1fbff;font-size:14px;font-variant-numeric:tabular-nums}
-</style></head><body><main><header><div><strong>Skoki narciarskie</strong><select id="hill" aria-label="Wybierz odblokowaną skocznię"></select></div><div id="metrics"></div><button id="music" aria-label="Muzyka" aria-pressed="true">♫</button><button id="exit" aria-label="Zamknij grę">×</button></header><div id="view"><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><div id="wind" role="status"></div></div><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script>
+</style></head><body><main><header><div><strong>Skoki narciarskie</strong><select id="hill" aria-label="Wybierz odblokowaną skocznię"></select></div><div id="metrics"></div><button id="music" aria-label="Muzyka" aria-pressed="true">♫</button><button id="exit" aria-label="Zamknij grę">×</button></header><div id="view"><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><div id="wind" role="status"></div></div><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script src="genesis-share-end.js"></script>
+<script>
 'use strict';
 // HS, venue, scenery, qualifying distance as a fraction of HS, wind strength.
 const hills=[
@@ -71,7 +72,7 @@ function ready(){
   tell('Cel: telemark za linią '+target()+' m. Telemark to lądowanie z jedną nartą wysuniętą. Na zielony sygnał stuknij raz lub naciśnij spację.','Rozpocznij najazd');
 }
 function send(message){if(parent!==window)parent.postMessage(JSON.stringify(message),location.origin)}
-function lift(quality){
+function lift(quality){genesisHideEndShare();
   phase='flight';x=0;y=0;elapsed=0;lean=0;landingAt=null;
   vx=.32+quality*.08;vy=-.075-quality*.10;
   tell('Przeciągnij palcem lub użyj strzałek. Trzymaj kropkę w zielonym polu.','Poczekaj na sygnał');
@@ -84,7 +85,7 @@ function finish(){
   advance=clean && distance>=target() && stage<hills.length-1;
   if(advance){unlocked=Math.max(unlocked,stage+1);persist('ski-tour-unlocked',unlocked)}
   if(result>best){best=result;persist('ski-local-best',best)}
-  send({type:'genesis-game-score',game:'ski',score:result,level:stage+1,at:Date.now()});
+  send({type:'genesis-game-score',game:'ski',score:result,level:stage+1,at:Date.now()});genesisShowEndShare('ski',result);
   let feedback;
   if(clean)feedback=distance<target()?'Telemark udany. Do awansu brakuje '+(target()-distance)+' m.':'Telemark udany!';
   else if(landingAt!==null)feedback='Za duże pochylenie. Wyrównaj kropkę do zielonego pola.';
