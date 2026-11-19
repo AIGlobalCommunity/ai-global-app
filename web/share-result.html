@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mój wynik | THE GENESIS ERA</title>
+<meta name="description" content="Zobacz wynik w THE GENESIS ERA i spróbuj go pobić!">
+<meta property="og:title" content="THE GENESIS ERA — podejmij wyzwanie">
+<meta property="og:description" content="Zagraj za darmo i pobij rekord w THE GENESIS ERA!">
+<meta property="og:type" content="website"><meta property="og:url" content="https://thegenesisera.com/">
+<meta property="og:image" content="https://thegenesisera.com/assets/genesis_signal_cinematic.jpg">
+<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#183c59,#07101f 70%);color:#fff;font:16px system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px}main{width:min(100%,660px);text-align:center}h1{font-size:27px;letter-spacing:2px;color:#f6cb7a}canvas{width:100%;border-radius:20px;box-shadow:0 14px 60px #0009}p{color:#d8e4ee;line-height:1.5}.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:22px 0}button,a.action{cursor:pointer;background:#f5c66b;border:0;border-radius:12px;padding:13px 17px;color:#101a28;font-weight:800;text-decoration:none;font-size:14px}.actions .secondary{background:#213c59;color:#fff}small{color:#aebfd0}</style></head>
+<body><main><h1>🏆 THE GENESIS ERA</h1><p id="intro"></p><canvas id="card" width="1200" height="630" aria-label="Grafika z wynikiem gry"></canvas><div class="actions">
+<button id="share">📲 Udostępnij zdjęcie i wynik</button><button id="download" class="secondary">⬇ Pobierz zdjęcie</button>
+<button id="facebook" class="secondary">Facebook</button><button id="x" class="secondary">X / Twitter</button><button id="whatsapp" class="secondary">WhatsApp</button>
+<button id="copy" class="secondary">Kopiuj link</button><a class="action" href="https://thegenesisera.com/">🎮 Zagraj teraz</a></div>
+<small>Na Facebooku podgląd linku może pokazywać ogólną grafikę strony. Aby opublikować indywidualną kartę z wynikiem, pobierz ją i dołącz do posta lub użyj systemowego udostępniania.</small></main>
+<script>
+(()=>{
+const params=new URLSearchParams(location.search);
+const names={signal:'GENESIS SIGNAL',defender:'GENESIS DEFENDER',wolf:'WILK I JAJKA',blocks:'GENESIS BLOCKS',snake:'GENESIS SNAKE',ski:'SKOKI NARCIARSKIE'};
+const game=Object.hasOwn(names,params.get('game'))?params.get('game'):'signal';
+const score=Math.max(0,Math.min(10000000,Number.parseInt(params.get('score')||'0',10)||0));
+const nick=(params.get('nick')||'Gracz').replace(/[^a-zA-Z0-9_]/g,'').slice(0,20)||'Gracz';
+const link='https://thegenesisera.com/';
+const title=names[game];const message=`${nick} zdobył ${score.toLocaleString('pl-PL')} pkt w ${title}! 🏆 Pobij ten wynik: ${link}`;
+document.getElementById('intro').textContent=`${nick} · ${title} · ${score.toLocaleString('pl-PL')} pkt`;
+const c=document.getElementById('card'),ctx=c.getContext('2d');const W=c.width,H=c.height;
+const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#071e37');grad.addColorStop(1,'#0b514a');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+for(let i=0;i<34;i++){ctx.fillStyle='rgba(115,230,212,.12)';ctx.beginPath();ctx.arc((i*197)%W,(i*113)%H,(i%5+1)*7,0,Math.PI*2);ctx.fill()}
+ctx.strokeStyle='#f2c56b';ctx.lineWidth=6;ctx.strokeRect(28,28,W-56,H-56);
+ctx.textAlign='center';ctx.fillStyle='#f2c56b';ctx.font='bold 48px Arial';ctx.fillText('THE GENESIS ERA',W/2,118);
+ctx.fillStyle='#ffffff';ctx.font='bold 54px Arial';ctx.fillText(title,W/2,218);
+ctx.fillStyle='#b5d4e6';ctx.font='34px Arial';ctx.fillText(nick,W/2,300);
+ctx.fillStyle='#f2c56b';ctx.font='bold 130px Arial';ctx.fillText(score.toLocaleString('pl-PL'),W/2,450);
+ctx.fillStyle='#fff';ctx.font='32px Arial';ctx.fillText('PUNKTÓW  •  POBIJ MÓJ WYNIK!',W/2,510);
+ctx.fillStyle='#bce7e0';ctx.font='bold 30px Arial';ctx.fillText('thegenesisera.com',W/2,576);
+const filename=`genesis-${game}-${score}.png`;
+function download(){const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=filename;a.click()}
+document.getElementById('download').onclick=download;
+document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);alert('Link skopiowany!')}catch{prompt('Skopiuj link:',location.href)}};
+document.getElementById('facebook').onclick=()=>window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),'_blank','noopener');
+document.getElementById('x').onclick=()=>window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(message)+'&url='+encodeURIComponent(location.href),'_blank','noopener');
+document.getElementById('whatsapp').onclick=()=>window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(message+' '+location.href),'_blank','noopener');
+document.getElementById('share').onclick=async()=>{
+const blob=await new Promise(resolve=>c.toBlob(resolve,'image/png'));
+const file=blob?new File([blob],filename,{type:'image/png'}):null;
+try{
+if(file&&navigator.canShare?.({files:[file]})){await navigator.share({title,message,text:message,files:[file]});return}
+if(navigator.share){await navigator.share({title,text:message,url:location.href});return}
+}catch(e){if(e.name==='AbortError')return}
+download();alert('Pobrano kartę z wynikiem. Dołącz zdjęcie do posta i wklej link do gry.')
+};
+})();
+</script></body></html>
