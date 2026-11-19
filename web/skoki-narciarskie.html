@@ -5,7 +5,9 @@
 header{gap:6px}header>div:first-child{min-width:0;flex:1}#hill{display:block;width:100%;max-width:350px;border:0;background:#102638;color:#b5ecff;font:inherit;font-size:13px}#hill:disabled{opacity:1}#music{min-width:44px}#music[aria-pressed=false]{color:#99aaba;text-decoration:line-through}#scene{touch-action:none}#action{min-width:min(54vw,235px)}#metrics{max-width:130px}#note{min-height:2.4em;align-content:center}@media(max-height:430px){#note{min-height:1.25em}}@media(max-width:480px){#metrics{max-width:82px;font-size:12px}header,footer{padding-left:8px;padding-right:8px}}
 #action[data-cue="now"]{background:#88f1af;box-shadow:0 0 0 3px #315d50;font-weight:800}
 #action[data-cue="set"]{background:#abdfec}
-</style></head><body><main><header><div><strong>Skoki narciarskie</strong><select id="hill" aria-label="Wybierz odblokowaną skocznię"></select></div><div id="metrics"></div><button id="music" aria-label="Muzyka" aria-pressed="true">♫</button><button id="exit" aria-label="Zamknij grę">×</button></header><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script>
+
+#view{position:relative;min-height:0}#wind{position:absolute;left:max(8px,env(safe-area-inset-left));bottom:8px;pointer-events:none;background:#0c2539ed;border:1px solid #6890a6;border-radius:8px;padding:6px 10px;color:#f1fbff;font-size:14px;font-variant-numeric:tabular-nums}
+</style></head><body><main><header><div><strong>Skoki narciarskie</strong><select id="hill" aria-label="Wybierz odblokowaną skocznię"></select></div><div id="metrics"></div><button id="music" aria-label="Muzyka" aria-pressed="true">♫</button><button id="exit" aria-label="Zamknij grę">×</button></header><div id="view"><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><div id="wind" role="status"></div></div><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script>
 'use strict';
 // HS, venue, scenery, qualifying distance as a fraction of HS, wind strength.
 const hills=[
@@ -37,10 +39,19 @@ let result=0,advance=false,previous=0,distance=0;
 const held=new Set();
 const balanceLimit=.72;
 let landingCue=false,earlyPress=false,cleanLanding=false;
+// Signed along the jumper's direction of travel. Negative wind blows uphill.
+function setJumpWind(){
+  const limit=2*hills[stage].gust;
+  wind=Math.round((Math.random()*2-1)*limit*10)/10;
+  const direction=wind<0?'← pod narty':wind>0?'→ w plecy':'cisza';
+  const strength=Math.abs(wind).toLocaleString('pl-PL',{minimumFractionDigits:1,maximumFractionDigits:1});
+  el('wind').textContent='Wiatr '+direction+' · '+strength+' m/s';
+}
+function flightGravity(){return .233+.09*Math.abs(lean)+wind*.010}
 function landingWindow(){
   // Predict contact with the actual slope, including its flatter outrun.
   const lead=.88-.16*difficulty();
-  const gravity=.233+.09*Math.abs(lean);
+  const gravity=flightGravity();
   return vy>0 && y+vy*lead+.5*gravity*lead*lead>=slope(x+vx*lead);
 }
 function ramp(t){return .29*t-curvature()*t*t}
@@ -50,6 +61,7 @@ function tell(note,button){
   if(el('action').textContent!==button)el('action').textContent=button;
 }
 function ready(){
+  setJumpWind();
   phase='ready';x=-.52;y=ramp(x);lean=0;advance=false;held.clear();
   landingCue=false;earlyPress=false;cleanLanding=false;el('action').setAttribute('data-cue','');
   takeoff=null;drag=0;gesture=null;landingAt=null;
@@ -61,7 +73,7 @@ function ready(){
 function send(message){if(parent!==window)parent.postMessage(JSON.stringify(message),location.origin)}
 function lift(quality){
   phase='flight';x=0;y=0;elapsed=0;lean=0;landingAt=null;
-  vx=.32+quality*.08+wind*.008;vy=-.075-quality*.10;
+  vx=.32+quality*.08;vy=-.075-quality*.10;
   tell('Przeciągnij palcem lub użyj strzałek. Trzymaj kropkę w zielonym polu.','Poczekaj na sygnał');
 }
 function finish(){
@@ -83,7 +95,7 @@ function finish(){
 function act(){
   startMusic();
   if(phase==='result'){if(advance)stage++;ready();return}
-  if(phase==='ready'){phase='inrun';el('hill').disabled=true;elapsed=0;wind=(Math.random()*2-1)*hills[stage].gust;tell('Wybij się w żółtej strefie na końcu progu.','Wybicie');return}
+  if(phase==='ready'){phase='inrun';el('hill').disabled=true;elapsed=0;tell('Wybij się w żółtej strefie na końcu progu.','Wybicie');return}
   if(phase==='inrun'){
     if(x<-.14){tell('Poczekaj na złoty odcinek progu.','Wybicie');return}
     takeoff=Math.max(.2,1-Math.abs(x+.035)*6);
@@ -102,8 +114,8 @@ function step(dt){
     if(x>=0)lift(takeoff??.12);
   }else if(phase==='flight'){
     const steer=drag || Number(held.has('forward'))-Number(held.has('back'));
-    lean=Math.max(-1,Math.min(1,lean+dt*(steer*2.2-lean*(steer?1.6:2.7)+wind*(.28+.38*difficulty())+.16*Math.sin(elapsed*(2+stage%4)))));
-    x+=vx*dt;y+=vy*dt;vy+=(.233+.09*Math.abs(lean))*dt;
+    lean=Math.max(-1,Math.min(1,lean+dt*(steer*2.2-lean*(steer?1.6:2.7)+wind*(.14+.19*difficulty())+.16*Math.sin(elapsed*(2+stage%4)))));
+    x+=vx*dt;y+=vy*dt;vy+=flightGravity()*dt;
     if(!landingCue && landingWindow()){
       landingCue=true;el('action').setAttribute('data-cue','now');
       tell('Teraz! Stuknij planszę lub zielony przycisk. Na klawiaturze naciśnij spację.','TELEMARK TERAZ');
@@ -304,7 +316,7 @@ function draw(){
   }
   const meters=phase==='flight'||phase==='result'?Math.max(0,Math.round(x*hills[stage].hs)):0;
   const metric=phase==='flight'||phase==='inrun'
-    ? meters+' m · wiatr '+(wind<0?'← ':'→ ')+Math.abs(wind*2).toFixed(1)+' m/s'
+    ? meters+' m'
     : meters+' m · rekord '+best+' pkt';
   if(el('metrics').textContent!==metric)el('metrics').textContent=metric;
 }
