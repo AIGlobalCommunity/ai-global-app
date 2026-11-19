@@ -186,18 +186,7 @@ function drawWolf(cx,cy,u,lane,bounce){
 }
 function drawScene(){
  const u=Math.min(width,height),l=layout(),bg=ctx.createLinearGradient(0,0,0,height);
- bg.addColorStop(0,'#2b7896');bg.addColorStop(.42,'#244c71');bg.addColorStop(.72,'#17435a');bg.addColorStop(1,'#173d32');ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
- // Layered illustrated countryside for a richer, more colorful backdrop.
- const sun=ctx.createRadialGradient(width*.52,height*.12,0,width*.52,height*.12,u*.37);
- sun.addColorStop(0,'#ffe6a04d');sun.addColorStop(1,'#ffe6a000');ctx.fillStyle=sun;ctx.fillRect(0,0,width,height);
- ctx.fillStyle='#2c6e66';ctx.beginPath();ctx.moveTo(0,height*.72);
- ctx.bezierCurveTo(width*.2,height*.53,width*.32,height*.66,width*.48,height*.61);
- ctx.bezierCurveTo(width*.68,height*.50,width*.81,height*.62,width,height*.56);
- ctx.lineTo(width,height);ctx.lineTo(0,height);ctx.fill();
- ctx.fillStyle='#225448';ctx.beginPath();ctx.moveTo(0,height*.85);
- ctx.bezierCurveTo(width*.3,height*.68,width*.53,height*.79,width*.72,height*.70);
- ctx.bezierCurveTo(width*.89,height*.65,width,height*.73,width,height*.71);
- ctx.lineTo(width,height);ctx.lineTo(0,height);ctx.fill();
+ bg.addColorStop(0,'#153b58');bg.addColorStop(.55,'#0b243a');bg.addColorStop(1,'#092333');ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
  // Subtle atmospheric lights, stars and decorative floor.
  const glow=ctx.createRadialGradient(width*.5,height*.5,u*.04,width*.5,height*.5,u*.8);
  glow.addColorStop(0,'#3180a02b');glow.addColorStop(1,'#09162600');ctx.fillStyle=glow;ctx.fillRect(0,0,width,height);
