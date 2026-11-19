@@ -41,7 +41,18 @@ for(let i=0;i<10;i++){let p=rndRoad();gangsters.push({x:p.x,y:p.y,a:rand(0,6.28)
 for(let i=0;i<95;i++){const axis=i%2?'v':'h',line=Math.floor(rand(1,11))*grid,side=i%4<2?-1:1;const offset=side*(road/2+12);people.push(axis==='v'?{x:line+offset,y:rand(0,world),axis,dir:i%3?-1:1,s:rand(9,24),color:['#f4a2a2','#9bc9eb','#efc578','#b7a3db'][i%4]}:{x:rand(0,world),y:line+offset,axis,dir:i%3?-1:1,s:rand(9,24),color:['#f4a2a2','#9bc9eb','#efc578','#b7a3db'][i%4]})}
 for(let i=0;i<18;i++){const p=rndRoad();pickups.push({x:p.x,y:p.y,active:true})}
 const missionPoint=()=>packages.find(p=>!p.done)||null;function hud(){document.getElementById('status').textContent=(onFoot?'🚶 Pieszo':'🚘 '+Math.round(Math.abs(player.s))+' km/h')+' · 💰 '+score+' pkt · 🔫 '+ammo+' · ⭐ '+wanted+'/5 · 🚔 '+police.length;document.getElementById('mission').textContent='Dostawy '+delivered+' · Stan auta '+Math.round(100-damage)+'% · E: pojazd · R: napraw · F: strzał';document.getElementById('best').textContent='Rekord: '+best;document.getElementById('crime').textContent=elapsed<crimeUntil?'🚨 PRZESTĘPSTWO: '+crimeLabel:'🚦 Brak aktywnego zgłoszenia'}
-function report(){if(score<10)return;let payload={type:'genesis-game-score',game:'city',score:Math.floor(score),level:Math.min(1000,delivered+1),at:Date.now()};try{localStorage.setItem('agc-game-pending-city',JSON.stringify(payload));if(parent!==window)parent.postMessage(JSON.stringify(payload),location.origin)}catch(e){}}
+function report(){
+ if(score<10)return;
+ const payload={type:'genesis-game-score',game:'city',score:Math.floor(score),level:Math.min(1000,delivered+1),at:Date.now()};
+ try{
+   const key='agc-game-pending-city',previous=localStorage.getItem(key);
+   let previousScore=0;
+   if(previous){try{previousScore=Number(JSON.parse(previous).score)||0}catch(e){}}
+   if(payload.score>=previousScore)localStorage.setItem(key,JSON.stringify(payload));
+ }catch(e){}
+ // Send even when localStorage is disabled; the parent owns the Supabase write.
+ try{if(parent!==window)parent.postMessage(JSON.stringify(payload),location.origin)}catch(e){}
+}
 function finish(){playing=false;report();genesisShowEndShare('city',score);document.getElementById('menu').style.display='grid';document.getElementById('summary').textContent='Koniec trasy! '+score+' pkt · Dostawy: '+delivered+'. Spróbuj ponownie!';document.getElementById('start').textContent='↻ ZAGRAJ PONOWNIE'}
 function start(){genesisHideEndShare();score=0;damage=0;delivered=0;elapsed=0;onFoot=false;ammo=0;wanted=0;shots=[];vehicleId=null;carColor='#f5c75d';police.forEach(p=>{const q=rndRoad();p.x=q.x;p.y=q.y});for(const p of pickups)p.active=true;player.x=1500;player.y=1500;player.a=0;player.s=0;for(const p of packages)p.done=false;playing=true;paused=false;document.getElementById('menu').style.display='none';last=performance.now();requestAnimationFrame(frame)}
 const carPark={x:1500,y:1500,a:0};
