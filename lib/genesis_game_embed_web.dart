@@ -28,6 +28,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const blocksView = 'genesis-blocks-html5-iframe';
   static const skiView = 'genesis-ski-html5-iframe';
   static const snakeView = 'genesis-snake-html5-iframe';
+  static const cityView = 'genesis-city-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
@@ -39,15 +40,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   OverlayEntry? blocksFullscreenOverlay;
   OverlayEntry? skiOverlay;
   OverlayEntry? snakeFullscreenOverlay;
+  OverlayEntry? cityFullscreenOverlay;
 
   static const scoreStoragePrefix = 'agc-game-pending-';
   static const buildVersion = String.fromEnvironment(
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'city'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS CITY'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, cityView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -204,6 +206,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
       _register(snakeView, 'genesis-snake.html?embed=1&version=$buildVersion', 'GENESIS SNAKE');
+      _register(cityView, 'genesis-city.html?embed=1&version=$buildVersion', 'GENESIS CITY');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
@@ -229,6 +232,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   void dispose() {
     skiOverlay?.remove();
     skiOverlay?.dispose();
+    cityFullscreenOverlay?.remove();
+    cityFullscreenOverlay?.dispose();
     snakeFullscreenOverlay?.remove();
     snakeFullscreenOverlay?.dispose();
     snakeFullscreenOverlay = null;
@@ -288,6 +293,20 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       child: HtmlElementView(viewType: skiView),
     ));
     Overlay.of(context, rootOverlay: true).insert(skiOverlay!);
+  }
+
+  void _showCityFullscreen() {
+    if (!mounted || cityFullscreenOverlay != null) return;
+    cityFullscreenOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+      child: HtmlElementView(viewType: cityView),
+    ));
+    Overlay.of(context, rootOverlay: true).insert(cityFullscreenOverlay!);
+  }
+  void _closeCityFullscreen() {
+    cityFullscreenOverlay?.remove();
+    cityFullscreenOverlay?.dispose();
+    cityFullscreenOverlay = null;
+    if (mounted) setState(() { game = null; scoreNotice = null; });
   }
 
   void _showSnakeFullscreen() {
@@ -394,6 +413,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       skiOverlay?.remove();
       skiOverlay?.dispose();
       skiOverlay = null;
+      return;
+    }
+    if (decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-city-exit-fullscreen') {
+      _closeCityFullscreen();
       return;
     }
     if (decoded is Map<String, dynamic> &&
@@ -1338,17 +1362,21 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final wolf = index == 2;
     final ski = index == 5;
     final snake = index == 4;
+    final city = index == 6;
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
     void openGame() {
       if (ski) { _showSkiFullscreen(); return; }
+      if (city) { _showCityFullscreen(); return; }
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = ski
+    final features = city
+      ? <(IconData, String)>[(Icons.directions_car_outlined, 'Otwarty świat i swobodna jazda'),(Icons.local_shipping_outlined, 'Misje kurierskie i punkty'),(Icons.map_outlined, 'Mapa miasta i ruch uliczny'),(Icons.phone_android_outlined, 'Sterowanie na telefonie')]
+      : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1525,7 +1553,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
