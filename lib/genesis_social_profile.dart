@@ -273,7 +273,7 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
         .update({
           'handle': nickname.text.trim(),
           'country_code': code.isEmpty ? null : code,
-          'show_nick_publicly': nicknamePublic,
+          'show_nick_publicly': true,
         })
         .eq('id', AgcBackend.user!.id).select('id');
       if (updated.isEmpty) {
@@ -405,16 +405,6 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
                 },
               ),
             ),
-            CheckboxListTile(
-              key: const Key('account_show_nick_in_rankings'),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero, value: nicknamePublic,
-              onChanged: (value) => setState(() => nicknamePublic = value ?? false),
-              title: Text(socialText(
-                'Pokazuj pseudonim w rankingu', 'Show nickname in ranking')),
-              subtitle: Text(socialText(
-                'Po wyłączeniu ranking użyje anonimowego identyfikatora.',
-                'When disabled, ranking uses an anonymous identifier.'))),
             const Divider(height: 28),
             Align(alignment: Alignment.centerLeft,
               child: Text(socialText('O MNIE', 'ABOUT ME'),
