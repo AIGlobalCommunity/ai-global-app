@@ -168,6 +168,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   String categoryFilter = 'all';
+  int gamesPerRow = 2; // 0 = compact list
   bool diagnosticsOpen = false;
   String lastBridgeStatus = 'Brak zdarzeń z gry';
   String lastDatabaseStatus = 'Nie sprawdzono';
@@ -1556,6 +1557,70 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     ]);
   }
 
+  Widget _compactGameCard(int index, {required bool listMode}) {
+    final title = titles[index];
+    final icon = index == 0 ? Icons.hub_outlined
+      : index == 1 ? Icons.rocket_launch_outlined
+      : index == 2 ? Icons.egg_outlined
+      : index == 3 ? Icons.grid_view_rounded
+      : index == 4 ? Icons.gamepad_outlined
+      : Icons.downhill_skiing_outlined;
+    final color = index == 2 ? const Color(0xFFFFB05A)
+      : index == 4 ? const Color(0xFF71F7C4)
+      : const Color(0xFF69CFFF);
+    void open() {
+      if (index == 5) { _showSkiFullscreen(); return; }
+      setState(() { game = index; scoreNotice = null; });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (index == 4) { _showSnakeFullscreen(); }
+        else if (index == 2) { _showWolfFullscreen(); }
+        else if (index == 3) { _showBlocksFullscreen(); }
+        else if (index == 1) { _showDefenderFullscreen(); }
+        else if (index == 0) { _showSignalFullscreen(); }
+      });
+    }
+    return Material(
+      color: const Color(0xFF0C2236),
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
+        onTap: open,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: color.withValues(alpha: .65)),
+            borderRadius: BorderRadius.circular(15)),
+          child: listMode
+            ? Row(children: [
+                Icon(icon, color: color, size: 34),
+                const SizedBox(width: 12),
+                Expanded(child: Text(title, maxLines: 2,
+                  style: const TextStyle(fontWeight: FontWeight.bold))),
+                IconButton(tooltip: 'Ranking', icon: const Icon(Icons.emoji_events_outlined),
+                  onPressed: () => _showRanking(index)),
+                IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_arrow_rounded),
+                  onPressed: open),
+              ])
+            : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(icon, color: color, size: 45),
+                const SizedBox(height: 9),
+                Text(title, maxLines: 2, textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                const SizedBox(height: 9),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_circle_fill),
+                    onPressed: open),
+                  IconButton(tooltip: 'Ranking', icon: const Icon(Icons.emoji_events_outlined),
+                    onPressed: () => _showRanking(index)),
+                ]),
+              ]),
+        ),
+      ),
+    );
+  }
+
   Widget _gameLibrary() => Center(
     child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1050),
@@ -1577,13 +1642,18 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           _versionLabel(),
           if (AgcBackend.user == null) const Card(child: Padding(padding: EdgeInsets.all(12), child: Text('⚠ TRYB GOŚCIA — możesz grać, ale punkty NIE są zapisywane w rankingu online. Zaloguj się w zakładce KONTO przed grą.', textAlign: TextAlign.center))),
           TextButton.icon(onPressed: () => setState(() => rulesOpen = true), icon: const Icon(Icons.gavel_outlined), label: const Text('REGULAMIN GIER I RANKINGÓW')),
-          TextButton.icon(
-            onPressed: _openDiagnostics,
-            icon: const Icon(Icons.bug_report_outlined, size: 17),
-            label: const Text('DIAGNOSTYKA RANKINGU'),
-          ),
           _cityPreviews(),
           const SizedBox(height: 10),
+          Wrap(spacing: 7, runSpacing: 7, crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Text('Widok:', style: TextStyle(fontWeight: FontWeight.bold)),
+              for (final count in [1, 2, 3, 4, 0])
+                ChoiceChip(
+                  label: Text(count == 0 ? 'Lista' : '$count'),
+                  selected: gamesPerRow == count,
+                  onSelected: (_) => setState(() => gamesPerRow = count)),
+            ]),
+          const SizedBox(height: 12),
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final entry in [
               ('all', GenesisLanguage.copy('Wszystkie', 'All')),
@@ -1634,20 +1704,33 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               for (final i in indices)
                 i < 2 ? cards[i] : _arcadeExtraCard(index: i),
             ];
-            if (constraints.maxWidth < 700) {
+            final count = gamesPerRow;
+            if (count == 0) {
+              return Column(children: [
+                for (final i in indices)
+                  Padding(padding: const EdgeInsets.only(bottom: 8),
+                    child: _compactGameCard(i, listMode: true)),
+              ]);
+            }
+            if (count >= 3) {
+              final tileWidth = (constraints.maxWidth - 12 * (count - 1)) / count;
+              return Wrap(spacing: 12, runSpacing: 12, children: [
+                for (final i in indices)
+                  SizedBox(width: tileWidth, height: 178,
+                    child: _compactGameCard(i, listMode: false)),
+              ]);
+            }
+            if (count == 1 || constraints.maxWidth < 700) {
               return Column(children: [
                 for (final card in visible) ...[
                   card, const SizedBox(height: 12),
                 ],
               ]);
             }
-            return Wrap(
-              spacing: 12, runSpacing: 12,
-              children: [
-                for (final card in visible)
-                  SizedBox(width: (constraints.maxWidth - 12) / 2, child: card),
-              ],
-            );
+            return Wrap(spacing: 12, runSpacing: 12, children: [
+              for (final card in visible)
+                SizedBox(width: (constraints.maxWidth - 12) / 2, child: card),
+            ]);
           }),
         ],
       ),
@@ -1690,7 +1773,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   Widget build(BuildContext context) {
     if (rulesOpen) return _rulesPage();
     if (diagnosticsOpen) {
-      return _diagnosticsPage();
+      return _cityPreviewAllowed ? _diagnosticsPage() : _gameLibrary();
     }
     if (rankingGame != null) {
       return _rankingPage(rankingGame!);
