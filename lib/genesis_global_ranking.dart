@@ -105,6 +105,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
     'defender' => 'GENESIS DEFENDER',
     'wolf' => 'WILK I JAJKA',
     'blocks' => 'GENESIS BLOCKS',
+    'snake' => 'GENESIS SNAKE',
     _ => key.replaceAll('_', ' ').toUpperCase(),
   };
 

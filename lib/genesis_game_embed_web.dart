@@ -509,7 +509,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _notifyGameScoreStatus(String key, String state, int points, [String detail = '']) {
     final view = key == 'wolf' ? wolfView : key == 'blocks' ? blocksView
-      : key == 'signal' ? signalView : defenderView;
+      : key == 'snake' ? snakeView : key == 'signal' ? signalView : defenderView;
     final frame = frames[view];
     if (frame == null) return;
     try {
@@ -601,7 +601,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               scoreNotice = GenesisLanguage.copy(
                 '✓ Wynik zapisany w rankingu! 🏆',
                 '✓ Score saved to leaderboard! 🏆');
-              if (rankingGame == (key == 'signal' ? 0 : key == 'defender' ? 1 : key == 'blocks' ? 3 : 2)) {
+              if (rankingGame == gameKeys.indexOf(key)) {
                 rankingFuture = _leaders(key);
               }
             });
