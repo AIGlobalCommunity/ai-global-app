@@ -104,13 +104,13 @@ $('tray').addEventListener('pointerdown',e=>{
  g.classList.add('visible');g.style.gap='3px';
  const w=(Math.max(...p.shape.map(v=>v[0]))+1)*size;
  const h=(Math.max(...p.shape.map(v=>v[1]))+1)*size;
- drag={index,x:e.clientX,y:e.clientY,offsetX:w/2,offsetY:h/2};
+ drag={index,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,offsetX:w/2,offsetY:h/2};
  dragPosition(e.clientX,e.clientY);paintTray();
 });
 document.addEventListener('pointermove',e=>{if(drag){e.preventDefault();dragPosition(e.clientX,e.clientY)}},{passive:false});
 function finishDrag(e){
  if(!drag)return;
- const index=drag.index,validDrop=insideBoard(e.clientX,e.clientY);
+ const index=drag.index,wasTap=Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<12,validDrop=insideBoard(e.clientX,e.clientY);
  const target=validDrop?pos(e):null;
  drag=null;$('drag-ghost').classList.remove('visible');
  if(dragRAF){cancelAnimationFrame(dragRAF);dragRAF=0}
@@ -118,8 +118,8 @@ function finishDrag(e){
  if(target&&tray[index]&&valid(tray[index],target.x,target.y)){
   selected=index;place(target.x,target.y);
  }else{
-  // Invalid placement: no points, no board changes, piece returns to its original slot.
-  selected=-1;paintPreview();paintTray();if(target)beep(180);
+  // A tap selects the piece; an invalid drag returns it to the tray.
+  selected=wasTap?index:-1;paintPreview();paintTray();if(target&&!wasTap)beep(180);
  }
 }
 document.addEventListener('pointerup',finishDrag);
