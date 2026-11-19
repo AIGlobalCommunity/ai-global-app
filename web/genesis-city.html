@@ -53,8 +53,8 @@ function report(){
  // Send even when localStorage is disabled; the parent owns the Supabase write.
  try{if(parent!==window)parent.postMessage(JSON.stringify(payload),location.origin)}catch(e){}
 }
-function finish(){playing=false;report();genesisShowEndShare('city',score);document.getElementById('menu').style.display='grid';document.getElementById('summary').textContent='Koniec trasy! '+score+' pkt · Dostawy: '+delivered+'. Spróbuj ponownie!';document.getElementById('start').textContent='↻ ZAGRAJ PONOWNIE'}
-function start(){genesisHideEndShare();score=0;damage=0;delivered=0;elapsed=0;onFoot=false;ammo=0;wanted=0;shots=[];vehicleId=null;carColor='#f5c75d';police.forEach(p=>{const q=rndRoad();p.x=q.x;p.y=q.y});for(const p of pickups)p.active=true;player.x=1500;player.y=1500;player.a=0;player.s=0;for(const p of packages)p.done=false;playing=true;paused=false;document.getElementById('menu').style.display='none';last=performance.now();requestAnimationFrame(frame)}
+function finish(){playing=false;report();try{if(typeof genesisShowEndShare==='function')genesisShowEndShare('city',score)}catch(e){console.warn('Share screen:',e)}document.getElementById('menu').style.display='grid';document.getElementById('summary').textContent='Koniec trasy! '+score+' pkt · Dostawy: '+delivered+'. Spróbuj ponownie!';document.getElementById('start').textContent='↻ ZAGRAJ PONOWNIE'}
+function start(){try{if(typeof genesisHideEndShare==='function')genesisHideEndShare()}catch(e){console.warn('Share reset:',e)}score=0;damage=0;delivered=0;elapsed=0;onFoot=false;ammo=0;wanted=0;shots=[];vehicleId=null;carColor='#f5c75d';police.forEach(p=>{const q=rndRoad();p.x=q.x;p.y=q.y});for(const p of pickups)p.active=true;player.x=1500;player.y=1500;player.a=0;player.s=0;for(const p of packages)p.done=false;playing=true;paused=false;document.getElementById('menu').style.display='none';last=performance.now();requestAnimationFrame(frame)}
 const carPark={x:1500,y:1500,a:0};
 function repair(){if(!playing)return;damage=0;player.s=0;sound(420,.25,'triangle');hud()}
 function toggleVehicle(){
@@ -230,11 +230,11 @@ mini.clearRect(0,0,110,110);mini.fillStyle='#0a2430';mini.fillRect(0,0,110,110);
 }
 function frame(t){if(!playing)return;let dt=Math.min((t-last)/1000,.05);last=t;if(!paused)update(dt);draw();requestAnimationFrame(frame)}
 document.getElementById('sound').onclick=()=>{soundOn=!soundOn;document.getElementById('sound').textContent=soundOn?'🔊 DŹWIĘK':'🔇 DŹWIĘK';if(soundOn){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume();sound(620,.12)}catch(e){soundOn=false}}};
-document.getElementById('start').onclick=()=>{try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume()}catch(e){}start()};
+document.getElementById('start').onclick=()=>{try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume()}catch(e){}try{start()}catch(error){console.error('Genesis City start failed',error);document.getElementById('summary').textContent='Nie udało się uruchomić gry: '+error.message;document.getElementById('menu').style.display='grid'}};
 document.getElementById('repair').onclick=repair;
 document.getElementById('enter').onclick=toggleVehicle;
 document.getElementById('shoot').onclick=fire;
-document.getElementById('touchShoot').onclick=fire;document.getElementById('pause').onclick=()=>{if(!playing)return;paused=!paused;document.getElementById('pause').textContent=paused?'▶ WZNÓW':'⏸ PAUZA'};document.getElementById('share').onclick=()=>genesisShowEndShare('city',score);
+document.getElementById('touchShoot').onclick=fire;document.getElementById('pause').onclick=()=>{if(!playing)return;paused=!paused;document.getElementById('pause').textContent=paused?'▶ WZNÓW':'⏸ PAUZA'};document.getElementById('share').onclick=()=>{if(typeof genesisShowEndShare==='function')genesisShowEndShare('city',score)};
 document.getElementById('exit').onclick=()=>{report();if(parent!==window)parent.postMessage(JSON.stringify({type:'genesis-city-exit-fullscreen',game:'city'}),location.origin);else location.href='/';};
 addEventListener('keydown',e=>{if(!e.repeat&&e.code==='KeyE')toggleVehicle();if(!e.repeat&&e.code==='KeyR')repair();if(e.code==='KeyF')fire();if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys.add(e.code)});addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());for(const b of document.querySelectorAll('[data-k]')){b.addEventListener('pointerdown',e=>{e.preventDefault();keys.add(b.dataset.k);b.setPointerCapture(e.pointerId)});for(const ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,()=>keys.delete(b.dataset.k))}
 hud();draw();
