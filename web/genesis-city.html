@@ -1,8 +1,14 @@
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>GENESIS CITY 2D — Warszawa Śródmieście</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08101a;color:white;font:14px system-ui}canvas{display:block;width:100vw;height:100dvh;touch-action:none}#hud{position:fixed;top:12px;left:12px;background:#081626d9;border:1px solid #5ddbc6;border-radius:14px;padding:11px 15px;pointer-events:none;line-height:1.7;max-width:55vw}#hud b{color:#ffd16b}#map{position:fixed;right:12px;top:12px;width:110px;height:110px;border-radius:50%;border:3px solid #d6b66e;background:#07121dcc}#controls{position:fixed;bottom:18px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}.pad{display:grid;grid-template-columns:repeat(3,55px);grid-template-rows:repeat(2,55px);gap:6px}.pedal{display:flex;gap:10px}.key{pointer-events:auto;border:1px solid #ffd16b88;border-radius:15px;background:#07192cbb;color:#fff;font-size:22px;font-weight:900;touch-action:none;user-select:none}.key:active{background:#1e8b8a}.pedal .key{height:85px;width:73px;font-size:14px}#top{position:fixed;right:12px;top:134px;display:flex;gap:7px;flex-direction:column}#top button,#menu button{border:1px solid #f5d37d;background:#0e283c;color:#fff;border-radius:11px;padding:9px;cursor:pointer;font-weight:bold}#menu{position:fixed;inset:0;display:grid;place-items:center;background:#030a15bd}#panel{width:min(460px,92vw);background:#0b1c30;border:2px solid #f3c86a;border-radius:24px;padding:30px;text-align:center;box-shadow:0 20px 80px #000}#panel h1{color:#f3c86a;font-size:32px;margin:0}#panel p{line-height:1.6}#panel button{padding:13px 25px;background:#e9bd64;color:#102032}#tip{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);background:#091c2cda;padding:8px 12px;border-radius:9px;text-align:center;pointer-events:none;white-space:nowrap}@media(max-width:650px){#hud{font-size:11px;padding:7px}#map{width:85px;height:85px}#top{top:102px}.pad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,48px)}.pedal .key{width:61px;height:77px}#tip{bottom:120px;font-size:11px}}
-</style></head><body><canvas id="world"></canvas><canvas id="map" width="110" height="110"></canvas><div id="hud">🌆 <b>GENESIS CITY 2D · WARSZAWA</b><div id="status">🚘 Auto · 💰 0 pkt · ⭐ 0/5</div><div id="mission">Misja: dotrzyj do złotego znacznika</div><div id="best">Rekord: 0</div></div><div id="top"><button id="exit">✕ WYJDŹ</button><button id="pause">⏸ PAUZA</button><button id="share">↗ WYNIK</button><button id="repair">🔧 REGENERUJ AUTO</button><button id="enter">🚶 WYJDŹ / WSIĄDŹ</button><button id="shoot">🎯 STRZAŁ</button></div><div style="position:fixed;bottom:2px;right:5px;font-size:10px;background:#061626bb;pointer-events:none">© OpenStreetMap contributors</div><div id="tip">WASD / strzałki · E: wyjdź / przejmij pobliskie auto · R: regeneruj · F: strzał</div><div id="controls"><div class="pad"><span></span><button class="key" data-k="ArrowUp">▲</button><span></span><button class="key" data-k="ArrowLeft">◀</button><button class="key" data-k="ArrowDown">▼</button><button class="key" data-k="ArrowRight">▶</button></div><div class="pedal"><button class="key" data-k="Space">HAMULEC</button><button class="key" data-k="ShiftLeft">NITRO ⚡</button><button class="key" id="touchShoot">🎯</button></div></div><div id="menu"><div id="panel"><h1>GENESIS CITY 2D</h1><h2>WARSZAWA ŚRÓDMIEŚCIE · STREET DRIVER</h2><p>Podkład OpenStreetMap przedstawia rzeczywiste centrum Warszawy. Ruch i kolizje nadal korzystają z uproszczonej siatki. Miejsca: Marszałkowska, Aleje Jerozolimskie, Świętokrzyska, Nowy Świat i Wisła. Samochody jadą prawą stroną jezdni. Na chodnikach spacerują piesi. Wykonuj dostawy i unikaj kolizji.</p><p id="summary">Gotowy na pierwszą trasę?</p><button id="start">▶ ROZPOCZNIJ</button></div></div><script src="genesis-share-end.js"></script><script>
+</style></head><body><canvas id="world"></canvas><canvas id="map" width="110" height="110"></canvas><div id="hud">🌆 <b>GENESIS CITY 2D · WARSZAWA</b><div id="status">🚘 Auto · 💰 0 pkt · ⭐ 0/5</div><div id="mission">Misja: dotrzyj do złotego znacznika</div><div id="best">Rekord: 0</div><div id="crime" style="color:#ffb7a0">🚦 Przestrzegaj przepisów</div></div><div id="top"><button id="exit">✕ WYJDŹ</button><button id="pause">⏸ PAUZA</button><button id="share">↗ WYNIK</button><button id="sound">🔊 DŹWIĘK</button><button id="repair">🔧 REGENERUJ AUTO</button><button id="enter">🚶 WYJDŹ / WSIĄDŹ</button><button id="shoot">🎯 STRZAŁ</button></div><div style="position:fixed;bottom:2px;right:5px;font-size:10px;background:#061626bb;pointer-events:none">© OpenStreetMap contributors</div><div id="tip">WASD / strzałki · E: wyjdź / przejmij pobliskie auto · R: regeneruj · F: strzał</div><div id="controls"><div class="pad"><span></span><button class="key" data-k="ArrowUp">▲</button><span></span><button class="key" data-k="ArrowLeft">◀</button><button class="key" data-k="ArrowDown">▼</button><button class="key" data-k="ArrowRight">▶</button></div><div class="pedal"><button class="key" data-k="Space">HAMULEC</button><button class="key" data-k="ShiftLeft">NITRO ⚡</button><button class="key" id="touchShoot">🎯</button></div></div><div id="menu"><div id="panel"><h1>GENESIS CITY 2D</h1><h2>WARSZAWA ŚRÓDMIEŚCIE · STREET DRIVER</h2><p>Podkład OpenStreetMap przedstawia rzeczywiste centrum Warszawy. Ruch i kolizje nadal korzystają z uproszczonej siatki. Miejsca: Marszałkowska, Aleje Jerozolimskie, Świętokrzyska, Nowy Świat i Wisła. Samochody jadą prawą stroną jezdni. Na chodnikach spacerują piesi. Wykonuj dostawy i unikaj kolizji.</p><p id="summary">Gotowy na pierwszą trasę?</p><button id="start">▶ ROZPOCZNIJ</button></div></div><script src="genesis-share-end.js"></script><script>
 (()=>{'use strict';const c=document.getElementById('world'),ctx=c.getContext('2d'),mini=document.getElementById('map').getContext('2d');let W=0,H=0,dpr=1;function resize(){W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,2);c.width=W*dpr;c.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
-const world=3600,grid=300,road=92,keys=new Set(),player={x:1500,y:1500,a:0,s:0},cars=[],packages=[],buildings=[],people=[];let crashes=[],police=[],gangsters=[],carColor="#f5c75d",vehicleId=null,stains=[],onFoot=false,ammo=0,shots=[],pickups=[],wanted=0,shotCooldown=0,score=0,delivered=0,damage=0,playing=false,paused=false,last=0,mission=0,best=Number(localStorage.getItem('genesis-city-best')||0),elapsed=0;
+const world=3600,grid=300,road=92,keys=new Set(),player={x:1500,y:1500,a:0,s:0},cars=[],packages=[],buildings=[],people=[];let audioCtx=null,soundOn=true,lastEngine=0,crimeLabel="Brak zgłoszeń",crimeUntil=0,crashes=[],police=[],gangsters=[],carColor="#f5c75d",vehicleId=null,stains=[],onFoot=false,ammo=0,shots=[],pickups=[],wanted=0,shotCooldown=0,score=0,delivered=0,damage=0,playing=false,paused=false,last=0,mission=0,best=Number(localStorage.getItem('genesis-city-best')||0),elapsed=0;
+function sound(freq=300,duration=.12,type='sine',volume=.035){if(!soundOn||!audioCtx)return;try{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(volume,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+duration);osc.connect(gain).connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+duration)}catch(e){}}
+function crime(name,severity=1){crimeLabel=name;crimeUntil=elapsed+8;wanted=Math.min(5,wanted+severity);sound(480,.16,'sawtooth',.035);hud()}
+function trafficLight(x,y){return Math.floor((elapsed+(x+y)/grid*2)/7)%3===0?'green':Math.floor((elapsed+(x+y)/grid*2)/7)%3===1?'yellow':'red'}
+const roundabouts=[{x:900,y:900,r:70},{x:2100,y:1800,r:70}];
+function onRoundabout(x,y){return roundabouts.some(r=>Math.abs(Math.hypot(x-r.x,y-r.y)-r.r)<road*.55)}
+function nearRedLight(x,y,dir){const aheadX=x+Math.sin(dir)*60,aheadY=y-Math.cos(dir)*60;const ix=Math.round(aheadX/grid)*grid,iy=Math.round(aheadY/grid)*grid;return Math.hypot(aheadX-ix,aheadY-iy)<85&&trafficLight(ix,iy)==='red'}
 const rand=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const roads=v=>{let n=((v%grid)+grid)%grid;return n<road/2||n>grid-road/2};
 const rndRoad=()=>{let k=Math.floor(rand(1,11))*grid;return Math.random()<.5?{x:k,y:rand(100,world-100)}:{x:rand(100,world-100),y:k}};
@@ -34,12 +40,12 @@ for(let i=0;i<7;i++){let p=rndRoad();police.push({x:p.x,y:p.y,a:0,s:85})}
 for(let i=0;i<10;i++){let p=rndRoad();gangsters.push({x:p.x,y:p.y,a:rand(0,6.28),s:rand(12,26),cool:0})}
 for(let i=0;i<95;i++){const axis=i%2?'v':'h',line=Math.floor(rand(1,11))*grid,side=i%4<2?-1:1;const offset=side*(road/2+12);people.push(axis==='v'?{x:line+offset,y:rand(0,world),axis,dir:i%3?-1:1,s:rand(9,24),color:['#f4a2a2','#9bc9eb','#efc578','#b7a3db'][i%4]}:{x:rand(0,world),y:line+offset,axis,dir:i%3?-1:1,s:rand(9,24),color:['#f4a2a2','#9bc9eb','#efc578','#b7a3db'][i%4]})}
 for(let i=0;i<18;i++){const p=rndRoad();pickups.push({x:p.x,y:p.y,active:true})}
-const missionPoint=()=>packages.find(p=>!p.done)||null;function hud(){document.getElementById('status').textContent=(onFoot?'🚶 Pieszo':'🚘 '+Math.round(Math.abs(player.s))+' km/h')+' · 💰 '+score+' pkt · 🔫 '+ammo+' · ⭐ '+wanted+'/5 · 🚔 '+police.length;document.getElementById('mission').textContent='Dostawy '+delivered+' · Stan auta '+Math.round(100-damage)+'% · E: pojazd · R: napraw · F: strzał';document.getElementById('best').textContent='Rekord: '+best}
+const missionPoint=()=>packages.find(p=>!p.done)||null;function hud(){document.getElementById('status').textContent=(onFoot?'🚶 Pieszo':'🚘 '+Math.round(Math.abs(player.s))+' km/h')+' · 💰 '+score+' pkt · 🔫 '+ammo+' · ⭐ '+wanted+'/5 · 🚔 '+police.length;document.getElementById('mission').textContent='Dostawy '+delivered+' · Stan auta '+Math.round(100-damage)+'% · E: pojazd · R: napraw · F: strzał';document.getElementById('best').textContent='Rekord: '+best;document.getElementById('crime').textContent=elapsed<crimeUntil?'🚨 PRZESTĘPSTWO: '+crimeLabel:'🚦 Brak aktywnego zgłoszenia'}
 function report(){if(score<10)return;let payload={type:'genesis-game-score',game:'city',score:Math.floor(score),level:Math.min(1000,delivered+1),at:Date.now()};try{localStorage.setItem('agc-game-pending-city',JSON.stringify(payload));if(parent!==window)parent.postMessage(JSON.stringify(payload),location.origin)}catch(e){}}
 function finish(){playing=false;report();genesisShowEndShare('city',score);document.getElementById('menu').style.display='grid';document.getElementById('summary').textContent='Koniec trasy! '+score+' pkt · Dostawy: '+delivered+'. Spróbuj ponownie!';document.getElementById('start').textContent='↻ ZAGRAJ PONOWNIE'}
 function start(){genesisHideEndShare();score=0;damage=0;delivered=0;elapsed=0;onFoot=false;ammo=0;wanted=0;shots=[];vehicleId=null;carColor='#f5c75d';police.forEach(p=>{const q=rndRoad();p.x=q.x;p.y=q.y});for(const p of pickups)p.active=true;player.x=1500;player.y=1500;player.a=0;player.s=0;for(const p of packages)p.done=false;playing=true;paused=false;document.getElementById('menu').style.display='none';last=performance.now();requestAnimationFrame(frame)}
 const carPark={x:1500,y:1500,a:0};
-function repair(){if(!playing)return;damage=0;player.s=0;hud()}
+function repair(){if(!playing)return;damage=0;player.s=0;sound(420,.25,'triangle');hud()}
 function toggleVehicle(){
  if(!playing||paused)return;
  if(!onFoot){
@@ -52,16 +58,19 @@ function toggleVehicle(){
    if(nearby){
      vehicleId=nearby.id;nearby.stolen=true;nearby.parked=true;carColor=nearby.color;
      player.x=nearby.x;player.y=nearby.y;player.a=nearby.dir;player.s=0;
-     wanted=Math.min(5,wanted+2);onFoot=false;
+     crime('Kradzież pojazdu',2);onFoot=false;
    }else if(Math.hypot(player.x-carPark.x,player.y-carPark.y)<65){
      vehicleId=null;carColor='#f5c75d';player.x=carPark.x;player.y=carPark.y;player.a=carPark.a;player.s=0;onFoot=false;
    }else{return}
  }
  hud();
 }
-function fire(){if(!playing||paused||!onFoot||ammo<=0||shotCooldown>0)return;ammo--;shotCooldown=.24;shots.push({x:player.x,y:player.y,a:player.a,life:.8});wanted=Math.min(5,wanted+1);hud()}
+function fire(){if(!playing||paused||!onFoot||ammo<=0||shotCooldown>0)return;sound(110,.13,'square',.055);ammo--;shotCooldown=.24;shots.push({x:player.x,y:player.y,a:player.a,life:.8});crime('Strzały w miejscu publicznym',1);hud()}
 function update(dt){
-elapsed+=dt;shotCooldown=Math.max(0,shotCooldown-dt);
+elapsed+=dt;
+if(audioCtx&&!onFoot&&Math.abs(player.s)>10&&elapsed-lastEngine>.32){lastEngine=elapsed;sound(65+Math.abs(player.s)*.45,.17,'sawtooth',.012)}
+if(!onFoot&&Math.abs(player.s)>70&&nearRedLight(player.x,player.y,player.a)&&Math.floor(elapsed)%4===0&&Math.floor(elapsed-dt)%4!==0)crime('Przejazd na czerwonym świetle',0);
+shotCooldown=Math.max(0,shotCooldown-dt);
 const accel=keys.has('ArrowUp')||keys.has('KeyW'),reverse=keys.has('ArrowDown')||keys.has('KeyS'),nitro=keys.has('ShiftLeft'),brake=keys.has('Space');
 let turn=(keys.has('ArrowRight')||keys.has('KeyD')?1:0)-(keys.has('ArrowLeft')||keys.has('KeyA')?1:0);
 if(onFoot){
@@ -78,7 +87,7 @@ if(onFoot){
  player.s=clamp(player.s,-110,nitro?360:230);
  player.a+=turn*dt*2.25*clamp(Math.abs(player.s)/75,0,1)*(player.s<0?-1:1);
  const nx=clamp(player.x+Math.sin(player.a)*player.s*dt,20,world-20),ny=clamp(player.y-Math.cos(player.a)*player.s*dt,20,world-20);
- if(!roads(nx)&&!roads(ny)){player.s*=-.22;damage+=dt*19}else{player.x=nx;player.y=ny}
+ if(!roads(nx)&&!roads(ny)){player.s*=-.22;damage+=dt*.5.5}else{player.x=nx;player.y=ny}
  if(vehicleId===null){carPark.x=player.x;carPark.y=player.y;carPark.a=player.a}
 }
 for(const p of pickups)if(p.active&&Math.hypot(player.x-p.x,player.y-p.y)<30){p.active=false;ammo+=12}
@@ -105,6 +114,7 @@ for(const car of cars){
    if(along>0&&along<120&&across<27)nearest=Math.min(nearest,along);
  }
  if(nearest<85)target=Math.min(target,Math.max(0,(nearest-40)*2));
+ if(nearRedLight(car.x,car.y,car.dir))target=0;
  car.s+=clamp(target-car.s,-180*dt,110*dt);
  const nextX=(car.x+forwardX*car.s*dt+world)%world,nextY=(car.y+forwardY*car.s*dt+world)%world;
  const lane=car.positive?-road*.23:road*.23;
@@ -117,7 +127,7 @@ for(const car of cars){
  if(!blocked){car.x=proposedX;car.y=proposedY}else{car.s=0}
  if(!onFoot&&Math.hypot(player.x-car.x,player.y-car.y)<34){
    const impact=Math.abs(player.s-car.s);
-   if(impact>45&&car.crashTimer<=0){car.crashTimer=rand(2,5);crashes.push({x:car.x,y:car.y,t:4});damage+=Math.min(25,impact*.09)}
+   if(impact>45&&car.crashTimer<=0){car.crashTimer=rand(2,5);crashes.push({x:car.x,y:car.y,t:4});damage+=Math.min(9,impact*.025)}
    player.s*=.5;
  }
 }
@@ -142,12 +152,31 @@ for(const person of people){
  if(person.down>0){person.down-=dt;continue}
  if(person.axis==='v')person.y=(person.y+person.dir*person.s*dt+world)%world;
  else person.x=(person.x+person.dir*person.s*dt+world)%world;
- if(!onFoot&&Math.abs(player.s)>25&&Math.hypot(player.x-person.x,player.y-person.y)<19){person.down=4;stains.push({x:person.x,y:person.y,r:rand(9,18)});wanted=Math.min(5,wanted+1);damage+=2;player.s*=.7}
- for(const bullet of shots)if(bullet.life>0&&Math.hypot(bullet.x-person.x,bullet.y-person.y)<13){person.down=4;stains.push({x:person.x,y:person.y,r:rand(7,14)});bullet.life=0;wanted=Math.min(5,wanted+1)}
+ if(!onFoot&&Math.abs(player.s)>25&&Math.hypot(player.x-person.x,player.y-person.y)<19){person.down=4;stains.push({x:person.x,y:person.y,r:rand(9,18)});crime('Potrącenie pieszego',1);damage+=.5;player.s*=.7}
+ for(const bullet of shots)if(bullet.life>0&&Math.hypot(bullet.x-person.x,bullet.y-person.y)<13){person.down=4;stains.push({x:person.x,y:person.y,r:rand(7,14)});bullet.life=0;crime('Atak na pieszego',1)}
 }
 for(const cop of police){
- if(wanted>0){const dx=player.x-cop.x,dy=player.y-cop.y,dist=Math.hypot(dx,dy)||1;cop.a=Math.atan2(dx,-dy);cop.x+=dx/dist*cop.s*dt;cop.y+=dy/dist*cop.s*dt;if(dist<36){damage+=dt*9;if(onFoot)wanted=Math.max(0,wanted-1)}}
- else{cop.x+=Math.sin(cop.a)*cop.s*.35*dt;cop.y-=Math.cos(cop.a)*cop.s*.35*dt;if(cop.x<40||cop.y<40||cop.x>world-40||cop.y>world-40)cop.a+=Math.PI}
+ // Patrol along the same grid road lanes as civilian traffic; pursue only via intersections.
+ if(!cop.axis){cop.axis='v';cop.line=Math.round(cop.x/grid)*grid;cop.positive=true;cop.s=60}
+ const lane=cop.positive?-road*.23:road*.23;
+ const speed=wanted>0?Math.min(105,65+wanted*8):55;
+ cop.s+=(speed-cop.s)*Math.min(1,dt*2);
+ const targetLine=cop.axis==='v'?Math.round(player.x/grid)*grid:Math.round(player.y/grid)*grid;
+ const coord=cop.axis==='v'?cop.y:cop.x;
+ const intersection=Math.round(coord/grid)*grid;
+ if(Math.abs(coord-intersection)<cop.s*dt+3&&Math.random()<dt*(wanted>0?4:1)){
+   if(cop.axis==='v'){cop.axis='h';cop.line=intersection;cop.positive=targetLine>cop.x}
+   else{cop.axis='v';cop.line=intersection;cop.positive=targetLine>cop.y}
+ }
+ cop.a=cop.axis==='v'?(cop.positive?Math.PI:0):(cop.positive?Math.PI/2:-Math.PI/2);
+ if(!nearRedLight(cop.x,cop.y,cop.a)||wanted>2){
+   cop.x=clamp(cop.x+Math.sin(cop.a)*cop.s*dt,40,world-40);
+   cop.y=clamp(cop.y-Math.cos(cop.a)*cop.s*dt,40,world-40);
+ }
+ if(cop.axis==='v')cop.x=cop.line+(cop.positive?-road*.23:road*.23);
+ else cop.y=cop.line+(cop.positive?-road*.23:road*.23);
+ if(cop.x<=40||cop.x>=world-40||cop.y<=40||cop.y>=world-40)cop.positive=!cop.positive;
+ if(wanted>0&&Math.hypot(player.x-cop.x,player.y-cop.y)<36)damage+=dt*1.5;
 }
 for(const gangster of gangsters){gangster.cool-=dt;if(gangster.cool<=0){gangster.a+=rand(-1.2,1.2);gangster.cool=rand(1,3)}gangster.x=clamp(gangster.x+Math.sin(gangster.a)*gangster.s*dt,30,world-30);gangster.y=clamp(gangster.y-Math.cos(gangster.a)*gangster.s*dt,30,world-30);if(Math.hypot(player.x-gangster.x,player.y-gangster.y)<28&&onFoot)damage+=dt*3}
 for(const p of packages)if(!p.done&&Math.hypot(player.x-p.x,player.y-p.y)<43){p.done=true;delivered++;score+=100+Math.max(0,Math.round(100-damage));if(score>best){best=score;localStorage.setItem('genesis-city-best',String(best))}report()}
@@ -167,6 +196,10 @@ for(let x=x0;x<Math.min(world,player.x+W/zoom+grid);x+=grid)for(let y=y0;y<Math.
  ctx.fillStyle='#253a46';ctx.fillRect(x-road/2,y-road/2,grid+road,road);ctx.fillRect(x-road/2,y-road/2,road,grid+road);
  ctx.strokeStyle='#e7d8a7bb';ctx.lineWidth=2;ctx.setLineDash([17,19]);ctx.beginPath();ctx.moveTo(x-road*.25,y);ctx.lineTo(x-road*.25,y+grid);ctx.moveTo(x+road*.25,y);ctx.lineTo(x+road*.25,y+grid);ctx.moveTo(x,y-road*.25);ctx.lineTo(x+grid,y-road*.25);ctx.moveTo(x,y+road*.25);ctx.lineTo(x+grid,y+road*.25);ctx.stroke();ctx.setLineDash([]);
  ctx.strokeStyle='#ffdc8b99';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,y+road/2);ctx.lineTo(x+grid,y+road/2);ctx.moveTo(x+road/2,y);ctx.lineTo(x+road/2,y+grid);ctx.stroke();
+ // Roundabouts replace the sharp square intersection with circular traffic islands.
+ const circle=roundabouts.find(r=>r.x===x&&r.y===y);
+ if(circle){ctx.fillStyle='#34434a';ctx.beginPath();ctx.arc(x,y,road*.85,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3d8061';ctx.beginPath();ctx.arc(x,y,road*.36,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e7c982';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,road*.65,0,Math.PI*2);ctx.stroke()}
+ else{const light=trafficLight(x,y);ctx.fillStyle='#152028';ctx.fillRect(x+road/2+4,y-road/2-22,12,27);ctx.fillStyle=light==='red'?'#f44848':'#5b2d35';ctx.beginPath();ctx.arc(x+road/2+10,y-road/2-16,4,0,7);ctx.fill();ctx.fillStyle=light==='yellow'?'#f9cf45':'#5b5130';ctx.beginPath();ctx.arc(x+road/2+10,y-road/2-9,4,0,7);ctx.fill();ctx.fillStyle=light==='green'?'#50e49c':'#234b3e';ctx.beginPath();ctx.arc(x+road/2+10,y-road/2-2,4,0,7);ctx.fill()}
  ctx.fillStyle='#dce5e3';for(let z=-30;z<=30;z+=12){ctx.fillRect(x-34+z,y-48,7,18);ctx.fillRect(x-34+z,y+30,7,18);ctx.fillRect(x-48,y-34+z,18,7);ctx.fillRect(x+30,y-34+z,18,7)}
  ctx.fillStyle='#e2e6dc';ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText(streetsX[Math.round(x/grid)%streetsX.length],x+52,y-54);ctx.save();ctx.translate(x-53,y+55);ctx.rotate(-Math.PI/2);ctx.fillText(streetsY[Math.round(y/grid)%streetsY.length],0,0);ctx.restore();
 }
@@ -185,7 +218,8 @@ if(onFoot){if(vehicleId===null)carShape(carPark.x,carPark.y,carPark.a,'#f5c75d')
 mini.clearRect(0,0,110,110);mini.fillStyle='#0a2430';mini.fillRect(0,0,110,110);mini.fillStyle='#277b98';mini.fillRect(94,0,16,110);mini.strokeStyle='#668b9a';mini.lineWidth=2;for(let n=0;n<=110;n+=10){mini.beginPath();mini.moveTo(n,0);mini.lineTo(n,110);mini.moveTo(0,n);mini.lineTo(110,n);mini.stroke()}mini.fillStyle='#ffcf65';mini.beginPath();mini.arc(55,55,5,0,7);mini.fill();const p=missionPoint();if(p){mini.fillStyle='#75f9bd';mini.beginPath();mini.arc(55+(p.x-player.x)/45,55+(p.y-player.y)/45,4,0,7);mini.fill()}
 }
 function frame(t){if(!playing)return;let dt=Math.min((t-last)/1000,.05);last=t;if(!paused)update(dt);draw();requestAnimationFrame(frame)}
-document.getElementById('start').onclick=start;
+document.getElementById('sound').onclick=()=>{soundOn=!soundOn;document.getElementById('sound').textContent=soundOn?'🔊 DŹWIĘK':'🔇 DŹWIĘK';if(soundOn){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume();sound(620,.12)}catch(e){soundOn=false}}};
+document.getElementById('start').onclick=()=>{try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume()}catch(e){}start()};
 document.getElementById('repair').onclick=repair;
 document.getElementById('enter').onclick=toggleVehicle;
 document.getElementById('shoot').onclick=fire;
