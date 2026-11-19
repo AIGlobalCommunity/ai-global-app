@@ -704,7 +704,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           }
           if (confirmed) {
             _clearConfirmedScore(key, points);
-            if (updated == true) GenesisGlobalRanking.scoreRevision.value++;
+            GenesisGlobalRanking.scoreRevision.value++;
             _notifyGameScoreStatus(key, 'saved', points);
             lastSaveStatus = 'POTWIERDZONE: $key · $points pkt';
             setState(() {
