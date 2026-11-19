@@ -409,7 +409,7 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
               key: const Key('account_show_nick_in_rankings'),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero, value: nicknamePublic,
-              onChanged: (value) => setState(() => nicknamePublic = value),
+              onChanged: (value) => setState(() => nicknamePublic = value ?? false),
               title: Text(socialText(
                 'Pokazuj pseudonim w rankingu', 'Show nickname in ranking')),
               subtitle: Text(socialText(
