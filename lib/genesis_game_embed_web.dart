@@ -972,7 +972,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         scoreNotice = null;
       });
     }
-    return SizedBox(height: 590, child: Container(
+    return SizedBox(height: 500, child: Container(
       decoration: BoxDecoration(
         color: const Color(0xFF071525),
         borderRadius: BorderRadius.circular(21),
@@ -1099,7 +1099,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           (Icons.leaderboard_outlined, 'Ranking graczy'),
           (Icons.emoji_events_outlined, 'Pobij swój rekord'),
         ];
-    return SizedBox(height: 590, child: Container(
+    return SizedBox(height: 500, child: Container(
       decoration: BoxDecoration(
         color: const Color(0xFF071525),
         borderRadius: BorderRadius.circular(21),
