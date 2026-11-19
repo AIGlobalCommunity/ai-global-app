@@ -484,6 +484,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   Future<List<Map<String, dynamic>>> _leaders(String key) async {
+    if (!AgcBackend.configured) {
+      throw StateError('Brak połączenia z bazą Supabase. Sprawdź konfigurację i odśwież stronę.');
+    }
     final raw = await AgcBackend.client
       .from('agc_game_scores')
       .select('member_id,best_score,best_level,updated_at')
@@ -600,9 +603,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                           'Could not load leaderboard.'),
                           textAlign: TextAlign.center),
                         const SizedBox(height: 8),
-                        Text('${snapshot.error}',
+                        SelectableText('${snapshot.error}',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 11)),
+                          style: const TextStyle(fontSize: 12, color: Color(0xFFFFC777))),
                         const SizedBox(height: 12),
                         FilledButton.icon(
                           onPressed: () => _showRanking(selectedGame),
@@ -1072,54 +1075,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     ));
   }
 
-  Future<void> _showGameStatistics(int index) async {
-    final key = index == 2 ? 'wolf' : 'blocks';
-    final title = index == 2 ? 'WILK I JAJKA' : 'GENESIS BLOCKS';
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('📊 STATYSTYKI · $title'),
-        content: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _leaders(key),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Text('Nie udało się pobrać statystyk: ${snapshot.error}');
-            }
-            if (!snapshot.hasData) return const SizedBox(
-              height: 70, child: Center(child: CircularProgressIndicator()));
-            final players = snapshot.data!;
-            final mine = players.where((p) =>
-              p['member_id']?.toString() == AgcBackend.user?.id).toList();
-            final position = players.indexWhere((p) =>
-              p['member_id']?.toString() == AgcBackend.user?.id);
-            return Column(mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Gracze w rankingu TOP 100: ${players.length}'),
-                const SizedBox(height: 10),
-                Text('Twój najlepszy wynik: ${mine.isEmpty ? 'Brak zapisu online' : '${mine.first['best_score']} pkt'}'),
-                const SizedBox(height: 10),
-                Text('Twoje miejsce: ${position < 0 ? 'Poza TOP 100 / brak wyniku' : '#${position + 1}'}'),
-                const SizedBox(height: 10),
-                const Text('Statystyki pokazują wyłącznie potwierdzone wyniki online.'),
-              ]);
-          },
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('ZAMKNIJ')),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              _showRanking(index);
-            },
-            icon: const Icon(Icons.emoji_events_outlined),
-            label: const Text('RANKING'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _arcadeExtraCard({required int index}) {
     final wolf = index == 2;
     final accent = wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
@@ -1217,9 +1172,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                     Expanded(child: Text(featureText, style: const TextStyle(
                       color: Color(0xFFD5E5F1), fontSize: 13))),
                   ])),
-              TextButton.icon(onPressed: () => _showGameStatistics(index),
-                icon: const Icon(Icons.bar_chart_rounded),
-                label: const Text('📊 STATYSTYKI GRY')),
               const Spacer(),
               Row(children: [
                 _arcadeButton(onPressed: openGame, primary: true, accent: accent,
