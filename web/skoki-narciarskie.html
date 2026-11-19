@@ -2,23 +2,38 @@
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Skoki narciarskie</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#102638;color:white;font:600 15px system-ui}main{height:100vh;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto}header,footer{background:#102638;padding:10px max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left))}header{display:flex;align-items:center;justify-content:space-between;padding-top:max(8px,env(safe-area-inset-top));gap:8px}header strong{font-size:clamp(16px,3.2vw,24px)}small{display:block;color:#a1dbe7}button{min-height:44px;border:1px solid #528194;border-radius:10px;background:#1b4054;color:white;font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.53}#exit{width:44px;font-size:24px}canvas{width:100%;height:100%;display:block;background:#92c6df}footer{padding-bottom:max(10px,env(safe-area-inset-bottom));text-align:center}#note{margin:0 0 8px}nav{display:flex;justify-content:center;gap:8px}nav button{min-width:50px}#action{background:#ffcc70;color:#102638;border:0;padding:0 22px}#metrics{font-variant-numeric:tabular-nums;color:#c9eff4;font-size:14px}@media(max-height:430px){header,footer{padding-top:4px;padding-bottom:4px}#note{margin:0 0 3px}}
-</style></head><body><main><header><div><strong>Skoki narciarskie</strong><small id="hill"></small></div><div id="metrics"></div><button id="exit" aria-label="Zamknij grę">×</button></header><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script>
+header{gap:6px}header>div:first-child{min-width:0;flex:1}#hill{display:block;width:100%;max-width:350px;border:0;background:#102638;color:#b5ecff;font:inherit;font-size:13px}#hill:disabled{opacity:1}#music{min-width:44px}#music[aria-pressed=false]{color:#99aaba;text-decoration:line-through}#scene{touch-action:none}#action{min-width:min(54vw,235px)}#metrics{max-width:130px}#note{min-height:2.4em;align-content:center}@media(max-height:430px){#note{min-height:1.25em}}@media(max-width:480px){#metrics{max-width:82px;font-size:12px}header,footer{padding-left:8px;padding-right:8px}}
+</style></head><body><main><header><div><strong>Skoki narciarskie</strong><select id="hill" aria-label="Wybierz odblokowaną skocznię"></select></div><div id="metrics"></div><button id="music" aria-label="Muzyka" aria-pressed="true">♫</button><button id="exit" aria-label="Zamknij grę">×</button></header><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script>
 'use strict';
+// HS, venue, scenery, qualifying distance as a fraction of HS, wind strength.
 const hills=[
-  {hs:35,name:'Leśna polana',sky:'#90c9dc'},
-  {hs:65,name:'Klubowa skocznia',sky:'#72b4d3'},
-  {hs:100,name:'Centrum treningowe',sky:'#659bbc'},
-  {hs:140,name:'Arena mistrzowska',sky:'#667ba9'},
-  {hs:235,name:'Mamucia skocznia',sky:'#424f7c'}
-];
+  [35,'Leśna polana','forest',.72,.25], [40,'Brzozowy stok','dawn',.74,.32],
+  [45,'Nad potokiem','lake',.75,.36], [50,'Sosnowa dolina','forest',.77,.42],
+  [55,'Puchar podhalańskiej wsi','sunset',.78,.46], [60,'Przełęcz we mgle','mist',.76,.56],
+  [65,'Klubowa skocznia','forest',.80,.50], [70,'Błękitna zatoka','lake',.82,.57],
+  [75,'Świerkowy grzbiet','snow',.79,.63], [80,'Skocznia o świcie','dawn',.84,.60],
+  [85,'Turniej nad fiordem','fjord',.83,.70], [92,'Lodowy kocioł','ice',.85,.68],
+  [100,'Centrum treningowe','lake',.86,.66], [105,'Nocny puchar','night',.87,.75],
+  [110,'Zachodni wiatr','sunset',.85,.89], [115,'Biała grań','snow',.88,.78],
+  [120,'Północne światła','aurora',.89,.82], [130,'Wysoka przełęcz','mist',.87,.95],
+  [140,'Arena mistrzowska','night',.90,.84], [150,'Puchar lodowca','ice',.91,.90],
+  [165,'Stadion pod zorzą','aurora',.90,.98], [180,'Loty nad fiordem','fjord',.92,1],
+  [200,'Złota dolina','sunset',.93,1.02], [215,'Noc polarna','aurora',.94,1.05],
+  [235,'Mamucia skocznia','night',.95,1.10]
+].map(([hs,name,theme,goal,gust])=>({hs,name,theme,goal,gust}));
 const el=id=>document.getElementById(id), canvas=el('scene'), ctx=canvas.getContext('2d');
 function stored(key){try{return Number(localStorage.getItem(key))||0}catch{return 0}}
 function persist(key,value){try{localStorage.setItem(key,String(value))}catch{}}
-let stage=Math.max(0,Math.min(4,Math.floor(stored('ski-unlocked-stage')))),best=stored('ski-local-best');
+const legacyStages=[0,6,12,18,24];
+let unlocked=Math.max(legacyStages[Math.max(0,Math.min(4,Math.floor(stored('ski-unlocked-stage'))))],Math.min(hills.length-1,Math.floor(stored('ski-tour-unlocked'))));
+let stage=unlocked,best=stored('ski-local-best'),takeoff=null,drag=0,gesture=null;
+const difficulty=()=>stage/(hills.length-1);
+const target=()=>Math.ceil(hills[stage].hs*hills[stage].goal);
+const curvature=()=>.52+.34*difficulty()+.045*Math.sin(stage*2);
 let phase='ready',x=-.52,y=0,vx=0,vy=0,lean=0,wind=0,elapsed=0,landingAt=null;
 let result=0,advance=false,previous=0,distance=0;
 const held=new Set();
-function ramp(t){return .29*t-(.52+.09*stage)*t*t}
+function ramp(t){return .29*t-curvature()*t*t}
 function slope(t){return .085+.41*Math.min(t,1.25)+.09*Math.max(0,t-1.25)}
 function tell(note,button){
   if(el('note').textContent!==note)el('note').textContent=note;
@@ -26,39 +41,50 @@ function tell(note,button){
 }
 function ready(){
   phase='ready';x=-.52;y=ramp(x);lean=0;advance=false;held.clear();
-  el('hill').textContent='Etap '+(stage+1)+' / 5 · '+hills[stage].name+' · HS '+hills[stage].hs;
-  tell('Cel: telemark za linią '+Math.ceil(hills[stage].hs*.72)+' m. Steruj dotykiem lub spacją i strzałkami.','Rozpocznij najazd');
+  takeoff=null;drag=0;gesture=null;landingAt=null;
+  const picker=el('hill');picker.replaceChildren();
+  hills.slice(0,unlocked+1).forEach((h,i)=>picker.add(new Option((i+1)+'/25 · '+h.name+' · HS '+h.hs,i)));
+  picker.value=String(stage);picker.disabled=false;
+  tell('Cel: telemark za linią '+target()+' m. Dotknij planszy lub naciśnij spację.','Rozpocznij najazd');
 }
 function send(message){if(parent!==window)parent.postMessage(JSON.stringify(message),location.origin)}
 function lift(quality){
   phase='flight';x=0;y=0;elapsed=0;lean=0;landingAt=null;
   vx=.32+quality*.08+wind*.008;vy=-.075-quality*.10;
-  tell('Strzałkami koryguj pochylenie. Przygotuj telemark tuż nad zeskokiem.','Telemark');
+  tell('Przeciągnij palcem lub użyj strzałek. Dotknij przy zeskoku.','Telemark');
 }
 function finish(){
   phase='result';distance=Math.round(x*hills[stage].hs*2)/2;
-  const clean=landingAt!==null && elapsed-landingAt<=.74-stage*.055 && Math.abs(lean)<.72;
+  const clean=landingAt!==null && elapsed-landingAt<=.79-.22*difficulty() && Math.abs(lean)<.72;
   result=Math.max(10,Math.round(distance*(clean?1.8:1)+ (clean?30:0)));
-  advance=clean && distance>=Math.ceil(hills[stage].hs*.72) && stage<hills.length-1;
-  if(advance)persist('ski-unlocked-stage',stage+1);
+  advance=clean && distance>=target() && stage<hills.length-1;
+  if(advance){unlocked=Math.max(unlocked,stage+1);persist('ski-tour-unlocked',unlocked)}
   if(result>best){best=result;persist('ski-local-best',best)}
   send({type:'genesis-game-score',game:'ski',score:result,level:stage+1,at:Date.now()});
-  tell(distance+' m · '+(clean?'Telemark':'Lądowanie bez telemarku')+' · '+result+' pkt',advance?'Następna skocznia':'Skocz ponownie');
+  tell((stage===24 && clean && distance>=target()?'Puchar zdobyty! · ':'')+distance+' m · '+(clean?'Telemark':'Lądowanie bez telemarku')+' · '+result+' pkt',advance?'Następna skocznia':'Skocz ponownie');
 }
 function act(){
+  startMusic();
   if(phase==='result'){if(advance)stage++;ready();return}
-  if(phase==='ready'){phase='inrun';elapsed=0;wind=Math.random()*2-1;tell('Wybij się w żółtej strefie na końcu progu.','Wybicie');return}
-  if(phase==='inrun'){lift(Math.max(0,1-Math.abs(x+.018)*8));return}
-  if(phase==='flight' && landingAt===null){landingAt=elapsed;tell('Telemark przygotowany.','Lądowanie')}
+  if(phase==='ready'){phase='inrun';el('hill').disabled=true;elapsed=0;wind=(Math.random()*2-1)*hills[stage].gust;tell('Wybij się w żółtej strefie na końcu progu.','Wybicie');return}
+  if(phase==='inrun'){
+    if(x<-.14){tell('Poczekaj na złoty odcinek progu.','Wybicie');return}
+    takeoff=Math.max(.2,1-Math.abs(x+.035)*6);
+    tell('Wybicie przygotowane.','Wybicie');return;
+  }
+  if(phase==='flight' && landingAt===null){
+    if(vy<=0 || slope(x)-y>.16){tell('Jeszcze za wysoko. Poczekaj na sygnał lądowania.','Telemark');return}
+    landingAt=elapsed;tell('Telemark przygotowany.','Lądowanie')
+  }
 }
 function step(dt){
   elapsed+=dt;
   if(phase==='inrun'){
     x+=(.14+elapsed*.085)*dt;y=ramp(x);
-    if(x>=0)lift(.12);
+    if(x>=0)lift(takeoff??.12);
   }else if(phase==='flight'){
-    const steer=Number(held.has('forward'))-Number(held.has('back'));
-    lean=Math.max(-1,Math.min(1,lean+dt*(steer*1.5+wind*(.13+stage*.045)+.12*Math.sin(elapsed*2))));
+    const steer=drag || Number(held.has('forward'))-Number(held.has('back'));
+    lean=Math.max(-1,Math.min(1,lean+dt*(steer*2.4-lean*1.45+wind*(.28+.38*difficulty())+.16*Math.sin(elapsed*(2+stage%4)))));
     x+=vx*dt;y+=vy*dt;vy+=(.233+.09*Math.abs(lean))*dt;
     if(landingAt===null && vy>0 && slope(x)-y<.12)tell('Teraz telemark!','Telemark');
     if(y>=slope(x)){y=slope(x);finish()}
@@ -71,23 +97,137 @@ function poly(points,color){
 function line(a,b,c,d,color,width){
   ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();
 }
+// Panorama is painted once per venue and viewport, then panned with the jumper.
+const palettes={
+  forest:['#406b91','#e6cfac','#627c87','#244752'], dawn:['#666797','#ffce9f','#8f7588','#47465d'],
+  lake:['#4085a8','#ddf2eb','#6a95ac','#254857'], sunset:['#68547d','#ffad78','#a47480','#4d3d57'],
+  mist:['#748fa1','#d9e3db','#91a4ad','#49636c'], snow:['#627e9b','#d8e7ec','#788e9e','#304759'],
+  fjord:['#346a85','#c9e5da','#587c88','#223e50'], ice:['#467eaa','#c4ebef','#5991ac','#274a69'],
+  night:['#101c44','#756f94','#404c73','#1d2c4c'], aurora:['#122c43','#549395','#3b697b','#173d51']
+};
+let panorama=null,panoramaKey='';
+const alpine=new Image();
+alpine.onload=()=>{panoramaKey=''};
+alpine.src='assets/ski-alpine.webp';
+function drawLandscape(w,h,pos){
+  const key=[stage,w,h].join('/');
+  if(key!==panoramaKey){
+    panoramaKey=key;panorama=document.createElement('canvas');
+    const width=panorama.width=Math.ceil(w*1.14),height=panorama.height=h,c=panorama.getContext('2d');
+    const theme=hills[stage].theme,[top,horizon,rock,pine]=palettes[theme];
+    let seed=31415+stage*919;
+    const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+    function shape(points,ink){c.fillStyle=ink;c.beginPath();points.forEach(([a,b],i)=>i?c.lineTo(a,b):c.moveTo(a,b));c.closePath();c.fill()}
+    const sky=c.createLinearGradient(0,0,0,h*.85);sky.addColorStop(0,top);sky.addColorStop(1,horizon);
+    c.fillStyle=sky;c.fillRect(0,0,width,height);
+    const photo=alpine.complete && alpine.naturalWidth>0;
+    if(photo){
+      const zoom=(1+(stage%4)*.10)*Math.max(width/alpine.naturalWidth,h/alpine.naturalHeight);
+      const pw=alpine.naturalWidth*zoom,ph=alpine.naturalHeight*zoom;
+      c.drawImage(alpine,(width-pw)*(.25+.12*(stage%5)),(h-ph)*.46,pw,ph);
+      const shade={night:'#081531c9',aurora:'#072b40ba',dawn:'#f5a87738',sunset:'#de82594d',mist:'#dbe2df70',ice:'#68cee32e'};
+      c.fillStyle=shade[theme]||'#50709812';c.fillRect(0,0,width,h);
+    }
+    const night=theme==='night'||theme==='aurora';
+    if(night){for(let i=0;i<145;i++){c.fillStyle='rgba(232,249,255,'+(.25+rand()*.6)+')';c.fillRect(rand()*width,rand()*h*.52,1+rand(),1)}}
+    if(!photo||night){
+    const sunX=width*(.60+rand()*.23),sunY=h*(night?.17:.24),radius=Math.min(w,h)*.058;
+    const glow=c.createRadialGradient(sunX,sunY,0,sunX,sunY,radius*3.8);
+    glow.addColorStop(0,'#ffe7b9aa');glow.addColorStop(1,'#ffe7b900');c.fillStyle=glow;c.fillRect(0,0,width,h);
+    c.fillStyle=night?'#e0e9ed':'#ffeac1';c.beginPath();c.arc(sunX,sunY,radius,0,Math.PI*2);c.fill();
+    }
+    if(theme==='aurora'){
+      for(let i=0;i<140;i++){
+        const xx=width*i/139,yy=h*(.16+.052*Math.sin(i*.042)+.02*Math.sin(i*.1));
+        const curtain=c.createLinearGradient(0,yy-h*.18,0,yy);curtain.addColorStop(0,'#74ffd000');curtain.addColorStop(1,'#74ffd080');
+        c.fillStyle=curtain;c.fillRect(xx,yy-h*.18,width/139+1,h*.18);
+      }
+    }
+    if(!photo){
+    for(let layer=0;layer<3;layer++){
+      const segment=width/(4+layer),base=h*(.69+layer*.095);
+      for(let j=-1;j<Math.ceil(width/segment)+1;j++){
+        const xx=(j+rand()*.45)*segment, yy=h*(.18+.13*layer+rand()*.19);
+        const span=segment*(.9+rand()*.45), ridge=[xx+span*.32, yy+(base-yy)*.55];
+        shape([[xx-span,base],[xx,yy],[xx+span,base]],rock);
+        shape([[xx,yy],ridge,[xx+span,base],[xx+span*.22,base]],'#1a385545');
+        const snowline=night?'#c3d4e6':'#edf4f4';
+        shape([[xx-span*.32,yy+(base-yy)*.32],[xx,yy],[xx+span*.31,yy+(base-yy)*.31],[xx+span*.13,yy+(base-yy)*.20],[xx+span*.10,yy+(base-yy)*.26],[xx,yy+(base-yy)*.12],[xx-span*.12,yy+(base-yy)*.24]],snowline);
+      }
+      if(layer<2){c.fillStyle=night?'#7578a019':'#e7edf22a';c.fillRect(0,h*.40,width,h*.6)}
+    }
+    if(['lake','fjord','ice'].includes(theme)){
+      c.fillStyle=theme==='ice'?'#a9d5e0':'#72a9b4';c.fillRect(0,h*.70,width,h*.15);
+      for(let i=0;i<90;i++){c.fillStyle='#e8ffff65';c.fillRect(rand()*width,h*(.71+.12*rand()),rand()*30+2,1)}
+    }
+    for(let i=0;i<155;i++){
+      const xx=i*width/154,yy=h*(.78+.075*Math.sin(i*.062+stage)),size=h*(.027+.063*rand());
+      for(let k=0;k<3;k++){const root=yy+k*size*.17;shape([[xx-size*(.17+k*.067),root],[xx,root-size*.56],[xx+size*(.17+k*.067),root]],pine)}
+    }
+    }
+    if(['snow','mist'].includes(theme)){
+      for(let i=0;i<155;i++){c.fillStyle='#ffffff73';c.beginPath();c.arc(rand()*width,rand()*h,.5+rand()*1.4,0,Math.PI*2);c.fill()}
+    }
+  }
+  ctx.drawImage(panorama,-Math.max(0,Math.min(.14,(pos+.52)*.065))*w,0);
+}
+
+// Original twelve-bar loop, scheduled against the audio clock.
+let audio=null,bus=null,musicTimer=null,nextBeat=0,beat=0,musicOn=!stored('ski-music-muted'),audioStarted=false;
+const chords=[[50,57,62,65],[46,53,58,62],[53,60,65,69],[48,55,60,64],[50,57,62,69],[43,50,55,58]];
+function noteAt(midi,time,duration,volume,type){
+  const o=audio.createOscillator(),g=audio.createGain();
+  o.type=type;o.frequency.value=440*2**((midi-69)/12);
+  g.gain.setValueAtTime(.0001,time);g.gain.exponentialRampToValueAtTime(volume,time+.023);
+  g.gain.exponentialRampToValueAtTime(.0001,time+duration);
+  o.connect(g);g.connect(bus);o.start(time);o.stop(time+duration+.02);
+  o.onended=()=>{o.disconnect();g.disconnect()};
+}
+function scheduleMusic(){
+  if(!musicOn||document.hidden||audio.state!=='running')return;
+  nextBeat=Math.max(audio.currentTime+.015,nextBeat);
+  while(nextBeat<audio.currentTime+.22){
+    const chord=chords[Math.floor(beat/8)%chords.length],n=beat%8;
+    noteAt(chord[[0,1,2,1,3,2,1,2][n]]+12,nextBeat,.44,.055,'sine');
+    if(n===0||n===4)noteAt(chord[0]-12,nextBeat,.82,.065,'triangle');
+    if(n===2||n===6)noteAt(chord[(Math.floor(beat/8)+n)%4]+24,nextBeat,.57,.026,'sine');
+    beat=(beat+1)%96;nextBeat+=.28;
+  }
+}
+function startMusic(){
+  if(!musicOn||document.hidden)return;
+  try{
+    const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
+    if(!audio){audio=new Audio();bus=audio.createGain();bus.gain.value=.65;bus.connect(audio.destination)}
+    audioStarted=true;
+    if(audio.state!=='running')audio.resume().catch(()=>{});
+    if(musicTimer===null){scheduleMusic();musicTimer=setInterval(scheduleMusic,80)}
+  }catch{}
+}
+function stopMusic(){
+  clearInterval(musicTimer);musicTimer=null;
+  if(audio && audio.state==='running')audio.suspend().catch(()=>{});
+}
+function musicLabel(){
+  el('music').setAttribute('aria-pressed',String(musicOn));
+  el('music').title=musicOn?'Wyłącz muzykę':'Włącz muzykę';
+}
+el('music').onclick=()=>{musicOn=!musicOn;persist('ski-music-muted',musicOn?0:1);musicLabel();if(musicOn)startMusic();else stopMusic()};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopMusic();else if(audioStarted)startMusic()});
+window.addEventListener('pagehide',stopMusic);
+musicLabel();
+
 function draw(){
   const w=canvas.clientWidth,h=canvas.clientHeight,r=Math.min(devicePixelRatio||1,2);
   if(w<1||h<1)return;
   if(canvas.width!==Math.round(w*r)||canvas.height!==Math.round(h*r)){canvas.width=Math.round(w*r);canvas.height=Math.round(h*r)}
   ctx.setTransform(r,0,0,r,0,0);
-  const scale=Math.min(w/1.52,h/.99),cx=w*.37-Math.max(0,x-.34)*scale,cy=h*.45;
+  const scale=Math.min(w/1.52,h/.99),cx=w*.37-Math.max(0,x-.34)*scale,cy=h*.45-Math.max(0,y*scale-h*.31);
   const X=t=>cx+t*scale,Y=t=>cy+t*scale;
-  const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,hills[stage].sky);sky.addColorStop(1,'#e1f6fa');ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
-  ctx.fillStyle='#fff2c4';ctx.beginPath();ctx.arc(w*.78,h*.18,Math.min(w,h)*.07,0,Math.PI*2);ctx.fill();
-  for(let j=-1;j<7;j++){
-    const px=(j*.24+.025*Math.sin(j*7))*w-x*scale*.07,py=(.18+.14*Math.abs(Math.sin(j*5)))*h,base=h*.86;
-    poly([[px-w*.32,base],[px,py],[px+w*.38,base]],'#7199ab');
-    poly([[px-w*.09,py+(base-py)*.28],[px,py],[px+w*.103,py+(base-py)*.27],[px+w*.027,py+(base-py)*.16],[px,py+(base-py)*.21]],'#d6ebef');
-  }
+  drawLandscape(w,h,x);
   for(let i=0;i<9;i++){
     const t=-.6+i*.073;
-    line(X(t),Y(ramp(t)),X(t),h,stage<2?'#785d48':'#455d72',3+stage*.5);
+    line(X(t),Y(ramp(t)),X(t),h,stage<2?'#785d48':'#455d72',3+2*difficulty());
     if(stage>=1)line(X(t),Y(ramp(t))+.12*scale,X(t+.072),Y(ramp(t+.072)),'#698395',2);
   }
   let ground=[[X(0),Y(slope(0))]];
@@ -95,12 +235,12 @@ function draw(){
   poly([...ground,[X(6),h],[X(0),h]],'#edf8fa');
   for(let t=-.65;t<0;t+=.01)line(X(t),Y(ramp(t)),X(Math.min(0,t+.01)),Y(ramp(Math.min(0,t+.01))),t>-.085?'#ffcf63':'#dff5fa',5);
   for(let i=1;i<=14;i++){const t=i/10;line(X(t),Y(slope(t)),X(t)+6,Y(slope(t))+2,'#83b8ca',2)}
-  const goal=Math.ceil(hills[stage].hs*.72)/hills[stage].hs;
+  const goal=target()/hills[stage].hs;
   line(X(goal),Y(slope(goal)),X(goal),Y(slope(goal))-18,'#d63e42',2);
   poly([[X(goal),Y(slope(goal))-18],[X(goal)+12,Y(slope(goal))-15],[X(goal),Y(slope(goal))-11]],'#ef6252');
   if(stage>=2){
     // Stepped grandstands beside the outrun, expanded for the larger venues.
-    for(let block=0;block<stage-1;block++){
+    for(let block=0;block<Math.ceil(4*difficulty());block++){
       const bx=X(.83+block*.16),by=Y(slope(.83+block*.16));
       const unit=scale*.015;
       for(let row=0;row<3;row++){
@@ -113,16 +253,34 @@ function draw(){
       }
     }
   }
-  for(let i=0;i<stage;i++){
+  for(let i=0;i<Math.ceil(5*difficulty());i++){
     const t=.63+i*.14,xx=X(t),yy=Y(slope(t))+22;line(xx,yy,xx,yy-53,'#456577',3);
     line(xx-8,yy-52,xx+8,yy-52,'#fff0af',5);
   }
-  const size=Math.max(10,Math.min(w,h)*.054);
-  ctx.save();ctx.translate(X(x),Y(y));ctx.rotate(phase==='flight'?-.09+lean*.36:phase==='inrun'?Math.atan(.29-2*(.52+.09*stage)*x):.16);
+  const size=Math.max(17,Math.min(w,h)*.077);
+  ctx.save();ctx.translate(X(x),Y(y));ctx.rotate(phase==='flight'?-.09+lean*.36:phase==='inrun'?Math.atan(.29-2*curvature()*x):.16);
   ctx.scale(size,size);
-  line(-.75,0,.85,0,'#d84b31',.11);line(-.05,-.08,.19,-.37,'#162d4c',.19);line(.19,-.37,-.16,-.46,'#213f60',.18);
-  line(-.16,-.46,.25,-.78,'#fa6247',.26);line(.07,-.62,-.47,-.5,'#b6352d',.11);
-  ctx.fillStyle='#f7f4da';ctx.beginPath();ctx.arc(.32,-.91,.19,0,Math.PI*2);ctx.fill();line(.34,-.93,.50,-.93,'#214557',.085);ctx.restore();
+  // Silhouette changes from a low tuck to a long V-flight and split telemark.
+  const flying=phase==='flight',split=phase==='result'||(flying&&landingAt!==null);
+  line(-.89,.08,.76,.025,'#243c59',.07);
+  line(-.91,0,.88,-.035,'#eb653f',.075);
+  line(.88,-.035,.97,-.11,'#ffae65',.055);
+  line(split?-.48:-.15,-.06,-.25,-.29,'#184967',.13);
+  line(-.25,-.29,-.06,-.46,'#245d82',.17);
+  line(.05,-.045,.25,-.27,'#193553',.16);
+  line(.25,-.27,-.06,-.46,'#264a70',.17);
+  const shoulder=flying?.39:.21,head=flying?.57:.34;
+  line(-.06,-.46,shoulder,-.69,'#df493a',.26);
+  line(.07,-.53,.16,-.58,'#ffe8b0',.24);
+  line(shoulder,-.67,flying?-.22:.12,flying?-.42:-.36,'#c53e32',.095);
+  ctx.fillStyle='#f5f3df';ctx.beginPath();ctx.arc(head,-.79,.17,0,Math.PI*2);ctx.fill();
+  line(head+.03,-.79,head+.16,-.8,'#17364a',.085);ctx.restore();
+  if(phase==='flight'){
+    const center=w*.5,bar=Math.min(140,w*.33),top=22;
+    line(center-bar/2,top,center+bar/2,top,'#17354e',8);
+    line(center-bar*.20,top,center+bar*.20,top,'#60d9ad',5);
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(center+lean*bar*.47,top,5,0,Math.PI*2);ctx.fill();
+  }
   const meters=phase==='flight'||phase==='result'?Math.max(0,Math.round(x*hills[stage].hs)):0;
   const metric=phase==='flight'||phase==='inrun'
     ? meters+' m · wiatr '+(wind<0?'← ':'→ ')+Math.abs(wind*2).toFixed(1)+' m/s'
@@ -131,18 +289,35 @@ function draw(){
 }
 function frame(now){const dt=previous?Math.min(.05,(now-previous)/1000):0;previous=now;if(!document.hidden)step(dt);draw();requestAnimationFrame(frame)}
 el('action').onclick=act;
+el('hill').onchange=()=>{stage=Number(el('hill').value);ready()};
+canvas.onpointerdown=e=>{
+  if(gesture)return;
+  canvas.setPointerCapture(e.pointerId);gesture={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+};
+canvas.onpointermove=e=>{
+  if(!gesture||gesture.id!==e.pointerId)return;
+  const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;
+  if(Math.hypot(dx,dy)>7)gesture.moved=true;
+  if(gesture.moved && phase==='flight')drag=Math.max(-1,Math.min(1,dx/50));
+};
+canvas.onpointerup=e=>{
+  if(!gesture||gesture.id!==e.pointerId)return;
+  const tap=!gesture.moved;gesture=null;drag=0;if(tap)act();
+};
+canvas.onlostpointercapture=()=>{drag=0;gesture=null};
 for(const key of ['back','forward']){
   const btn=el(key);btn.style.touchAction='none';
   btn.onpointerdown=e=>{btn.setPointerCapture(e.pointerId);held.add(key)};
   btn.onlostpointercapture=()=>held.delete(key);
 }
 window.addEventListener('keydown',e=>{
+  if(e.target===el('hill') || (e.code==='Space' && [el('music'),el('exit')].includes(e.target)))return;
   if(['Space','ArrowLeft','ArrowRight'].includes(e.code)){
     e.preventDefault();if(e.code==='Space'){if(!e.repeat)act()}else held.add(e.code==='ArrowLeft'?'back':'forward');
   }
 });
 window.addEventListener('keyup',e=>held.delete(e.code==='ArrowLeft'?'back':e.code==='ArrowRight'?'forward':''));
-window.addEventListener('blur',()=>held.clear());
-el('exit').onclick=()=>{if(parent===window){location.assign('./');return}send({type:'genesis-ski-exit-fullscreen',game:'ski'})};
+window.addEventListener('blur',()=>{held.clear();drag=0;gesture=null});
+el('exit').onclick=()=>{stopMusic();if(parent===window){location.assign('./');return}send({type:'genesis-ski-exit-fullscreen',game:'ski'})};
 ready();requestAnimationFrame(frame);
 </script></body></html>
