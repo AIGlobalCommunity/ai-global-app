@@ -227,7 +227,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     final isKnownFrame = frames.values.any((frame) => event.source == frame.contentWindow);
-    if (!isKnownFrame) return;
+    // Fullscreen games can use a different iframe instance from the catalog.
+    // The same-origin check above still applies to every score message.
+    final fullscreenScore = decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-game-score' &&
+        (decoded['game'] == 'wolf' || decoded['game'] == 'blocks');
+    if (!isKnownFrame && !fullscreenScore) return;
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-fullscreen') {
       _showWolfFullscreen();
       return;
