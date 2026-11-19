@@ -969,7 +969,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         scoreNotice = null;
       });
     }
-    return Container(
+    return SizedBox(height: 590, child: Container(
       decoration: BoxDecoration(
         color: const Color(0xFF071525),
         borderRadius: BorderRadius.circular(21),
@@ -1044,7 +1044,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                               color: Color(0xFFD5E5F1), fontSize: 13))),
                         ]),
                       ),
-                    const SizedBox(height: 8),
+                    const Spacer(),
                     Row(children: [
                       _arcadeButton(
                         onPressed: openGame,
@@ -1069,7 +1069,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Future<void> _showGameStatistics(int index) async {
@@ -1144,7 +1144,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           (Icons.leaderboard_outlined, 'Ranking graczy'),
           (Icons.emoji_events_outlined, 'Pobij swój rekord'),
         ];
-    return Container(
+    return SizedBox(height: 590, child: Container(
       decoration: BoxDecoration(
         color: const Color(0xFF071525),
         borderRadius: BorderRadius.circular(21),
@@ -1220,7 +1220,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               TextButton.icon(onPressed: () => _showGameStatistics(index),
                 icon: const Icon(Icons.bar_chart_rounded),
                 label: const Text('📊 STATYSTYKI GRY')),
-              const SizedBox(height: 8),
+              const Spacer(),
               Row(children: [
                 _arcadeButton(onPressed: openGame, primary: true, accent: accent,
                   icon: Icons.play_arrow_rounded, label: 'ZAGRAJ'),
@@ -1232,7 +1232,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ])),
         ],
       )),
-    );
+    ));
   }
 
   Widget _gameLibrary() => Center(
