@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Skoki narciarskie</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#102638;color:white;font:600 15px system-ui}main{height:100vh;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto}header,footer{background:#102638;padding:10px max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left))}header{display:flex;align-items:center;justify-content:space-between;padding-top:max(8px,env(safe-area-inset-top));gap:8px}header strong{font-size:clamp(16px,3.2vw,24px)}small{display:block;color:#a1dbe7}button{min-height:44px;border:1px solid #528194;border-radius:10px;background:#1b4054;color:white;font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.53}#exit{width:44px;font-size:24px}canvas{width:100%;height:100%;display:block;background:#92c6df}footer{padding-bottom:max(10px,env(safe-area-inset-bottom));text-align:center}#note{margin:0 0 8px}nav{display:flex;justify-content:center;gap:8px}nav button{min-width:50px}#action{background:#ffcc70;color:#102638;border:0;padding:0 22px}#metrics{font-variant-numeric:tabular-nums;color:#c9eff4;font-size:14px}@media(max-height:430px){header,footer{padding-top:4px;padding-bottom:4px}#note{margin:0 0 3px}}
+</style></head><body><main><header><div><strong>Skoki narciarskie</strong><small id="hill"></small></div><div id="metrics"></div><button id="exit" aria-label="Zamknij grę">×</button></header><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script>
+'use strict';
+const hills=[
+  {hs:35,name:'Leśna polana',sky:'#90c9dc'},
+  {hs:65,name:'Klubowa skocznia',sky:'#72b4d3'},
+  {hs:100,name:'Centrum treningowe',sky:'#659bbc'},
+  {hs:140,name:'Arena mistrzowska',sky:'#667ba9'},
+  {hs:235,name:'Mamucia skocznia',sky:'#424f7c'}
+];
+const el=id=>document.getElementById(id), canvas=el('scene'), ctx=canvas.getContext('2d');
+function stored(key){try{return Number(localStorage.getItem(key))||0}catch{return 0}}
+function persist(key,value){try{localStorage.setItem(key,String(value))}catch{}}
+let stage=Math.max(0,Math.min(4,Math.floor(stored('ski-unlocked-stage')))),best=stored('ski-local-best');
+let phase='ready',x=-.52,y=0,vx=0,vy=0,lean=0,wind=0,elapsed=0,landingAt=null;
+let result=0,advance=false,previous=0,distance=0;
+const held=new Set();
+function ramp(t){return .29*t-(.52+.09*stage)*t*t}
+function slope(t){return .085+.41*Math.min(t,1.25)+.09*Math.max(0,t-1.25)}
+function tell(note,button){
+  if(el('note').textContent!==note)el('note').textContent=note;
+  if(el('action').textContent!==button)el('action').textContent=button;
+}
+function ready(){
+  phase='ready';x=-.52;y=ramp(x);lean=0;advance=false;held.clear();
+  el('hill').textContent='Etap '+(stage+1)+' / 5 · '+hills[stage].name+' · HS '+hills[stage].hs;
+  tell('Cel: telemark za linią '+Math.ceil(hills[stage].hs*.72)+' m. Steruj dotykiem lub spacją i strzałkami.','Rozpocznij najazd');
+}
+function send(message){if(parent!==window)parent.postMessage(JSON.stringify(message),location.origin)}
+function lift(quality){
+  phase='flight';x=0;y=0;elapsed=0;lean=0;landingAt=null;
+  vx=.32+quality*.08+wind*.008;vy=-.075-quality*.10;
+  tell('Strzałkami koryguj pochylenie. Przygotuj telemark tuż nad zeskokiem.','Telemark');
+}
+function finish(){
+  phase='result';distance=Math.round(x*hills[stage].hs*2)/2;
+  const clean=landingAt!==null && elapsed-landingAt<=.74-stage*.055 && Math.abs(lean)<.72;
+  result=Math.max(10,Math.round(distance*(clean?1.8:1)+ (clean?30:0)));
+  advance=clean && distance>=Math.ceil(hills[stage].hs*.72) && stage<hills.length-1;
+  if(advance)persist('ski-unlocked-stage',stage+1);
+  if(result>best){best=result;persist('ski-local-best',best)}
+  send({type:'genesis-game-score',game:'ski',score:result,level:stage+1,at:Date.now()});
+  tell(distance+' m · '+(clean?'Telemark':'Lądowanie bez telemarku')+' · '+result+' pkt',advance?'Następna skocznia':'Skocz ponownie');
+}
+function act(){
+  if(phase==='result'){if(advance)stage++;ready();return}
+  if(phase==='ready'){phase='inrun';elapsed=0;wind=Math.random()*2-1;tell('Wybij się w żółtej strefie na końcu progu.','Wybicie');return}
+  if(phase==='inrun'){lift(Math.max(0,1-Math.abs(x+.018)*8));return}
+  if(phase==='flight' && landingAt===null){landingAt=elapsed;tell('Telemark przygotowany.','Lądowanie')}
+}
+function step(dt){
+  elapsed+=dt;
+  if(phase==='inrun'){
+    x+=(.14+elapsed*.085)*dt;y=ramp(x);
+    if(x>=0)lift(.12);
+  }else if(phase==='flight'){
+    const steer=Number(held.has('forward'))-Number(held.has('back'));
+    lean=Math.max(-1,Math.min(1,lean+dt*(steer*1.5+wind*(.13+stage*.045)+.12*Math.sin(elapsed*2))));
+    x+=vx*dt;y+=vy*dt;vy+=(.233+.09*Math.abs(lean))*dt;
+    if(landingAt===null && vy>0 && slope(x)-y<.12)tell('Teraz telemark!','Telemark');
+    if(y>=slope(x)){y=slope(x);finish()}
+  }
+}
+function poly(points,color){
+  ctx.fillStyle=color;ctx.beginPath();
+  points.forEach(([a,b],i)=>i?ctx.lineTo(a,b):ctx.moveTo(a,b));ctx.closePath();ctx.fill();
+}
+function line(a,b,c,d,color,width){
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke();
+}
+function draw(){
+  const w=canvas.clientWidth,h=canvas.clientHeight,r=Math.min(devicePixelRatio||1,2);
+  if(w<1||h<1)return;
+  if(canvas.width!==Math.round(w*r)||canvas.height!==Math.round(h*r)){canvas.width=Math.round(w*r);canvas.height=Math.round(h*r)}
+  ctx.setTransform(r,0,0,r,0,0);
+  const scale=Math.min(w/1.52,h/.99),cx=w*.37-Math.max(0,x-.34)*scale,cy=h*.45;
+  const X=t=>cx+t*scale,Y=t=>cy+t*scale;
+  const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,hills[stage].sky);sky.addColorStop(1,'#e1f6fa');ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#fff2c4';ctx.beginPath();ctx.arc(w*.78,h*.18,Math.min(w,h)*.07,0,Math.PI*2);ctx.fill();
+  for(let j=-1;j<7;j++){
+    const px=(j*.24+.025*Math.sin(j*7))*w-x*scale*.07,py=(.18+.14*Math.abs(Math.sin(j*5)))*h,base=h*.86;
+    poly([[px-w*.32,base],[px,py],[px+w*.38,base]],'#7199ab');
+    poly([[px-w*.09,py+(base-py)*.28],[px,py],[px+w*.103,py+(base-py)*.27],[px+w*.027,py+(base-py)*.16],[px,py+(base-py)*.21]],'#d6ebef');
+  }
+  for(let i=0;i<9;i++){
+    const t=-.6+i*.073;
+    line(X(t),Y(ramp(t)),X(t),h,stage<2?'#785d48':'#455d72',3+stage*.5);
+    if(stage>=1)line(X(t),Y(ramp(t))+.12*scale,X(t+.072),Y(ramp(t+.072)),'#698395',2);
+  }
+  let ground=[[X(0),Y(slope(0))]];
+  for(let t=.025;t<6;t+=.025)ground.push([X(t),Y(slope(t))]);
+  poly([...ground,[X(6),h],[X(0),h]],'#edf8fa');
+  for(let t=-.65;t<0;t+=.01)line(X(t),Y(ramp(t)),X(Math.min(0,t+.01)),Y(ramp(Math.min(0,t+.01))),t>-.085?'#ffcf63':'#dff5fa',5);
+  for(let i=1;i<=14;i++){const t=i/10;line(X(t),Y(slope(t)),X(t)+6,Y(slope(t))+2,'#83b8ca',2)}
+  const goal=Math.ceil(hills[stage].hs*.72)/hills[stage].hs;
+  line(X(goal),Y(slope(goal)),X(goal),Y(slope(goal))-18,'#d63e42',2);
+  poly([[X(goal),Y(slope(goal))-18],[X(goal)+12,Y(slope(goal))-15],[X(goal),Y(slope(goal))-11]],'#ef6252');
+  if(stage>=2){
+    // Stepped grandstands beside the outrun, expanded for the larger venues.
+    for(let block=0;block<stage-1;block++){
+      const bx=X(.83+block*.16),by=Y(slope(.83+block*.16));
+      const unit=scale*.015;
+      for(let row=0;row<3;row++){
+        const left=bx+row*unit,top=by-(row+1)*unit;
+        ctx.fillStyle=row%2?'#365a72':'#4e7183';ctx.fillRect(left,top,unit*(8-row),unit);
+        for(let fan=0;fan<6-row;fan++){
+          ctx.fillStyle=['#ef785d','#ffdb80','#29566b'][(fan+row+block)%3];
+          ctx.fillRect(left+unit*(fan+.35),top-unit*.56,unit*.4,unit*.55);
+        }
+      }
+    }
+  }
+  for(let i=0;i<stage;i++){
+    const t=.63+i*.14,xx=X(t),yy=Y(slope(t))+22;line(xx,yy,xx,yy-53,'#456577',3);
+    line(xx-8,yy-52,xx+8,yy-52,'#fff0af',5);
+  }
+  const size=Math.max(10,Math.min(w,h)*.054);
+  ctx.save();ctx.translate(X(x),Y(y));ctx.rotate(phase==='flight'?-.09+lean*.36:phase==='inrun'?Math.atan(.29-2*(.52+.09*stage)*x):.16);
+  ctx.scale(size,size);
+  line(-.75,0,.85,0,'#d84b31',.11);line(-.05,-.08,.19,-.37,'#162d4c',.19);line(.19,-.37,-.16,-.46,'#213f60',.18);
+  line(-.16,-.46,.25,-.78,'#fa6247',.26);line(.07,-.62,-.47,-.5,'#b6352d',.11);
+  ctx.fillStyle='#f7f4da';ctx.beginPath();ctx.arc(.32,-.91,.19,0,Math.PI*2);ctx.fill();line(.34,-.93,.50,-.93,'#214557',.085);ctx.restore();
+  const meters=phase==='flight'||phase==='result'?Math.max(0,Math.round(x*hills[stage].hs)):0;
+  const metric=phase==='flight'||phase==='inrun'
+    ? meters+' m · wiatr '+(wind<0?'← ':'→ ')+Math.abs(wind*2).toFixed(1)+' m/s'
+    : meters+' m · rekord '+best+' pkt';
+  if(el('metrics').textContent!==metric)el('metrics').textContent=metric;
+}
+function frame(now){const dt=previous?Math.min(.05,(now-previous)/1000):0;previous=now;if(!document.hidden)step(dt);draw();requestAnimationFrame(frame)}
+el('action').onclick=act;
+for(const key of ['back','forward']){
+  const btn=el(key);btn.style.touchAction='none';
+  btn.onpointerdown=e=>{btn.setPointerCapture(e.pointerId);held.add(key)};
+  btn.onlostpointercapture=()=>held.delete(key);
+}
+window.addEventListener('keydown',e=>{
+  if(['Space','ArrowLeft','ArrowRight'].includes(e.code)){
+    e.preventDefault();if(e.code==='Space'){if(!e.repeat)act()}else held.add(e.code==='ArrowLeft'?'back':'forward');
+  }
+});
+window.addEventListener('keyup',e=>held.delete(e.code==='ArrowLeft'?'back':e.code==='ArrowRight'?'forward':''));
+window.addEventListener('blur',()=>held.clear());
+el('exit').onclick=()=>{if(parent===window){location.assign('./');return}send({type:'genesis-ski-exit-fullscreen',game:'ski'})};
+ready();requestAnimationFrame(frame);
+</script></body></html>
