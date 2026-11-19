@@ -1028,7 +1028,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   ),
                 ),
               ]),
-              Padding(
+              Expanded(child: Padding(
                 padding: const EdgeInsets.fromLTRB(17, 5, 17, 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1064,7 +1064,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                     ]),
                   ],
                 ),
-              ),
+              )),
             ],
           ),
         ),
@@ -1204,7 +1204,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   fontWeight: FontWeight.w700, letterSpacing: 1.1)),
             )),
           ])),
-          Padding(padding: const EdgeInsets.fromLTRB(17, 13, 17, 18),
+          Expanded(child: Padding(padding: const EdgeInsets.fromLTRB(17, 13, 17, 18),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Text(title, style: TextStyle(color: accent, fontSize: 18,
                 fontWeight: FontWeight.w800, letterSpacing: 1.1)),
@@ -1229,7 +1229,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   primary: false, accent: accent,
                   icon: Icons.emoji_events_outlined, label: 'RANKING'),
               ]),
-            ])),
+            ]))),
         ],
       )),
     ));
