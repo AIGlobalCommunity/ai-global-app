@@ -34,7 +34,7 @@ else if(game==='wolf'){ctx.font='190px Arial';ctx.fillText('🐺',90,270);ctx.fi
 else if(game==='blocks'){for(let i=0;i<6;i++)for(let j=0;j<3;j++)if((i+j)%3!==0)ctx.fillRect(110+i*100,80+j*95,82,82)}
 else if(game==='ski'){ctx.font='200px Arial';ctx.fillText('⛷️',160,260);ctx.fillText('🏔️',760,260)}
 ctx.restore()}
-ctx.fillStyle='rgba(3,13,29,.72)';ctx.fillRect(0,0,W,H);
+ctx.fillStyle=background?'rgba(3,13,29,.53)':'rgba(3,13,29,.68)';ctx.fillRect(0,0,W,H);
 ctx.strokeStyle='#f2c56b';ctx.lineWidth=6;ctx.strokeRect(28,28,W-56,H-56);
 ctx.textAlign='center';ctx.fillStyle='#f2c56b';ctx.font='bold 48px Arial';ctx.fillText('THE GENESIS ERA',W/2,115);
 ctx.fillStyle='#fff';ctx.font='bold 54px Arial';ctx.fillText(title,W/2,208);
@@ -44,7 +44,7 @@ ctx.fillStyle='#fff';ctx.font='31px Arial';ctx.fillText('PUNKTÓW  •  POBIJ M�
 ctx.fillStyle='#bce7e0';ctx.font='bold 30px Arial';ctx.fillText('thegenesisera.com',W/2,575);
 }
 draw(null);
-const artwork={signal:'/assets/genesis_signal_cinematic.jpg',defender:'/assets/genesis_defender_cinematic.jpg'}[game];
+const artwork={signal:'/assets/assets/genesis_signal_cinematic.jpg',defender:'/assets/assets/genesis_defender_cinematic.jpg'}[game];
 if(artwork){const img=new Image();img.onload=()=>draw(img);img.onerror=()=>draw(null);img.src=artwork}
 const filename=`genesis-${game}-${score}.png`;
 function download(){const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=filename;a.click()}
