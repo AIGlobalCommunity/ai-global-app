@@ -59,6 +59,9 @@ body.embedded .modal h2{font-size:21px;margin:4px 0}
 body.embedded .modal p{font-size:11px;line-height:1.35;margin:5px 0}
 @media(max-height:470px){body.embedded .status{min-height:16px}body.embedded .modal .symbol{display:none}body.embedded .modal p{font-size:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+.tile{background:radial-gradient(circle at 30% 20%,#254a69,#07172a 78%);border-color:#28617f;box-shadow:inset 0 1px 0 #ffffff20}.tile.live{box-shadow:0 0 13px #00dfff55,inset 0 0 15px #00eaff20}.tile.relay{border-color:#ffcb60}.tile.relay:before{content:"◆";position:absolute;right:3px;top:1px;color:#ffcc65;font-size:13px;z-index:1}.tile.blocked{background:repeating-linear-gradient(135deg,#091322,#091322 8px,#24334b 8px,#24334b 16px);opacity:.6}
+.command{display:flex;align-items:center;justify-content:space-between;gap:6px;max-width:700px;margin:0 auto 6px;font-size:11px;color:#6ce8ff;font-weight:800}.command button{border:1px solid #4a95b6;border-radius:8px;background:#102b42;color:#e5faff;padding:8px;cursor:pointer}
+body.signal-full{position:fixed;inset:0;overflow:hidden}body.signal-full main{height:100dvh;max-width:none;display:flex;flex-direction:column;padding:4px;overflow:hidden}body.signal-full .eyebrow,body.signal-full .lead,body.signal-full .foot,body.signal-full .legend{display:none}body.signal-full h1{font-size:clamp(16px,3vh,26px);margin:0}body.signal-full .stats{width:100%;margin-bottom:3px}body.signal-full .stat{padding:3px}body.signal-full .stat b{font-size:15px}body.signal-full .board-wrap{width:min(calc(100vw - 12px),calc(100dvh - 164px),780px);min-width:0;margin:auto}body.signal-full .actions{padding:3px}body.signal-full button.action{min-height:30px;padding:6px}
 </style>
 </head>
 <body>
@@ -66,7 +69,7 @@ body.embedded .modal p{font-size:11px;line-height:1.35;margin:5px 0}
 <div class="eyebrow">THE GENESIS ERA · INTERAKTYWNA GRA HTML5</div>
 <h1>GENESIS SIGNAL</h1>
 <p class="lead">Połącz źródło sygnału <strong>S</strong> z celem <strong>C</strong>. Obracaj fragmenty sieci, odkrywaj połączenia i przywracaj transmisję.</p>
-<div class="stats" aria-label="Statystyki gry">
+<div class="command"><span id="mission">MISJA 01 · TRANSMISJA</span><span><button id="fullToggle" type="button">⛶ FULLSCREEN</button> <button id="exitSignal" type="button">✕</button></span></div><div class="stats" aria-label="Statystyki gry">
   <div class="stat"><b id="level">01</b><span>Poziom</span></div>
   <div class="stat"><b id="moves">0</b><span>Ruchy</span></div>
   <div class="stat"><b id="clock">00:00</b><span>Czas</span></div>
@@ -97,7 +100,7 @@ body.embedded .modal p{font-size:11px;line-height:1.35;margin:5px 0}
 "use strict";
 if(new URLSearchParams(window.location.search).has('embed'))document.body.classList.add('embedded');
 var N=1,E=2,S=4,W=8, dirs=[[-1,0,N,S],[0,1,E,W],[1,0,S,N],[0,-1,W,E]];
-var level=1,score=0,moves=0,hints=2,startedAt=0,elapsed=0,tick=null,tiles=[],solution=[],path=[],size=5,locked=true;
+var level=1,score=0,moves=0,hints=2,startedAt=0,elapsed=0,tick=null,tiles=[],solution=[],path=[],size=5,locked=true,missionType="connect",missionLimit=0,relays=[],blocked=new Set(),completed=false;
 var board=document.getElementById("board"),overlay=document.getElementById("overlay");
 var modalButton=document.getElementById("modalButton"),modalTitle=document.getElementById("modalTitle"),modalText=document.getElementById("modalText"),modalSymbol=document.getElementById("modalSymbol");
 var best=0;
@@ -122,8 +125,13 @@ function generatePath(){
  dfs(0);return route;
 }
 function direction(a,b){for(var d=0;d<4;d++)if(neighbor(a,d)===b)return d;return -1;}
+function missionName(){return ({connect:"POŁĄCZ SIEĆ",relay:"AKTYWUJ WĘZŁY ◆",moves:"LIMIT RUCHÓW",blackout:"ZAKŁÓCENIA",timed:"WYŚCIG Z CZASEM"})[missionType];}
+function fail(reason){if(locked)return;locked=true;clearInterval(tick);modalSymbol.textContent="⚠";modalTitle.textContent="MISJA NIEUDANA";modalText.textContent=reason;modalButton.textContent="↺ Spróbuj ponownie";overlay.hidden=false;modalButton.onclick=function(){overlay.hidden=true;buildLevel();};try{localStorage.removeItem("genesis-signal-progress-v2")}catch(_){}}
+function save(){try{localStorage.setItem("genesis-signal-progress-v2",JSON.stringify({level,score,moves,hints,elapsed,tiles,solution,path,size,missionType,missionLimit,relays,blocked:[...blocked],completed}))}catch(_){}}
+function restore(){try{var d=JSON.parse(localStorage.getItem("genesis-signal-progress-v2")||"null");if(!d||!Array.isArray(d.tiles)||!Array.isArray(d.solution)||!Number.isInteger(d.size)||d.size<5||d.size>9||d.tiles.length!==d.size*d.size||d.solution.length!==d.tiles.length||!Number.isInteger(d.level)||d.level<1)return false;level=d.level;score=d.score||0;moves=d.moves||0;hints=d.hints||0;elapsed=d.elapsed||0;tiles=d.tiles;solution=d.solution;path=d.path||[];size=d.size;missionType=d.missionType||"connect";missionLimit=d.missionLimit||0;relays=d.relays||[];blocked=new Set(d.blocked||[]);completed=!!d.completed;locked=true;board.style.gridTemplateColumns="repeat("+size+",1fr)";draw();updateStats();return true}catch(_){return false}}
+function clockTick(){if(locked)return;elapsed=Math.floor((Date.now()-startedAt)/1000);updateStats();if(missionType==="timed"&&elapsed>=missionLimit)fail("Upłynął limit czasu.")}
 function buildLevel(){
- size=level<3?5:level<6?6:level<9?7:8;
+ size=level<3?5:level<6?6:level<9?7:level<14?8:9;missionType=["connect","relay","moves","blackout","timed"][(level-1)%5];completed=false;relays=[];blocked=new Set();
  path=generatePath();solution=Array(size*size).fill(0);
  for(var i=0;i<path.length;i++){
    var here=path[i];
@@ -135,11 +143,14 @@ function buildLevel(){
    var choices=[5,10,3,6,9,12,7,11,13,14,15];
    return choices[rand(choices.length)];
  });
+ if(missionType==="relay"){var count=Math.min(4,1+Math.floor(level/4));for(var j=1;j<=count;j++){var checkpoint=path[Math.floor(j*path.length/(count+1))];if(checkpoint>0&&checkpoint<size*size-1)relays.push(checkpoint)}}
+ if(missionType==="blackout"){var spare=[];for(var j=0;j<size*size;j++)if(!path.includes(j))spare.push(j);for(var j=0;j<Math.min(2+Math.floor(level/3),spare.length);j++)blocked.add(spare.splice(rand(spare.length),1)[0])}
+ missionLimit=missionType==="timed"?Math.max(35,150-level*5):missionType==="moves"?Math.max(12,path.length*3+level):0;
  scramble();
  moves=0;hints=2;elapsed=0;startedAt=Date.now();locked=false;
  board.style.gridTemplateColumns="repeat("+size+",1fr)";
- draw();updateStats();document.getElementById("status").textContent="Sygnał czeka na połączenie. Obracaj fragmenty sieci.";
- clearInterval(tick);tick=setInterval(function(){if(!locked){elapsed=Math.floor((Date.now()-startedAt)/1000);updateStats();}},1000);
+ draw();updateStats();document.getElementById("status").textContent=missionName();save();
+ clearInterval(tick);tick=setInterval(clockTick,1000);
 }
 function scramble(){
  for(var i=0;i<tiles.length;i++){var turns=rand(4);while(turns--)tiles[i]=rotate(tiles[i]);}
@@ -156,7 +167,7 @@ function connected(){
      if(j>=0&&(tiles[j]&dirs[d][3])&&!seen.has(j)){seen.add(j);queue.push(j);}
    }
  }
- return {seen:seen,won:seen.has(size*size-1)};
+ return {seen:seen,won:seen.has(size*size-1)&&relays.every(function(i){return seen.has(i)})};
 }
 function tileSVG(mask){
  var paths="";
@@ -171,7 +182,7 @@ function draw(){
  board.replaceChildren();
  for(var i=0;i<tiles.length;i++){
    var tile=document.createElement("button");tile.type="button";
-   tile.className="tile"+(active.seen.has(i)?" live":"")+(i===0?" source":"")+(i===tiles.length-1?" target":"");
+   tile.className="tile"+(active.seen.has(i)?" live":"")+(i===0?" source":"")+(i===tiles.length-1?" target":"")+(relays.includes(i)?" relay":"")+(blocked.has(i)?" blocked":"");tile.disabled=blocked.has(i);
    tile.setAttribute("aria-label","Segment "+(i+1)+(i===0?", źródło":i===tiles.length-1?", cel":"")+". Obróć o 90 stopni");
    tile.innerHTML=tileSVG(tiles[i]);
    (function(index){tile.addEventListener("click",function(){turn(index);});})(i);
@@ -185,17 +196,16 @@ function updateStats(){
  document.getElementById("score").textContent=score;
  var t=elapsed;document.getElementById("clock").textContent=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");
  document.getElementById("hint").textContent="✧ Wskazówka ("+hints+")";
- document.getElementById("hint").disabled=locked||hints===0;
+ document.getElementById("hint").disabled=locked||hints===0;document.getElementById("mission").textContent="MISJA "+String(level).padStart(2,"0")+" · "+missionName()+(missionLimit?" · "+Math.max(0,missionLimit-(missionType==="timed"?elapsed:moves))+(missionType==="timed"?"s":" ruchów"):"");
 }
 function turn(i){
- if(locked)return;
+ if(locked||blocked.has(i))return;
  tiles[i]=rotate(tiles[i]);moves++;
  var state=draw();updateStats();
- if(state.won)win();
- else document.getElementById("status").textContent="Aktywne segmenty: "+state.seen.size+" / "+tiles.length+" · Połącz źródło S z celem C.";
+ if(state.won)win();else if(missionType==="moves"&&moves>=missionLimit)fail("Wykorzystano limit ruchów.");else{document.getElementById("status").textContent="Aktywne segmenty: "+state.seen.size+" / "+tiles.length;save();}
 }
 function win(){
- locked=true;clearInterval(tick);elapsed=Math.floor((Date.now()-startedAt)/1000);
+ locked=true;completed=true;clearInterval(tick);elapsed=Math.floor((Date.now()-startedAt)/1000);
  var gain=Math.max(100,1200-moves*22-elapsed*4)+hints*75;
  score+=gain;
  try{
@@ -205,7 +215,7 @@ function win(){
  }catch(_){}
  if(score>best){best=score;try{localStorage.setItem("genesis-signal-best",String(best));}catch(e){}}
  document.getElementById("best").textContent="Najlepszy wynik: "+best;
- updateStats();document.getElementById("status").textContent="Transmisja przywrócona! +"+gain+" punktów.";
+ updateStats();save();document.getElementById("status").textContent="Transmisja przywrócona! +"+gain+" punktów.";
  modalSymbol.textContent="✦";modalTitle.textContent="Sygnał odebrany!";
  modalText.textContent="Poziom "+level+" ukończony w "+moves+" ruchach i "+elapsed+" sekundach. Zdobywasz "+gain+" punktów. Następna misja będzie trudniejsza.";
  modalButton.textContent="Następna transmisja →";overlay.hidden=false;
@@ -228,14 +238,18 @@ document.getElementById("hint").addEventListener("click",function(){
  var state=draw();updateStats();
  var element=board.children[i];if(element)element.classList.add("hint");
  document.getElementById("status").textContent="Wskazówka: poprawiono jeden fragment głównej trasy (+"+steps+" ruchów).";
- if(state.won)win();
+ if(state.won)win();else if(missionType==="moves"&&moves>=missionLimit)fail("Wykorzystano limit ruchów.");else save();
 });
 document.getElementById("restart").addEventListener("click",function(){
  if(locked&&overlay.hidden===false)return;
- overlay.hidden=true;score=0;level=1;buildLevel();
+ overlay.hidden=true;buildLevel();
 });
-document.getElementById("newGame").addEventListener("click",function(){clearInterval(tick);locked=true;showStart();});
-showStart();
+document.getElementById("newGame").addEventListener("click",function(){clearInterval(tick);locked=true;try{localStorage.removeItem("genesis-signal-progress-v2")}catch(_){}showStart();});
+function full(on){document.body.classList.toggle("signal-full",on);document.getElementById("fullToggle").textContent=on?"⤢ OKNO":"⛶ FULLSCREEN"}
+document.getElementById("fullToggle").onclick=function(){full(!document.body.classList.contains("signal-full"))};
+document.getElementById("exitSignal").onclick=function(){save();full(false);try{window.parent.postMessage(JSON.stringify({type:"genesis-signal-exit-fullscreen",game:"signal"}),location.origin)}catch(_){}};
+document.addEventListener("keydown",function(e){if(e.key==="Escape")full(false)});
+if(restore()){overlay.hidden=false;modalSymbol.textContent="◈";modalTitle.textContent="ZAPISANA KAMPANIA";modalText.textContent="Poziom "+level+" · "+score+" pkt. "+(completed?"Misja ukończona.":"Kontynuuj od zapisanej planszy.");modalButton.textContent="Kontynuuj →";modalButton.onclick=function(){overlay.hidden=true;if(completed){level++;buildLevel()}else{locked=false;startedAt=Date.now()-elapsed*1000;clearInterval(tick);tick=setInterval(clockTick,1000);draw();updateStats()}}}else showStart();
 })();
 </script>
 </body>
