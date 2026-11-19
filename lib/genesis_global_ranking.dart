@@ -82,14 +82,12 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
     for (var i = 0; i < ids.length; i += 100) {
       final batch = ids.skip(i).take(100).toList();
       try {
-        final members = await AgcBackend.client
-            .from('agc_public_scores')
-            .select('id,handle')
-            .inFilter('id', batch);
+        final members = await AgcBackend.client.rpc(
+            'agc_game_ranking_names', params: {'p_ids': batch});
         for (final member in members) {
           final id = member['id']?.toString();
           if (id != null) {
-            handles[id] = member['handle']?.toString() ?? '';
+            handles[id] = member['display_handle']?.toString() ?? '';
           }
         }
       } catch (_) {
@@ -102,7 +100,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
         id: entry.key,
         handle: (handles[entry.key]?.trim().isNotEmpty ?? false)
             ? handles[entry.key]!
-            : 'Genesis_${entry.key.substring(0, entry.key.length < 6 ? entry.key.length : 6)}',
+            : 'Gracz anonimowy',
         scores: scores,
         total: scores.values.fold<int>(0, (sum, score) => sum + score),
       );
