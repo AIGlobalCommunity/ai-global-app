@@ -1,1 +1,96 @@
-<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>GENESIS SNAKE</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07140d;color:#d5ffb5;font:600 14px system-ui}main{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;background:radial-gradient(ellipse at center,#1b3b21,#050b08)}header{display:flex;justify-content:space-between;align-items:center;width:min(95vw,70dvh,530px);gap:10px}h1{font-size:clamp(18px,4vw,28px);margin:0;letter-spacing:3px;color:#b9f47a;text-shadow:0 0 14px #68f644}#stats{display:flex;gap:12px;font-size:12px}canvas{width:min(95vw,calc((100dvh - 200px)*1),530px);height:auto;aspect-ratio:1;border:5px solid #5b8751;border-radius:13px;background:#152e18;box-shadow:0 0 25px #6eff5625;touch-action:none}nav{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}button{background:#183b20;color:#e6ffb6;border:1px solid #6b9a55;border-radius:8px;min-height:36px;padding:7px 12px;font-weight:800;cursor:pointer}button:active{background:#377642}.pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,42px);gap:4px}.pad button{font-size:19px;padding:0}.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}.hint{font-size:11px;color:#9ac88c;text-align:center}#notice{min-height:20px;color:#f8e48d;text-align:center}body.embed main{padding:4px;gap:5px}body.embed canvas{width:min(95vw,calc(100dvh - 175px),530px)}@media(max-height:510px){.hint{display:none}.pad{grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,30px)}.pad button{min-height:29px}body.embed canvas{width:min(65vw,calc(100dvh - 100px))}}</style></head><body><main><header><h1>▣ SNAKE 3310</h1><div id="stats"><span>PKT <b id="score">0</b></span><span>BEST <b id="best">0</b></span><span>LV <b id="level">1</b></span></div></header><canvas id="board" width="480" height="480" aria-label="Snake - gra w węża"></canvas><div id="notice">Naciśnij START, aby rozpocząć</div><nav><button id="start">▶ START</button><button id="pause">Ⅱ PAUZA</button><button id="mode">TRYB: KLASYCZNY</button><button id="sound">♫ OFF</button><button id="exit">✕</button></nav><div class="pad"><button class="up" data-dir="up">▲</button><button class="left" data-dir="left">◀</button><button class="down" data-dir="down">▼</button><button class="right" data-dir="right">▶</button></div><div class="hint">Strzałki / WASD · Przesuń palcem · Zbieraj jedzenie · Unikaj ścian i ogona</div></main><script>(()=>{'use strict';if(location.search.includes('embed'))document.body.classList.add('embed');const c=document.getElementById('board'),g=c.getContext('2d'),N=20,C=24;let snake=[],dir={x:1,y:0},next={x:1,y:0},food={x:13,y:10},score=0,level=1,best=0,running=false,paused=false,mode=0,loop=null,fx=false,audio=null;try{best=Number(localStorage.getItem('genesis-snake-best')||0)}catch(e){}document.getElementById('best').textContent=best;const el=id=>document.getElementById(id);function beep(f=500){if(!fx)return;try{audio??=new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),a=audio.createGain();o.frequency.value=f;o.type='square';a.gain.value=.018;o.connect(a);a.connect(audio.destination);o.start();o.stop(audio.currentTime+.065)}catch(e){}}function randomFood(){let free=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(!snake.some(p=>p.x===x&&p.y===y))free.push({x,y});if(!free.length){finish(true);return}food=free[Math.floor(Math.random()*free.length)]}function report(){if(score<10)return;const data={type:'genesis-game-score',game:'snake',score,level,at:Date.now()};try{localStorage.setItem('agc-game-pending-snake',JSON.stringify(data));if(parent!==window)parent.postMessage(JSON.stringify(data),location.origin)}catch(e){}}function finish(win=false){running=false;clearTimeout(loop);beep(120);report();el('notice').textContent=win?'🏆 WYGRANA!':'KONIEC GRY — START, aby spróbować ponownie';render()}function start(){clearTimeout(loop);snake=[{x:7,y:10},{x:6,y:10},{x:5,y:10}];dir={x:1,y:0};next={...dir};score=0;level=1;running=true;paused=false;randomFood();el('notice').textContent='';updateHud();render();schedule()}function updateHud(){el('score').textContent=score;el('level').textContent=level;el('best').textContent=best}function schedule(){clearTimeout(loop);if(running&&!paused)loop=setTimeout(step,Math.max(65,165-(level-1)*10))}function step(){if(!running||paused)return;dir=next;let head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(mode===1){head.x=(head.x+N)%N;head.y=(head.y+N)%N}else if(head.x<0||head.y<0||head.x>=N||head.y>=N)return finish();const eating=head.x===food.x&&head.y===food.y;const body=eating?snake:snake.slice(0,-1);if(body.some(p=>p.x===head.x&&p.y===head.y))return finish();snake.unshift(head);if(eating){score+=10;level=1+Math.floor(score/70);beep(670);if(score>best){best=score;try{localStorage.setItem('genesis-snake-best',String(best))}catch(e){}}randomFood();report()}else snake.pop();updateHud();render();schedule()}function render(){g.fillStyle='#142f18';g.fillRect(0,0,480,480);for(let y=0;y<N;y++)for(let x=0;x<N;x++){g.fillStyle=(x+y)%2?'#183b20':'#1c4223';g.fillRect(x*C,y*C,C,C)}g.fillStyle='#f3bd52';g.beginPath();g.arc(food.x*C+12,food.y*C+12,8,0,Math.PI*2);g.fill();snake.forEach((p,i)=>{g.fillStyle=i===0?'#d2ff77':i%2?'#7ecb4b':'#93de53';g.fillRect(p.x*C+2,p.y*C+2,C-4,C-4);if(i===0){g.fillStyle='#244e19';g.fillRect(p.x*C+7,p.y*C+6,4,4);g.fillRect(p.x*C+15,p.y*C+6,4,4)}});if(!running||paused){g.fillStyle='#051308aa';g.fillRect(0,0,480,480);g.fillStyle='#d4ff9d';g.textAlign='center';g.font='bold 29px monospace';g.fillText(paused?'PAUZA':score?'GAME OVER':'SNAKE',240,240)}}function turn(x,y){if(x===-dir.x&&y===-dir.y)return;next={x,y}}function key(e){const d={ArrowUp:[0,-1],KeyW:[0,-1],ArrowDown:[0,1],KeyS:[0,1],ArrowLeft:[-1,0],KeyA:[-1,0],ArrowRight:[1,0],KeyD:[1,0]}[e.code];if(d){e.preventDefault();turn(...d)}if(e.code==='Space'){e.preventDefault();pause()}}function pause(){if(!running)return;paused=!paused;el('notice').textContent=paused?'WSTRZYMANO':'';render();schedule()}window.addEventListener('keydown',key);document.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>{const d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];turn(...d)});let sx=0,sy=0;c.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});c.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;Math.abs(dx)>Math.abs(dy)?turn(Math.sign(dx),0):turn(0,Math.sign(dy))},{passive:true});el('start').onclick=start;el('pause').onclick=pause;el('mode').onclick=()=>{mode=1-mode;el('mode').textContent=mode?'TRYB: BEZ ŚCIAN':'TRYB: KLASYCZNY';start()};el('sound').onclick=()=>{fx=!fx;el('sound').textContent=fx?'♫ ON':'♫ OFF';beep()};el('exit').onclick=()=>{report();if(parent!==window)parent.postMessage(JSON.stringify({type:'genesis-snake-exit-fullscreen',game:'snake'}),location.origin)};window.addEventListener('blur',()=>{if(running&&!paused)pause()});render()})();</script></body></html>
+<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>GENESIS SNAKE</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07140d;color:#d5ffb5;font:600 14px system-ui}main{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px;background:radial-gradient(ellipse at center,#1b3b21,#050b08)}header{display:flex;justify-content:space-between;align-items:center;width:min(95vw,70dvh,530px);gap:10px}h1{font-size:clamp(18px,4vw,28px);margin:0;letter-spacing:3px;color:#b9f47a;text-shadow:0 0 14px #68f644}#stats{display:flex;gap:12px;font-size:12px}canvas{width:min(95vw,calc((100dvh - 200px)*1),530px);height:auto;aspect-ratio:1;border:5px solid #5b8751;border-radius:13px;background:#152e18;box-shadow:0 0 25px #6eff5625;touch-action:none}nav{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}button{background:#183b20;color:#e6ffb6;border:1px solid #6b9a55;border-radius:8px;min-height:36px;padding:7px 12px;font-weight:800;cursor:pointer}button:active{background:#377642}.pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,42px);gap:4px}.pad button{font-size:19px;padding:0}.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}.hint{font-size:11px;color:#9ac88c;text-align:center}#notice{min-height:20px;color:#f8e48d;text-align:center}body.embed main{padding:4px;gap:5px}body.embed canvas{width:min(95vw,calc(100dvh - 175px),530px)}@media(max-height:510px){.hint{display:none}.pad{grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,30px)}.pad button{min-height:29px}body.embed canvas{width:min(65vw,calc(100dvh - 100px))}}
+html,body{color:#e5faf8;background:#071322}
+main{background:radial-gradient(ellipse at 48% 32%,#15344a,#071322 68%)}
+header{flex-wrap:wrap;justify-content:center}
+h1{color:#83fada;text-shadow:none;font-size:clamp(17px,3vw,23px)}
+#stats{color:#a8bbca;font-variant-numeric:tabular-nums}#stats b{color:#fff}
+canvas{border:2px solid #367c86;border-radius:16px;box-shadow:0 12px 40px #020a16,0 0 18px #4fe6c520}
+button{background:#10283b;border-color:#365368;color:#e0f3f6}button:active{background:#205763}
+#start{background:#83fada;color:#082730;border-color:#83fada}
+.hint{color:#a9bdc9}#notice{color:#ffd58b}
+@media(max-width:450px){nav{gap:4px}nav button{padding:6px 8px}header{padding-inline:34px}}
+@media(max-height:510px) and (orientation:landscape){
+ main,body.embed main{display:grid;grid-template-columns:auto minmax(180px,265px);grid-template-rows:auto auto auto auto;align-content:center;justify-items:center;gap:8px 14px}
+ canvas,body.embed canvas{grid-row:1/5;grid-column:1;width:min(52vw,92dvh)}
+ header,nav,.pad,#notice{grid-column:2;width:auto}header{grid-row:1}#notice{grid-row:2}
+}
+
+body > button.genesis-close-game{
+  position:fixed!important;top:max(8px,env(safe-area-inset-top))!important;
+  right:max(8px,env(safe-area-inset-right))!important;left:auto!important;
+  display:grid!important;place-items:center;z-index:2147483647;
+  width:44px;height:44px;min-width:44px;min-height:44px;padding:0;
+  background:#e4c98d;color:#101720;border:1px solid #ffe6ae;border-radius:50%;
+  font:500 30px/1 system-ui;cursor:pointer;touch-action:manipulation;
+}
+</style></head><body><main><header><h1>GENESIS SNAKE</h1><div id="stats"><span>PKT <b id="score">0</b></span><span>REKORD <b id="best">0</b></span><span>POZ. <b id="level">1</b></span></div></header><canvas id="board" width="480" height="480" aria-label="Snake - gra w węża"></canvas><div id="notice">Naciśnij START, aby rozpocząć</div><nav><button id="start">▶ START</button><button id="pause">Ⅱ PAUZA</button><button id="mode">TRYB: KLASYCZNY</button><button id="sound">♫ OFF</button><button id="exit" aria-label="Zamknij grę">✕</button></nav><div class="pad"><button class="up" data-dir="up">▲</button><button class="left" data-dir="left">◀</button><button class="down" data-dir="down">▼</button><button class="right" data-dir="right">▶</button></div><div class="hint">Strzałki / WASD · Przesuń palcem · Zbieraj jedzenie · Unikaj ścian i ogona</div></main><script>(()=>{'use strict';if(location.search.includes('embed'))document.body.classList.add('embed');const c=document.getElementById('board'),g=c.getContext('2d'),N=20,C=24;let snake=[],dir={x:1,y:0},next={x:1,y:0},food={x:13,y:10},score=0,level=1,best=0,running=false,paused=false,mode=0,loop=null,fx=false,audio=null;try{best=Number(localStorage.getItem('genesis-snake-best')||0)}catch(e){}document.getElementById('best').textContent=best;const el=id=>document.getElementById(id);function beep(f=500){if(!fx)return;try{audio??=new(window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),a=audio.createGain();o.frequency.value=f;o.type='square';a.gain.value=.018;o.connect(a);a.connect(audio.destination);o.start();o.stop(audio.currentTime+.065)}catch(e){}}function randomFood(){let free=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(!snake.some(p=>p.x===x&&p.y===y))free.push({x,y});if(!free.length){finish(true);return}food=free[Math.floor(Math.random()*free.length)]}function report(){if(score<10)return;const data={type:'genesis-game-score',game:'snake',score,level,at:Date.now()};try{localStorage.setItem('agc-game-pending-snake',JSON.stringify(data));if(parent!==window)parent.postMessage(JSON.stringify(data),location.origin)}catch(e){}}function finish(win=false){running=false;clearTimeout(loop);beep(120);report();el('notice').textContent=win?'🏆 WYGRANA!':'KONIEC GRY — START, aby spróbować ponownie';render()}function start(){clearTimeout(loop);snake=[{x:7,y:10},{x:6,y:10},{x:5,y:10}];dir={x:1,y:0};next={...dir};score=0;level=1;running=true;paused=false;randomFood();el('notice').textContent='';updateHud();render();schedule()}function updateHud(){el('score').textContent=score;el('level').textContent=level;el('best').textContent=best}function schedule(){clearTimeout(loop);if(running&&!paused)loop=setTimeout(step,Math.max(65,165-(level-1)*10))}function step(){if(!running||paused)return;dir=next;let head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(mode===1){head.x=(head.x+N)%N;head.y=(head.y+N)%N}else if(head.x<0||head.y<0||head.x>=N||head.y>=N)return finish();const eating=head.x===food.x&&head.y===food.y;const body=eating?snake:snake.slice(0,-1);if(body.some(p=>p.x===head.x&&p.y===head.y))return finish();snake.unshift(head);if(eating){score+=10;level=1+Math.floor(score/70);beep(670);if(score>best){best=score;try{localStorage.setItem('genesis-snake-best',String(best))}catch(e){}}randomFood();report()}else snake.pop();updateHud();render();schedule()}function render() {
+  const backdrop = g.createRadialGradient(185,150,0,230,230,345);
+  backdrop.addColorStop(0,'#14354b');
+  backdrop.addColorStop(1,'#061221');
+  g.fillStyle = backdrop;
+  g.fillRect(0,0,480,480);
+  g.strokeStyle = '#72deee18';
+  g.lineWidth = 1;
+  g.beginPath();
+  for (let t=0; t<=480; t+=C) {
+    g.moveTo(t+.5,0); g.lineTo(t+.5,480);
+    g.moveTo(0,t+.5); g.lineTo(480,t+.5);
+  }
+  g.stroke();
+
+  g.save();
+  g.translate(food.x*C+12,food.y*C+12);
+  g.shadowColor = '#ffaf35';
+  g.shadowBlur = 16;
+  g.fillStyle = '#ffab45';
+  g.beginPath();
+  g.moveTo(0,-10); g.lineTo(8,0); g.lineTo(0,10); g.lineTo(-8,0);
+  g.closePath(); g.fill();
+  g.fillStyle = '#fff2ad';
+  g.beginPath(); g.moveTo(0,-10); g.lineTo(2,1); g.lineTo(-8,0); g.fill();
+  g.restore();
+
+  const preview = [[12,8],[11,8],[10,8],[9,8],[9,9],[9,10],[9,11],[8,11],[7,11],[6,11],[6,10],[6,9],[5,9]];
+  const body = snake.length ? snake : preview.map(([x,y])=>({x,y}));
+  body.forEach(({x,y},i)=>{
+    g.save();
+    g.translate(x*C+12,y*C+12);
+    const size = i===0 ? 11 : 10;
+    const surface = g.createLinearGradient(-8,-9,8,10);
+    surface.addColorStop(0,i===0?'#dbffe8':'#83fada');
+    surface.addColorStop(.44,'#38cba5');
+    surface.addColorStop(1,'#116c74');
+    g.fillStyle=surface;
+    g.shadowColor='#31dfbb'; g.shadowBlur=i===0?10:3;
+    g.beginPath(); g.roundRect(-size,-size,size*2,size*2,i===0?7:5); g.fill();
+    g.shadowBlur=0;
+    if(i===0){
+      g.rotate(Math.atan2(dir.y,dir.x));
+      g.fillStyle='#082735';
+      for(const offset of [-5,5]){
+        g.beginPath(); g.arc(4,offset,2.7,0,Math.PI*2); g.fill();
+      }
+    }else{
+      g.strokeStyle='#b5ffe776';
+      g.beginPath(); g.moveTo(-5,-4); g.lineTo(0,0); g.lineTo(5,-4); g.stroke();
+    }
+    g.restore();
+  });
+  if(!running || paused){
+    g.fillStyle='rgba(5,16,32,.83)';
+    g.fillRect(0,302,480,58);
+    g.fillStyle='#dafff3'; g.textAlign='center';
+    g.font='700 24px system-ui';
+    g.fillText(paused?'PAUZA':snake.length?'KONIEC GRY':'GENESIS SNAKE',240,339);
+  }
+}
+function turn(x,y){if(x===-dir.x&&y===-dir.y)return;next={x,y}}function key(e){const d={ArrowUp:[0,-1],KeyW:[0,-1],ArrowDown:[0,1],KeyS:[0,1],ArrowLeft:[-1,0],KeyA:[-1,0],ArrowRight:[1,0],KeyD:[1,0]}[e.code];if(d){e.preventDefault();turn(...d)}if(e.code==='Space'){e.preventDefault();pause()}}function pause(){if(!running)return;paused=!paused;el('notice').textContent=paused?'WSTRZYMANO':'';render();schedule()}window.addEventListener('keydown',key);document.querySelectorAll('[data-dir]').forEach(b=>b.onclick=()=>{const d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[b.dataset.dir];turn(...d)});let sx=0,sy=0;c.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});c.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;Math.abs(dx)>Math.abs(dy)?turn(Math.sign(dx),0):turn(0,Math.sign(dy))},{passive:true});el('start').onclick=start;el('pause').onclick=pause;el('mode').onclick=()=>{mode=1-mode;el('mode').textContent=mode?'TRYB: BEZ ŚCIAN':'TRYB: KLASYCZNY';start()};el('sound').onclick=()=>{fx=!fx;el('sound').textContent=fx?'♫ ON':'♫ OFF';beep()};el('exit').onclick=()=>{report();if(parent!==window)parent.postMessage(JSON.stringify({type:'genesis-snake-exit-fullscreen',game:'snake'}),location.origin)};window.addEventListener('blur',()=>{if(running&&!paused)pause()});render()})();
+if (window.parent !== window && new URLSearchParams(location.search).has('embed')) {
+  const closeButton = document.getElementById('exit');
+  closeButton.setAttribute('aria-label', 'Zamknij grę');
+  closeButton.title = 'Zamknij grę';
+  closeButton.textContent = '×';
+  closeButton.classList.add('genesis-close-game');
+  document.body.appendChild(closeButton);
+}
+</script></body></html>
