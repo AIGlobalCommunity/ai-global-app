@@ -184,7 +184,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           Positioned(
             right: 8, top: MediaQuery.of(context).padding.top + 8,
             child: IconButton.filled(
-              onPressed: _hideBlocksFullscreen,
+              onPressed: () {
+                _hideBlocksFullscreen();
+                setState(() { game = null; scoreNotice = null; });
+              },
               tooltip: 'Zamknij grę',
               icon: const Icon(Icons.close),
             ),
@@ -213,6 +216,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     try {
       decoded = jsonDecode(event.data as String);
     } catch (_) {
+      return;
+    }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-blocks-exit-fullscreen') {
+      _hideBlocksFullscreen();
+      setState(() { game = null; scoreNotice = null; });
       return;
     }
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-fullscreen') {
