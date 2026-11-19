@@ -42,6 +42,79 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake'];
+  Map<String, (int, int, bool?)> ratings = {};
+  final voting = <int>{};
+  int ratingRequest = 0;
+  bool ratingsReady = false;
+  bool ratingsFailed = false;
+
+  Future<void> _loadRatings() async {
+    final request = ++ratingRequest;
+    final owner = AgcBackend.user?.id;
+    try {
+      final rows = await AgcBackend.client.rpc('agc_game_ratings');
+      if (!mounted || request != ratingRequest || owner != AgcBackend.user?.id) return;
+      setState(() {
+        ratings = {
+          for (final row in rows)
+            row['game'] as String: (row['likes'] as int, row['dislikes'] as int, row['mine'] as bool?),
+        };
+        ratingsReady = true;
+        ratingsFailed = false;
+      });
+    } catch (_) {
+      if (mounted && request == ratingRequest) setState(() => ratingsFailed = true);
+    }
+  }
+
+  Future<void> _vote(int index, bool positive) async {
+    if (AgcBackend.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zaloguj się, aby ocenić grę.')));
+      return;
+    }
+    if (!voting.add(index)) return;
+    setState(() {});
+    try {
+      await AgcBackend.client.rpc('agc_rate_game', params: {'p_game': gameKeys[index], 'p_positive': positive});
+      if (mounted) await _loadRatings();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nie udało się zapisać oceny. Spróbuj ponownie.')));
+    } finally {
+      if (mounted) setState(() => voting.remove(index));
+    }
+  }
+
+  (int, int, bool?) _rating(int index) => ratings[gameKeys[index]] ?? (0, 0, null);
+
+  int _compareRatings(int a, int b) {
+    final x = _rating(a), y = _rating(b);
+    final nx = x.$1 + x.$2, ny = y.$1 + y.$2;
+    final ratio = (y.$1 * nx).compareTo(x.$1 * ny);
+    if (ratio != 0) return ratio;
+    final volume = ny.compareTo(nx);
+    return volume != 0 ? volume : a.compareTo(b);
+  }
+
+  Widget _ratingBar(int index) {
+    final (likes, dislikes, mine) = _rating(index);
+    final total = likes + dislikes;
+    return Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
+      for (final positive in [true, false])
+        TextButton.icon(
+          onPressed: voting.contains(index) ? null : () => _vote(index, positive),
+          icon: Icon(positive
+            ? (mine == true ? Icons.thumb_up : Icons.thumb_up_outlined)
+            : (mine == false ? Icons.thumb_down : Icons.thumb_down_outlined), size: 17),
+          label: Text(positive ? 'Lubię · $likes' : 'Nie lubię · $dislikes'),
+        ),
+      if (ratingsFailed)
+        IconButton(onPressed: _loadRatings, tooltip: 'Odśwież oceny', icon: const Icon(Icons.refresh))
+      else
+        Text(!ratingsReady ? '…' : total == 0 ? 'Brak ocen' : '${(100 * likes / total).round()}% lubi'),
+    ]);
+  }
+
   String categoryFilter = 'all';
   bool diagnosticsOpen = false;
   String lastBridgeStatus = 'Brak zdarzeń z gry';
@@ -87,8 +160,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     messages = html.window.onMessage.listen(_onMessage);
     if (AgcBackend.configured) {
+      _loadRatings();
       authChanges = AgcBackend.client.auth.onAuthStateChange.listen((_) {
         if (!mounted) return;
+        _loadRatings();
         setState(() {});
         for (final frame in frames.values) {
           sendGameAuthStatus(frame);
@@ -672,7 +747,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     _recoverPendingScores();
     setState(() {
       rankingGame = selectedGame;
-      rankingFuture = _loadRanking(selectedGame == 0 ? 'signal' : selectedGame == 1 ? 'defender' : selectedGame == 3 ? 'blocks' : 'wolf');
+      rankingFuture = _loadRanking(gameKeys[selectedGame]);
     });
   }
 
@@ -1231,16 +1306,24 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Widget _arcadeExtraCard({required int index}) {
     final wolf = index == 2;
-    final accent = wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
-    final title = wolf ? 'WILK I JAJKA' : 'GENESIS BLOCKS';
+    final snake = index == 4;
+    final accent = snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
+    final title = snake ? 'GENESIS SNAKE' : wolf ? 'WILK I JAJKA' : 'GENESIS BLOCKS';
     void openGame() {
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
+        if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = wolf
+    final features = snake
+      ? <(IconData, String)>[
+          (Icons.gamepad_outlined, 'Steruj gestem, strzałkami lub WASD'),
+          (Icons.diamond_outlined, 'Zbieraj kryształy i wydłużaj węża'),
+          (Icons.speed_outlined, 'Przyspieszaj co 70 punktów'),
+          (Icons.border_outer, 'Graj ze ścianami lub bez'),
+        ]
+      : wolf
       ? <(IconData, String)>[
           (Icons.egg_outlined, 'Łap jajka z czterech stron'),
           (Icons.speed_outlined, 'Coraz szybsza rozgrywka'),
@@ -1269,7 +1352,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: wolf
+              child: snake
+                ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
+                : wolf
                 ? Image.network('wolfart/farm-scene.jpg', fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const Center(
                       child: Icon(Icons.pets, size: 90, color: Color(0xFFFFB05A))))
@@ -1308,7 +1393,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               decoration: BoxDecoration(
                 color: const Color(0xDD071525), borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: accent.withValues(alpha: .8))),
-              child: Text(wolf ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
+              child: Text((snake || wolf) ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
                 style: TextStyle(color: accent, fontSize: 11,
                   fontWeight: FontWeight.w700, letterSpacing: 1.1)),
             )),
@@ -1340,32 +1425,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       )),
     ));
   }
-
-  Widget _snakeCard() => Card(
-    color: const Color(0xFF102819),
-    child: InkWell(
-      onTap: () {
-        setState(() { game = 4; scoreNotice = null; });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showSnakeFullscreen();
-        });
-      },
-      child: Padding(padding: const EdgeInsets.all(22), child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.grid_on, size: 44, color: Color(0xFFB9F47A)),
-          const SizedBox(height: 10),
-          const Text('GENESIS SNAKE', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFB9F47A))),
-          const SizedBox(height: 8),
-          const Text('ARKADOWA · OFFLINE'),
-          const SizedBox(height: 10),
-          const Text('Klasyczny wąż jak w Nokii. Zbieraj jedzenie, unikaj ogona, pobij rekord. Sterowanie dotykiem lub klawiaturą.'),
-          const SizedBox(height: 14),
-          const Align(alignment: Alignment.centerRight, child: Chip(label: Text('▶ ZAGRAJ'))),
-        ],
-      )),
-    ),
-  );
 
   Widget _gameLibrary() => Center(
     child: ConstrainedBox(
@@ -1432,13 +1491,19 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   'Defend the Genesis station, survive waves and beat the high score.'),
               ),
             ];
-            final visible = <Widget>[
-              if (categoryFilter == 'all' || categoryFilter == 'puzzle') cards[0],
-              if (categoryFilter == 'all' || categoryFilter == 'puzzle' || categoryFilter == 'offline') _arcadeExtraCard(index: 3),
-              if (categoryFilter == 'all' || categoryFilter == 'shooter') cards[1],
-              if (categoryFilter == 'all' || categoryFilter == 'arcade' ||
-                  categoryFilter == 'offline') _arcadeExtraCard(index: 2),
-              if (categoryFilter == 'all' || categoryFilter == 'arcade' || categoryFilter == 'offline') _snakeCard(),
+            const categories = [
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'],
+            ];
+            final indices = [
+              for (var i = 0; i < gameKeys.length; i++)
+                if (categoryFilter == 'all' || categories[i].contains(categoryFilter)) i,
+            ]..sort(_compareRatings);
+            final visible = [
+              for (final i in indices)
+                Column(key: ValueKey(gameKeys[i]), children: [
+                  i < 2 ? cards[i] : _arcadeExtraCard(index: i),
+                  _ratingBar(i),
+                ]),
             ];
             if (constraints.maxWidth < 700) {
               return Column(children: [
