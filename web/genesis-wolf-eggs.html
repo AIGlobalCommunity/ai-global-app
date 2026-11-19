@@ -52,7 +52,8 @@ body > button.genesis-close-game{
 <div id="overlay"><div class="panel"><div class="mascot">🐺🥚</div><h1 id="heading">WILK I JAJKA</h1><p id="message">Łap jajka z czterech stron! Dotknij odpowiedniej ćwiartki planszy, aby złapać jajko. Masz trzy życia.</p><div class="ranking-warning" id="ranking-warning">🏆 Ranking online wymaga zalogowania na konto THE GENESIS ERA przed grą. Bez logowania wynik pozostaje lokalny.</div><button id="play">▶ ZAGRAJ TERAZ</button></div></div></div>
 <div id="controls"><button class="control active" data-lane="0">↖ LEWA GÓRA</button><button class="control" data-lane="1">PRAWA GÓRA ↗</button><button class="control" data-lane="2">↙ LEWA DÓŁ</button><button class="control" data-lane="3">PRAWA DÓŁ ↘</button></div>
 <div id="help"><span id="device">Wykrywanie urządzenia…</span> · Telefon: dotknij ćwiartki planszy · Komputer: Q / E / A / D · Offline: lokalny rekord</div>
-</div><script>
+</div><script src="genesis-share-end.js"></script>
+<script>
 (function(){
 'use strict';
 const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
@@ -282,7 +283,7 @@ function reportScore(){
   localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}));
  }catch(e){console.warn('Score bridge unavailable',e)}
 }
-function end(){reportScore();playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
+function end(){reportScore();genesisShowEndShare('wolf',points);playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
 if(points>0){try{localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}))}catch(_){}
 try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(_){}}
 
