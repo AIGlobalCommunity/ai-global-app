@@ -267,12 +267,16 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
       });
       GenesisGlobalRanking.scoreRevision.value++;
     } on PostgrestException catch (e) {
-      if (mounted) setState(() => notice = e.code == '23505'
-        ? socialText('Ten nick jest już zajęty.', 'This nickname is taken.')
-        : socialText('Nie udało się zmienić nicku.', 'Could not change nickname.'));
+      if (mounted) {
+        setState(() => notice = e.code == '23505'
+          ? socialText('Ten nick jest już zajęty.', 'This nickname is taken.')
+          : socialText('Nie udało się zmienić nicku.', 'Could not change nickname.'));
+      }
     } catch (_) {
-      if (mounted) setState(() => notice = socialText(
-        'Nie udało się zmienić nicku.', 'Could not change nickname.'));
+      if (mounted) {
+        setState(() => notice = socialText(
+          'Nie udało się zmienić nicku.', 'Could not change nickname.'));
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
