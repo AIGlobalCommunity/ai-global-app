@@ -2,7 +2,7 @@
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08101a;color:white;font:14px system-ui}canvas{display:block;width:100vw;height:100dvh;touch-action:none}#hud{position:fixed;top:12px;left:12px;background:#081626d9;border:1px solid #5ddbc6;border-radius:14px;padding:11px 15px;pointer-events:none;line-height:1.7;max-width:55vw}#hud b{color:#ffd16b}#map{position:fixed;right:12px;top:12px;width:110px;height:110px;border-radius:50%;border:3px solid #d6b66e;background:#07121dcc}#controls{position:fixed;bottom:18px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}.pad{display:grid;grid-template-columns:repeat(3,55px);grid-template-rows:repeat(2,55px);gap:6px}.pedal{display:flex;gap:10px}.key{pointer-events:auto;border:1px solid #ffd16b88;border-radius:15px;background:#07192cbb;color:#fff;font-size:22px;font-weight:900;touch-action:none;user-select:none}.key:active{background:#1e8b8a}.pedal .key{height:85px;width:73px;font-size:14px}#top{position:fixed;right:12px;top:134px;display:flex;gap:7px;flex-direction:column}#top button,#menu button{border:1px solid #f5d37d;background:#0e283c;color:#fff;border-radius:11px;padding:9px;cursor:pointer;font-weight:bold}#menu{position:fixed;inset:0;display:grid;place-items:center;background:#030a15bd}#panel{width:min(460px,92vw);background:#0b1c30;border:2px solid #f3c86a;border-radius:24px;padding:30px;text-align:center;box-shadow:0 20px 80px #000}#panel h1{color:#f3c86a;font-size:32px;margin:0}#panel p{line-height:1.6}#panel button{padding:13px 25px;background:#e9bd64;color:#102032}#tip{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);background:#091c2cda;padding:8px 12px;border-radius:9px;text-align:center;pointer-events:none;white-space:nowrap}@media(max-width:650px){#hud{font-size:11px;padding:7px}#map{width:85px;height:85px}#top{top:102px}.pad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,48px)}.pedal .key{width:61px;height:77px}#tip{bottom:120px;font-size:11px}}
 </style></head><body><canvas id="world"></canvas><canvas id="map" width="110" height="110"></canvas><div id="hud">🌆 <b>GENESIS CITY 2D · WARSZAWA</b><div id="status">🚘 Auto · 💰 0 pkt · ⭐ 0/5</div><div id="mission">Misja: dotrzyj do złotego znacznika</div><div id="best">Rekord: 0</div></div><div id="top"><button id="exit">✕ WYJDŹ</button><button id="pause">⏸ PAUZA</button><button id="share">↗ WYNIK</button><button id="repair">🔧 REGENERUJ AUTO</button><button id="enter">🚶 WYJDŹ / WSIĄDŹ</button><button id="shoot">🎯 STRZAŁ</button></div><div style="position:fixed;bottom:2px;right:5px;font-size:10px;background:#061626bb;pointer-events:none">© OpenStreetMap contributors</div><div id="tip">WASD / strzałki · E: wyjdź / przejmij pobliskie auto · R: regeneruj · F: strzał</div><div id="controls"><div class="pad"><span></span><button class="key" data-k="ArrowUp">▲</button><span></span><button class="key" data-k="ArrowLeft">◀</button><button class="key" data-k="ArrowDown">▼</button><button class="key" data-k="ArrowRight">▶</button></div><div class="pedal"><button class="key" data-k="Space">HAMULEC</button><button class="key" data-k="ShiftLeft">NITRO ⚡</button><button class="key" id="touchShoot">🎯</button></div></div><div id="menu"><div id="panel"><h1>GENESIS CITY 2D</h1><h2>WARSZAWA ŚRÓDMIEŚCIE · STREET DRIVER</h2><p>Podkład OpenStreetMap przedstawia rzeczywiste centrum Warszawy. Ruch i kolizje nadal korzystają z uproszczonej siatki. Miejsca: Marszałkowska, Aleje Jerozolimskie, Świętokrzyska, Nowy Świat i Wisła. Samochody jadą prawą stroną jezdni. Na chodnikach spacerują piesi. Wykonuj dostawy i unikaj kolizji.</p><p id="summary">Gotowy na pierwszą trasę?</p><button id="start">▶ ROZPOCZNIJ</button></div></div><script src="genesis-share-end.js"></script><script>
 (()=>{'use strict';const c=document.getElementById('world'),ctx=c.getContext('2d'),mini=document.getElementById('map').getContext('2d');let W=0,H=0,dpr=1;function resize(){W=innerWidth;H=innerHeight;dpr=Math.min(devicePixelRatio||1,2);c.width=W*dpr;c.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
-const world=3600,grid=300,road=92,keys=new Set(),player={x:1500,y:1500,a:0,s:0},cars=[],packages=[],buildings=[],people=[];let police=[],gangsters=[],carColor="#f5c75d",vehicleId=null,stains=[],onFoot=false,ammo=0,shots=[],pickups=[],wanted=0,shotCooldown=0,score=0,delivered=0,damage=0,playing=false,paused=false,last=0,mission=0,best=Number(localStorage.getItem('genesis-city-best')||0),elapsed=0;
+const world=3600,grid=300,road=92,keys=new Set(),player={x:1500,y:1500,a:0,s:0},cars=[],packages=[],buildings=[],people=[];let crashes=[],police=[],gangsters=[],carColor="#f5c75d",vehicleId=null,stains=[],onFoot=false,ammo=0,shots=[],pickups=[],wanted=0,shotCooldown=0,score=0,delivered=0,damage=0,playing=false,paused=false,last=0,mission=0,best=Number(localStorage.getItem('genesis-city-best')||0),elapsed=0;
 const rand=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const roads=v=>{let n=((v%grid)+grid)%grid;return n<road/2||n>grid-road/2};
 const rndRoad=()=>{let k=Math.floor(rand(1,11))*grid;return Math.random()<.5?{x:k,y:rand(100,world-100)}:{x:rand(100,world-100),y:k}};
@@ -28,7 +28,8 @@ for(let x=0;x<world;x+=grid)for(let y=0;y<world;y+=grid){
 }
 for(let i=0;i<35;i++){let p=rndRoad();if(p.x>2970)p.x=2700;packages.push({...p,done:false})}
 function spawnTraffic(i){const axis=i%2===0?'v':'h',line=(Math.floor(rand(1,10)))*grid,positive=i%4<2;const offset=positive?-road*.23:road*.23;return axis==='v'?{x:line+offset,y:rand(0,world),dir:positive?Math.PI:0,axis,line,positive,s:rand(38,90),color:['#ffb75e','#d9f2ff','#db6880','#9cdad2'][i%4]}:{x:rand(0,world),y:line+offset,dir:positive?Math.PI/2:-Math.PI/2,axis,line,positive,s:rand(38,90),color:['#ffb75e','#d9f2ff','#db6880','#9cdad2'][i%4]}}
-for(let i=0;i<36;i++)cars.push({...spawnTraffic(i),id:i,stolen:false,parked:false});
+for(let i=0;i<36;i++)cars.push({...spawnTraffic(i),id:i,stolen:false,parked:false,baseSpeed:0,crashTimer:0});
+for(const car of cars)car.baseSpeed=car.s;
 for(let i=0;i<7;i++){let p=rndRoad();police.push({x:p.x,y:p.y,a:0,s:85})}
 for(let i=0;i<10;i++){let p=rndRoad();gangsters.push({x:p.x,y:p.y,a:rand(0,6.28),s:rand(12,26),cool:0})}
 for(let i=0;i<95;i++){const axis=i%2?'v':'h',line=Math.floor(rand(1,11))*grid,side=i%4<2?-1:1;const offset=side*(road/2+12);people.push(axis==='v'?{x:line+offset,y:rand(0,world),axis,dir:i%3?-1:1,s:rand(9,24),color:['#f4a2a2','#9bc9eb','#efc578','#b7a3db'][i%4]}:{x:rand(0,world),y:line+offset,axis,dir:i%3?-1:1,s:rand(9,24),color:['#f4a2a2','#9bc9eb','#efc578','#b7a3db'][i%4]})}
@@ -83,16 +84,60 @@ if(onFoot){
 for(const p of pickups)if(p.active&&Math.hypot(player.x-p.x,player.y-p.y)<30){p.active=false;ammo+=12}
 for(const bullet of shots){bullet.x+=Math.sin(bullet.a)*620*dt;bullet.y-=Math.cos(bullet.a)*620*dt;bullet.life-=dt}
 shots=shots.filter(b=>b.life>0);
+// Traffic simulation: braking, safe following gaps and physical separation.
 for(const car of cars){
  if(car.stolen&&vehicleId===car.id&&!onFoot){car.x=player.x;car.y=player.y;car.dir=player.a;continue}
  if(car.parked)continue;
- const dx=Math.sin(car.dir)*car.s*dt,dy=-Math.cos(car.dir)*car.s*dt;
- car.x=(car.x+dx+world)%world;car.y=(car.y+dy+world)%world;
- // Keep traffic in the correct lane: right-hand traffic in Poland.
+ car.crashTimer=Math.max(0,car.crashTimer-dt);
+ let target=car.baseSpeed;
+ if(car.crashTimer>0)target=0;
+ const forwardX=Math.sin(car.dir),forwardY=-Math.cos(car.dir);
+ let nearest=Infinity;
+ for(const other of cars){
+   if(other===car)continue;
+   const dx=other.x-car.x,dy=other.y-car.y;
+   const along=dx*forwardX+dy*forwardY,across=Math.abs(dx*forwardY-dy*forwardX);
+   if(along>0&&along<120&&across<27)nearest=Math.min(nearest,along);
+ }
+ if(!onFoot){
+   const dx=player.x-car.x,dy=player.y-car.y;
+   const along=dx*forwardX+dy*forwardY,across=Math.abs(dx*forwardY-dy*forwardX);
+   if(along>0&&along<120&&across<27)nearest=Math.min(nearest,along);
+ }
+ if(nearest<85)target=Math.min(target,Math.max(0,(nearest-40)*2));
+ car.s+=clamp(target-car.s,-180*dt,110*dt);
+ const nextX=(car.x+forwardX*car.s*dt+world)%world,nextY=(car.y+forwardY*car.s*dt+world)%world;
  const lane=car.positive?-road*.23:road*.23;
- if(car.axis==='v')car.x=car.line+lane;else car.y=car.line+lane;
- if(!onFoot&&Math.hypot(player.x-car.x,player.y-car.y)<34){damage+=dt*55;player.s*=.87}
+ const proposedX=car.axis==='v'?car.line+lane:nextX,proposedY=car.axis==='h'?car.line+lane:nextY;
+ let blocked=false;
+ for(const other of cars){
+   if(other===car)continue;
+   if(Math.hypot(proposedX-other.x,proposedY-other.y)<35){blocked=true;break}
+ }
+ if(!blocked){car.x=proposedX;car.y=proposedY}else{car.s=0}
+ if(!onFoot&&Math.hypot(player.x-car.x,player.y-car.y)<34){
+   const impact=Math.abs(player.s-car.s);
+   if(impact>45&&car.crashTimer<=0){car.crashTimer=rand(2,5);crashes.push({x:car.x,y:car.y,t:4});damage+=Math.min(25,impact*.09)}
+   player.s*=.5;
+ }
 }
+// Resolve accidental NPC overlaps after movement (including intersections).
+for(let i=0;i<cars.length;i++)for(let j=i+1;j<cars.length;j++){
+ const a=cars[i],b=cars[j];
+ if((a.stolen&&vehicleId===a.id&&!onFoot)||(b.stolen&&vehicleId===b.id&&!onFoot))continue;
+ const dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy);
+ if(dist>=32)continue;
+ const nx=dist>0?dx/dist:1,ny=dist>0?dy/dist:0,overlap=(32-dist)/2;
+ if(!a.parked){a.x=clamp(a.x-nx*overlap,15,world-15);a.y=clamp(a.y-ny*overlap,15,world-15)}
+ if(!b.parked){b.x=clamp(b.x+nx*overlap,15,world-15);b.y=clamp(b.y+ny*overlap,15,world-15)}
+ if(a.crashTimer<=0&&b.crashTimer<=0&&Math.max(a.s,b.s)>35){
+   crashes.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2,t:4});
+   a.crashTimer=rand(2,4);b.crashTimer=rand(2,4);
+ }
+ a.s=0;b.s=0;
+}
+for(const crash of crashes)crash.t-=dt;
+crashes=crashes.filter(crash=>crash.t>0);
 for(const person of people){
  if(person.down>0){person.down-=dt;continue}
  if(person.axis==='v')person.y=(person.y+person.dir*person.s*dt+world)%world;
@@ -133,6 +178,7 @@ for(const car of cars)if(!(car.stolen&&vehicleId===car.id&&!onFoot)&&Math.abs(ca
 for(const cop of police){if(Math.abs(cop.x-player.x)>W/zoom||Math.abs(cop.y-player.y)>H/zoom)continue;carShape(cop.x,cop.y,cop.a,'#e5e9ef');ctx.fillStyle=elapsed%1<.5?'#317cfe':'#fa4040';ctx.fillRect(cop.x-8,cop.y-4,16,7)}
 for(const g of gangsters){if(Math.abs(g.x-player.x)>W/zoom||Math.abs(g.y-player.y)>H/zoom)continue;ctx.fillStyle='#26202d';ctx.beginPath();ctx.arc(g.x,g.y,10,0,7);ctx.fill();ctx.fillStyle='#d44e8a';ctx.fillRect(g.x-5,g.y-5,10,9)}
 
+for(const crash of crashes){ctx.save();ctx.globalAlpha=Math.min(1,crash.t);ctx.strokeStyle='#ff9b4e';ctx.lineWidth=3;for(let k=0;k<7;k++){const angle=k*Math.PI*2/7;ctx.beginPath();ctx.moveTo(crash.x+Math.cos(angle)*8,crash.y+Math.sin(angle)*8);ctx.lineTo(crash.x+Math.cos(angle)*22,crash.y+Math.sin(angle)*22);ctx.stroke()}ctx.restore()}
 for(const p of pickups)if(p.active){ctx.fillStyle='#a9dcf8';ctx.fillRect(p.x-9,p.y-9,18,18);ctx.fillStyle='#092438';ctx.font='bold 15px system-ui';ctx.textAlign='center';ctx.fillText('✚',p.x,p.y+5)}
 for(const b of shots){ctx.fillStyle='#ffe28a';ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill()}
 if(onFoot){if(vehicleId===null)carShape(carPark.x,carPark.y,carPark.a,'#f5c75d');ctx.fillStyle='#ffe6bc';ctx.beginPath();ctx.arc(player.x,player.y,10,0,7);ctx.fill();ctx.strokeStyle='#fbd47a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(player.x,player.y);ctx.lineTo(player.x+Math.sin(player.a)*22,player.y-Math.cos(player.a)*22);ctx.stroke()}else carShape(player.x,player.y,player.a,carColor);ctx.restore();
