@@ -216,6 +216,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     } catch (_) {
       return;
     }
+    if (decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-signal-exit-fullscreen' &&
+        decoded['game'] == 'signal') {
+      if (mounted) setState(() { game = null; scoreNotice = null; });
+      return;
+    }
     // A fullscreen HtmlElementView may be hosted in a separate platform view.
     // Accept only the explicit exit command from a same-origin frame even if
     // its WindowProxy differs from the registered catalogue iframe.
