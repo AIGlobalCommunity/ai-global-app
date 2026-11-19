@@ -79,7 +79,7 @@ const png={ship:makePng('ship'),enemy:makePng('enemy'),elite:makePng('enemy'),bo
 const assets={ship:'player.png',enemy:'enemy.png',elite:'enemy-elite.png',asteroid:'asteroid.png',turret:'turret.png',nuke:'nuke.png',background:'space-background.png'};
 for(let i=0;i<4;i++)assets['boss'+i]='boss-'+(i+1)+'.png';
 const spriteReady={};
-for(const [key,file] of Object.entries(assets)){const img=new Image();img.onload=()=>{png[key.startsWith('boss')?'boss':key] instanceof Array?png.boss[Number(key.slice(4))]=img:png[key]=img;spriteReady[key]=true};img.onerror=()=>{spriteReady[key]=false};img.src='assets/defender/'+file;}
+for(const [key,file] of Object.entries(assets)){const img=new Image();img.onload=()=>{if(key.startsWith('boss'))png.boss[Number(key.slice(4))]=img;else png[key]=img;spriteReady[key]=true};img.onerror=()=>{spriteReady[key]=false};img.src='assets/defender/'+file;}
 function sprite(image,x,y,w,h){if(image&&image.complete&&image.naturalWidth)ctx.drawImage(image,x-w/2,y-h/2,w,h);}
 
 function beep(freq=440,duration=.06,type='sine',gain=.025){if(!sound)return;try{audio??=new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}catch(_){}}
