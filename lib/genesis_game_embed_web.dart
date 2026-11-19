@@ -375,6 +375,21 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     } catch (_) {
       return;
     }
+    if (decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-share-finished-score' &&
+        gameKeys.contains(decoded['game']) &&
+        decoded['score'] is num) {
+      final points = (decoded['score'] as num).toInt();
+      if (points < 0 || points > 10000000) return;
+      final handle = AgcBackend.user?.userMetadata?['handle']?.toString() ?? 'Gracz';
+      final url = Uri.https('thegenesisera.com', '/share-result.html', {
+        'game': decoded['game'] as String,
+        'score': '$points',
+        'nick': handle,
+      });
+      html.window.open(url.toString(), '_blank');
+      return;
+    }
     if (decoded is Map && decoded['game'] == 'ski' && decoded['type'] == 'genesis-ski-exit-fullscreen') {
       skiOverlay?.remove();
       skiOverlay?.dispose();
