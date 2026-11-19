@@ -84,7 +84,7 @@ for(let i=0;i<3;i++){const slot=document.createElement('div');slot.className='sl
 function color(el,c){el.style.setProperty('--color',palette[c][0]);el.style.setProperty('--light',palette[c][1]);el.style.setProperty('--dark',palette[c][2])}
 const saveKey='genesis-blocks-campaign-v1';
 const challenges=[
- ['💎 Zbieracz kryształów','crystals',12],['⭐ Łowca punktów','score',450],
+ ['💎 Zbieracz kryształów','crystals',12],['🔄 Odnawiające się kryształy','regen',14],['⭐ Łowca punktów','score',450],
  ['🧱 Mistrz układania','pieces',15],['💥 Niszczyciel linii','lines',5],
  ['🔥 Mistrz kombo','combo',2],['🟦 Niebieskie kryształy','blue',14],
  ['⏱️ Przetrwanie','survive',75],['🎯 Precyzja','singles',9],
@@ -105,6 +105,7 @@ function progress(){
  const c=challenge(),m=missionStats;
  if(c.type==='survive')return Math.floor((Date.now()-missionStart)/1000);
  if(c.type==='colors')return (m.colors||[]).length;
+ if(c.type==='regen')return m.crystals||0;
  return m[c.type]||0;
 }
 function missionUI(){
@@ -114,8 +115,19 @@ function missionUI(){
  $('mission-progress').textContent=v+'/'+c.target;
  $('mission-fill').style.width=(100*v/c.target)+'%';
 }
-function gemMission(){return ['crystals','blue','gold','colors'].includes(challenge().type)}
+function gemMission(){return ['crystals','regen','blue','gold','colors'].includes(challenge().type)}
 function seedGems(){if(!gemMission())return;const available=[];for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(board[y][x]!==null&&gems[y][x]===null)available.push([x,y]);for(let i=0;i<Math.min(5,available.length);i++){const j=rand(available.length),[x,y]=available.splice(j,1)[0];gems[y][x]=challenge().type==='blue'?0:challenge().type==='gold'?1:rand(palette.length)}}
+function seedStartingGems(){
+ if(challenge().type!=='regen')return;
+ // Start this mission with visible gem-bearing blocks, while keeping plenty of free space.
+ const positions=[[1,1],[3,1],[5,2],[2,4],[6,4],[4,6]];
+ for(const [x,y] of positions){if(board[y][x]===null)board[y][x]=rand(palette.length);gems[y][x]=rand(palette.length)}
+}
+function refillGemsAfterClear(){
+ if(challenge().type!=='regen')return;
+ // Cleared gems count first; replacements appear on remaining occupied cells.
+ seedGems();
+}
 function saveCampaign(){
  try{localStorage.setItem(saveKey,JSON.stringify({version:2,level,score,best,board,gems,tray,combo,maxCombo,turn,missionStats,elapsed:Math.floor((Date.now()-missionStart)/1000),ended}))}catch(_){}
 }
@@ -140,7 +152,7 @@ function openLevelDialog(completed){
 function nextLevel(){
  level++;missionStats={};missionStart=Date.now();combo=0;turn=0;ended=false;roundId++;
  for(const row of board)row.fill(null);for(const row of gems)row.fill(null);
- tray=[piece(),piece(),piece()];selected=-1;hover=null;
+ tray=[piece(),piece(),piece()];selected=-1;hover=null;seedStartingGems();
  $('overlay').classList.remove('show');paint();missionUI();saveCampaign();report();
  openLevelDialog(true);
 }
@@ -215,7 +227,7 @@ function place(x,y){
  }else{combo=0;beep(420)}
  if(score>best){best=score;try{localStorage.setItem('genesis-blocks-best',String(best))}catch(_){}}
  tray[selected]=null;selected=-1;hover=null;
- seedGems();
+ if(challenge().type==='regen'){if(lines)refillGemsAfterClear()}else seedGems();
  if(tray.every(v=>!v))tray=[piece(),piece(),piece()];
  paint();if(lines){for(const [cx,cy]of clearCells){const d=cellNodes[cy*N+cx];d.classList.add('burst');setTimeout(()=>d.classList.remove('burst'),330)}}$('combo-status').textContent=combo>=2?'🔥 KOMBO ×'+combo+' · REKORD KOMBO ×'+maxCombo:combo===1?'✨ LINIA! Kolejna linia = SUPER KOMBO':'';
  if(lines){for(const [cx,cy]of placed)if(board[cy][cx]!==null){const d=cellNodes[cy*N+cx];d.classList.add('just-placed');setTimeout(()=>d.classList.remove('just-placed'),210)}}
@@ -283,7 +295,7 @@ $('board').addEventListener('pointerleave',()=>{if(drag)return;hover=null;paintP
 $('exit').onclick=()=>{try{window.parent.postMessage(JSON.stringify({type:'genesis-blocks-exit-fullscreen',game:'blocks'}),location.origin)}catch(_){}};
 $('ranking').onclick=()=>{try{window.parent.postMessage(JSON.stringify({type:'genesis-open-ranking',game:'blocks'}),location.origin)}catch(_){}};
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;try{const msg=typeof e.data==='string'?JSON.parse(e.data):e.data;if(msg?.type==='genesis-score-status'&&msg.game==='blocks'){$('hint').textContent=msg.state==='saved'?'🏆 Wynik '+msg.score+' pkt zapisany online':msg.state==='error'?'⚠ Błąd rankingu: '+String(msg.detail||'').slice(0,95):'⏳ Trwa zapis wyniku online';}}catch(_){}});
-function reset(newCampaign=false){if(newCampaign){level=1;missionStats={};missionStart=Date.now()}else{missionStats={};missionStart=Date.now()}roundId++;ended=false;combo=0;maxCombo=0;turn=0;clearTimeout(fxTimer);$('combo-banner').classList.remove('show');$('combo-status').textContent='';$('fx-layer').replaceChildren();drag=null;$('drag-ghost').classList.remove('visible');for(const row of board)row.fill(null);for(const row of gems)row.fill(null);score=0;selected=-1;hover=null;tray=[piece(),piece(),piece()];$('overlay').classList.remove('show');paint();missionUI();saveCampaign();checkGameOver()}$('reset').onclick=()=>reset();$('again').onclick=()=>reset();$('sound').onclick=()=>{sound=!sound;$('sound').textContent=sound?'♫ DŹWIĘK: WŁ.':'♫ DŹWIĘK: WYŁ.'};$('music').onclick=()=>{activateAudio();music=!music;$('music').textContent=music?'♪ MUZYKA: WŁ.':'♪ MUZYKA: WYŁ.'};$('level-continue').onclick=()=>{$('level-dialog').classList.remove('show');checkGameOver()};$('level-restart').onclick=()=>{$('level-dialog').classList.remove('show');reset(true)};
+function reset(newCampaign=false){if(newCampaign){level=1;missionStats={};missionStart=Date.now()}else{missionStats={};missionStart=Date.now()}roundId++;ended=false;combo=0;maxCombo=0;turn=0;clearTimeout(fxTimer);$('combo-banner').classList.remove('show');$('combo-status').textContent='';$('fx-layer').replaceChildren();drag=null;$('drag-ghost').classList.remove('visible');for(const row of board)row.fill(null);for(const row of gems)row.fill(null);score=0;selected=-1;hover=null;tray=[piece(),piece(),piece()];seedStartingGems();$('overlay').classList.remove('show');paint();missionUI();saveCampaign();checkGameOver()}$('reset').onclick=()=>reset();$('again').onclick=()=>reset();$('sound').onclick=()=>{sound=!sound;$('sound').textContent=sound?'♫ DŹWIĘK: WŁ.':'♫ DŹWIĘK: WYŁ.'};$('music').onclick=()=>{activateAudio();music=!music;$('music').textContent=music?'♪ MUZYKA: WŁ.':'♪ MUZYKA: WYŁ.'};$('level-continue').onclick=()=>{$('level-dialog').classList.remove('show');checkGameOver()};$('level-restart').onclick=()=>{$('level-dialog').classList.remove('show');reset(true)};
 if(restoreCampaign()){paint();missionUI();if(ended){ended=false;reset()}else{openLevelDialog(false)}}else reset(true);
 missionClock=setInterval(missionTick,1000);
 })();</script></body></html>
