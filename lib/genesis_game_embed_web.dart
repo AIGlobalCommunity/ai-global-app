@@ -547,7 +547,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Future<void> _ensureGuestIdentity() async {
     if (!mounted || !AgcBackend.configured || AgcBackend.user != null ||
-        guestSignInRunning) return;
+        guestSignInRunning) { return; }
     guestSignInRunning = true;
     try {
       final suffix = DateTime.now().microsecondsSinceEpoch
@@ -563,11 +563,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         setState(() => scoreNotice = 'Grasz jako $nick · zapisuję wynik online.');
       }
     } on AuthException catch (error) {
-      if (mounted) setState(() => scoreNotice =
-        'Ranking gości niedostępny: ${error.message}. Wynik zapisany lokalnie.');
+      if (mounted) { setState(() => scoreNotice =
+        'Ranking gości niedostępny: ${error.message}. Wynik zapisany lokalnie.'); }
     } catch (error) {
-      if (mounted) setState(() => scoreNotice =
-        'Nie udało się utworzyć profilu gościa. Wynik zapisany lokalnie.');
+      if (mounted) { setState(() => scoreNotice =
+        'Nie udało się utworzyć profilu gościa. Wynik zapisany lokalnie.'); }
     } finally {
       guestSignInRunning = false;
     }
