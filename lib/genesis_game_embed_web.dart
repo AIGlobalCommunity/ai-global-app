@@ -210,19 +210,24 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         event.data is! String) {
       return;
     }
-    final isKnownFrame = frames.values.any((frame) => event.source == frame.contentWindow);
-    if (!isKnownFrame) return;
     dynamic decoded;
     try {
       decoded = jsonDecode(event.data as String);
     } catch (_) {
       return;
     }
-    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-blocks-exit-fullscreen') {
+    // A fullscreen HtmlElementView may be hosted in a separate platform view.
+    // Accept only the explicit exit command from a same-origin frame even if
+    // its WindowProxy differs from the registered catalogue iframe.
+    if (decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-blocks-exit-fullscreen' &&
+        decoded['game'] == 'blocks') {
       _hideBlocksFullscreen();
-      setState(() { game = null; scoreNotice = null; });
+      if (mounted) setState(() { game = null; scoreNotice = null; });
       return;
     }
+    final isKnownFrame = frames.values.any((frame) => event.source == frame.contentWindow);
+    if (!isKnownFrame) return;
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-fullscreen') {
       _showWolfFullscreen();
       return;
