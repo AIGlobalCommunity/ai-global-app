@@ -1292,9 +1292,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     final features = ski
       ? <(IconData, String)>[
-          (Icons.landscape_outlined, 'Pięć skoczni od HS 35 do HS 235'),
+          (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
-          (Icons.air, 'Koryguj pozycję w locie'),
+          (Icons.air, 'Steruj lotem gestem lub strzałkami'),
           (Icons.emoji_events_outlined, 'Ląduj telemarkiem i awansuj'),
         ]
       : snake
