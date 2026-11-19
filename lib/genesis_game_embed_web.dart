@@ -101,6 +101,48 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     return volume != 0 ? volume : a.compareTo(b);
   }
 
+  Future<void> _shareGameScore(int index) async {
+    final key = gameKeys[index];
+    var points = pendingScores[key]?.$1 ?? 0;
+    if (AgcBackend.user != null) {
+      try {
+        final record = await AgcBackend.client.from('agc_game_scores')
+          .select('best_score')
+          .eq('member_id', AgcBackend.user!.id)
+          .eq('game_key', key).maybeSingle();
+        final saved = (record?['best_score'] as num?)?.toInt() ?? 0;
+        if (saved > points) points = saved;
+      } catch (_) {}
+    }
+    try {
+      final raw = html.window.localStorage['$scoreStoragePrefix$key'];
+      if (raw != null) {
+        final local = jsonDecode(raw);
+        if (local is Map && local['score'] is int &&
+            (local['score'] as int) > points) {
+          points = local['score'] as int;
+        }
+      }
+    } catch (_) {}
+    if (!mounted) return;
+    if (points <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Zagraj i zdobądź punkty, aby udostępnić wynik.')));
+      return;
+    }
+    final handle = AgcBackend.user?.userMetadata?['handle']?.toString() ?? 'Gracz';
+    final url = Uri.https('thegenesisera.com', '/share-result.html', {
+      'game': key, 'score': '$points', 'nick': handle,
+    });
+    html.window.open(url.toString(), '_blank');
+  }
+
+  Widget _shareScoreButton(int index) => TextButton.icon(
+    onPressed: () => _shareGameScore(index),
+    icon: const Icon(Icons.share_outlined, size: 18),
+    label: const Text('UDOSTĘPNIJ WYNIK'),
+  );
+
   Widget _ratingBar(int index) {
     final (likes, dislikes, mine) = _rating(index);
     final total = likes + dislikes;
@@ -1267,7 +1309,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: _ratingBar(index),
+            child: Column(children: [
+              _ratingBar(index),
+              _shareScoreButton(index),
+            ]),
           ),
         ]),
       ),
@@ -1391,6 +1436,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   primary: false, accent: accent,
                   icon: Icons.emoji_events_outlined, label: 'E-RANKING'),
               ]),
+              _shareScoreButton(index),
             ]))),
         ],
       ),
