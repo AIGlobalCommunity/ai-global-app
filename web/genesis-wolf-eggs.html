@@ -186,7 +186,18 @@ function drawWolf(cx,cy,u,lane,bounce){
 }
 function drawScene(){
  const u=Math.min(width,height),l=layout(),bg=ctx.createLinearGradient(0,0,0,height);
- bg.addColorStop(0,'#153b58');bg.addColorStop(.55,'#0b243a');bg.addColorStop(1,'#092333');ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+ bg.addColorStop(0,'#2b7896');bg.addColorStop(.42,'#244c71');bg.addColorStop(.72,'#17435a');bg.addColorStop(1,'#173d32');ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+ // Layered illustrated countryside for a richer, more colorful backdrop.
+ const sun=ctx.createRadialGradient(width*.52,height*.12,0,width*.52,height*.12,u*.37);
+ sun.addColorStop(0,'#ffe6a04d');sun.addColorStop(1,'#ffe6a000');ctx.fillStyle=sun;ctx.fillRect(0,0,width,height);
+ ctx.fillStyle='#2c6e66';ctx.beginPath();ctx.moveTo(0,height*.72);
+ ctx.bezierCurveTo(width*.2,height*.53,width*.32,height*.66,width*.48,height*.61);
+ ctx.bezierCurveTo(width*.68,height*.50,width*.81,height*.62,width,height*.56);
+ ctx.lineTo(width,height);ctx.lineTo(0,height);ctx.fill();
+ ctx.fillStyle='#225448';ctx.beginPath();ctx.moveTo(0,height*.85);
+ ctx.bezierCurveTo(width*.3,height*.68,width*.53,height*.79,width*.72,height*.70);
+ ctx.bezierCurveTo(width*.89,height*.65,width,height*.73,width,height*.71);
+ ctx.lineTo(width,height);ctx.lineTo(0,height);ctx.fill();
  // Subtle atmospheric lights, stars and decorative floor.
  const glow=ctx.createRadialGradient(width*.5,height*.5,u*.04,width*.5,height*.5,u*.8);
  glow.addColorStop(0,'#3180a02b');glow.addColorStop(1,'#09162600');ctx.fillStyle=glow;ctx.fillRect(0,0,width,height);
@@ -212,13 +223,6 @@ canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getB
 document.addEventListener('keydown',e=>{const keys={q:0,Q:0,e:1,E:1,a:2,A:2,d:3,D:3,ArrowUp:0,ArrowRight:1,ArrowLeft:2,ArrowDown:3};if(keys[e.key]!==undefined){e.preventDefault();choose(keys[e.key])}});
 function start(){wolfX=.5;wolfY=.56;wolfFromX=.5;wolfFromY=.56;wolfToX=.5;wolfToY=.56;wolfMotion=1;cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
 el('play').addEventListener('click',()=>{
- if(window.parent!==window && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
-   try{
-     sessionStorage.setItem('genesis-wolf-auto-start','1');
-     window.parent.postMessage(JSON.stringify({type:'genesis-wolf-fullscreen'}),location.origin);
-     return;
-   }catch(_){}
- }
  setGameFullscreen(true);
  start();
  // Fullscreen must be requested synchronously from the user's click.
@@ -293,7 +297,15 @@ const remaining=[];for(const egg of eggs){if(egg.p>=.96){if(egg.lane===active&&w
 function ensureAudio(){try{if(!audio){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audio=new AC()}if(audio&&audio.state==='suspended')audio.resume()}catch(_){}}
 function beep(freq,duration,type,volume){if(!audio||audio.state!=='running')return;try{const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(volume,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+duration+.01)}catch(_){}}
 const melody=[392,523,587,523,440,523,659,523,392,494,587,494,349,440,523,440];
-function musicTick(t){if(t>=nextNote){beep(melody[noteIndex++%melody.length],.13,'triangle',.025);nextNote=t+225}}
+function musicTick(t){
+ if(t<nextNote)return;
+ const step=noteIndex++,note=melody[step%melody.length];
+ beep(note,.16,'triangle',.025);
+ if(step%4===0)beep(note/2,.30,'sine',.019);
+ if(step%8===4)beep(note*1.5,.10,'sine',.009);
+ if(step%4===2)beep(95,.055,'triangle',.012);
+ nextNote=t+235;
+}
 el('music').addEventListener('click',()=>{ensureAudio();musicOn=!musicOn;nextNote=0;el('music').textContent=musicOn?'♫ MUZYKA: WŁ.':'♫ MUZYKA: WYŁ.'});
 function roundRect(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);ctx.fill()}
 function render(){if(!width||!height)return;ctx.clearRect(0,0,width,height);
