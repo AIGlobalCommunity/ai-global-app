@@ -4,6 +4,7 @@ import 'agc_registration.dart';
 import 'agc_social_buttons.dart';
 import 'genesis_language.dart';
 import 'genesis_password_change.dart';
+import 'genesis_social_profile.dart';
 import 'agc_luxury_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -407,6 +408,18 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               color: AgcLuxury.champagne),
             title: Text('✅ Zalogowano jako: ${AgcBackend.user!.userMetadata?['handle'] ?? AgcBackend.user!.email ?? 'Gracz'}'),
             subtitle: Text('Aktywna sesja · ${AgcBackend.user!.email ?? '—'}'),
+          )),
+          const SizedBox(height: 12),
+          Card(child: ExpansionTile(
+            key: const Key('account_edit_genesis_card'),
+            initiallyExpanded: false,
+            leading: const Icon(Icons.edit_outlined,
+              color: AgcLuxury.champagne),
+            title: Text(GenesisLanguage.copy(
+              'Edytuj kartę Genesis i zmień nick',
+              'Edit Genesis card and change nickname')),
+            childrenPadding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
+            children: const [GenesisSocialProfile()],
           )),
           const SizedBox(height: 12),
           Card(child: ExpansionTile(
