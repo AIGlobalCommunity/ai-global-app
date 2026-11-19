@@ -1138,24 +1138,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (signal) { _showSignalFullscreen(); } else { _showDefenderFullscreen(); }
       });
     }
-    return SizedBox(height: 500, child: Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF071525),
-        borderRadius: BorderRadius.circular(21),
-        border: Border.all(color: accent.withValues(alpha: .9), width: 1.3),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: .18),
-            blurRadius: 20, spreadRadius: -2),
-          const BoxShadow(
-            color: Color(0x99000000), blurRadius: 24,
-            offset: Offset(0, 10)),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return _ratedCard(index: index, accent: accent,
+      content: InkWell(
           onTap: openGame,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1237,8 +1221,38 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ],
           ),
         ),
+    );
+  }
+
+  Widget _ratedCard({required int index, required Color accent, required Widget content}) {
+    return Container(
+      key: ValueKey(gameKeys[index]),
+      decoration: BoxDecoration(
+        color: const Color(0xFF071525),
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(color: accent.withValues(alpha: .9), width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: .18),
+            blurRadius: 20, spreadRadius: -2),
+          const BoxShadow(
+            color: Color(0x99000000), blurRadius: 24,
+            offset: Offset(0, 10)),
+        ],
       ),
-    ));
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SizedBox(height: 500, child: content),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: _ratingBar(index),
+          ),
+        ]),
+      ),
+    );
   }
 
   Widget _arcadeExtraCard({required int index}) {
@@ -1273,18 +1287,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           (Icons.leaderboard_outlined, 'Ranking graczy'),
           (Icons.emoji_events_outlined, 'Pobij swój rekord'),
         ];
-    return SizedBox(height: 500, child: Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF071525),
-        borderRadius: BorderRadius.circular(21),
-        border: Border.all(color: accent.withValues(alpha: .9), width: 1.3),
-        boxShadow: [
-          BoxShadow(color: accent.withValues(alpha: .18), blurRadius: 20, spreadRadius: -2),
-          const BoxShadow(color: Color(0x99000000), blurRadius: 24, offset: Offset(0, 10)),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(color: Colors.transparent, child: Column(
+    return _ratedCard(index: index, accent: accent,
+      content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
@@ -1359,8 +1363,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ]),
             ]))),
         ],
-      )),
-    ));
+      ),
+    );
   }
 
   Widget _gameLibrary() => Center(
@@ -1437,10 +1441,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ]..sort(_compareRatings);
             final visible = [
               for (final i in indices)
-                Column(key: ValueKey(gameKeys[i]), children: [
-                  i < 2 ? cards[i] : _arcadeExtraCard(index: i),
-                  _ratingBar(i),
-                ]),
+                i < 2 ? cards[i] : _arcadeExtraCard(index: i),
             ];
             if (constraints.maxWidth < 700) {
               return Column(children: [
