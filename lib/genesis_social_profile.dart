@@ -247,6 +247,37 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
     }
   }
 
+  Future<void> saveNickname() async {
+    if (saving || checkingNickname) return;
+    final proposed = nickname.text.trim();
+    final available = await checkNick();
+    if (!available || !mounted || nickname.text.trim() != proposed) return;
+    setState(() { saving = true; notice = null; });
+    try {
+      final updated = await AgcBackend.client.from('agc_profiles')
+        .update({'handle': proposed, 'show_nick_publicly': true})
+        .eq('id', AgcBackend.user!.id).select('id');
+      if (updated.isEmpty) throw StateError('Nickname update did not match a row');
+      if (!mounted) return;
+      setState(() {
+        handle = proposed;
+        nicknameAvailability = socialText('Nick zapisany ✓', 'Nickname saved ✓');
+        notice = socialText('Nick zmieniony. Jest widoczny w rankingach.',
+          'Nickname changed and visible in leaderboards.');
+      });
+      GenesisGlobalRanking.scoreRevision.value++;
+    } on PostgrestException catch (e) {
+      if (mounted) setState(() => notice = e.code == '23505'
+        ? socialText('Ten nick jest już zajęty.', 'This nickname is taken.')
+        : socialText('Nie udało się zmienić nicku.', 'Could not change nickname.'));
+    } catch (_) {
+      if (mounted) setState(() => notice = socialText(
+        'Nie udało się zmienić nicku.', 'Could not change nickname.'));
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
+
   Future<void> save() async {
     if (saving || checkingNickname) return;
     final code = country.text.trim().toUpperCase();
@@ -386,6 +417,12 @@ class _GenesisSocialProfileState extends State<GenesisSocialProfile> {
               Align(alignment: Alignment.centerLeft,
                 child: Text(nicknameAvailability!,
                   style: const TextStyle(color: AgcLuxury.champagne))),
+            Align(alignment: Alignment.centerLeft,
+              child: FilledButton.icon(
+                key: const Key('account_save_nickname'),
+                onPressed: saving || checkingNickname ? null : saveNickname,
+                icon: const Icon(Icons.check_circle_outline),
+                label: Text(socialText('Zmień nick', 'Change nickname')))),
             const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerLeft,
