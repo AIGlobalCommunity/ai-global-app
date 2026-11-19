@@ -302,7 +302,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   void _showCityFullscreen([String view = cityView]) {
-    if (!_cityPreviewAllowed) return;
+    if (view != cityView && !_cityPreviewAllowed) return;
     activeCityView = view;
     if (!mounted || cityFullscreenOverlay != null) return;
     cityFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
@@ -1417,7 +1417,21 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: ski
+              child: city
+                ? DecoratedBox(decoration: const BoxDecoration(gradient: LinearGradient(
+                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    colors: [Color(0xFF0A1C30), Color(0xFF237C75), Color(0xFF071629)])),
+                    child: Stack(alignment: Alignment.center, children: [
+                      const Positioned(top: 15, left: 20, child: Icon(Icons.location_city,
+                        size: 68, color: Color(0x886AD8BD))),
+                      const Icon(Icons.directions_car_filled_rounded, size: 145,
+                        color: Color(0xFFFFC65A)),
+                      const Positioned(bottom: 14, child: Text('WARSZAWA · OPEN CITY',
+                        style: TextStyle(fontSize: 20, color: Colors.white,
+                          fontWeight: FontWeight.w900, letterSpacing: 1.3,
+                          shadows: [Shadow(color: Colors.black, blurRadius: 10)]))),
+                    ]))
+                : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1460,7 +1474,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               decoration: BoxDecoration(
                 color: const Color(0xDD071525), borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: accent.withValues(alpha: .8))),
-              child: Text(ski ? 'SPORTOWA' : (snake || wolf) ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
+              child: Text(city ? 'OTWARTY ŚWIAT' : ski ? 'SPORTOWA' : (snake || wolf) ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
                 style: TextStyle(color: accent, fontSize: 11,
                   fontWeight: FontWeight.w700, letterSpacing: 1.1)),
             )),
@@ -1535,9 +1549,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       const SizedBox(height: 14),
       LayoutBuilder(builder: (context, constraints) {
         final cards = [
-          _cityPreviewCard('GENESIS CITY 2D',
-            'Miasto z góry, samochód, ruch uliczny i misje kurierskie.',
-            cityView, Icons.map_outlined, const Color(0xFF6AD8BD)),
           _cityPreviewCard('GENESIS CITY 3D',
             'Perspektywa zza auta, jazda i znaczniki misji. Prototyp pseudo-3D.',
             city3dView, Icons.view_in_ar_outlined, const Color(0xFFFFC86D)),
@@ -1559,17 +1570,18 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Widget _compactGameCard(int index, {required bool listMode}) {
     final title = titles[index];
-    final icon = index == 0 ? Icons.hub_outlined
+    final icon = index == 6 ? Icons.directions_car_filled_outlined : index == 0 ? Icons.hub_outlined
       : index == 1 ? Icons.rocket_launch_outlined
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
       : index == 4 ? Icons.gamepad_outlined
       : Icons.downhill_skiing_outlined;
-    final color = index == 2 ? const Color(0xFFFFB05A)
+    final color = index == 6 ? const Color(0xFF6AD8BD) : index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     void open() {
       if (index == 5) { _showSkiFullscreen(); return; }
+      if (index == 6) { _showCityFullscreen(); return; }
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -1698,7 +1710,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
-                if (i != 6 && (categoryFilter == 'all' || categories[i].contains(categoryFilter))) i,
+                if (categoryFilter == 'all' || categories[i].contains(categoryFilter))) i,
             ]..sort(_compareRatings);
             final visible = [
               for (final i in indices)
