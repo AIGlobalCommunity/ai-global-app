@@ -7,7 +7,9 @@ import 'genesis_language.dart';
 /// Global arcade leaderboard: sum of each player's personal best per game.
 /// Uses the same database records as the individual game leaderboards.
 class GenesisGlobalRanking extends StatefulWidget {
-  const GenesisGlobalRanking({super.key});
+  static final scoreRevision = ValueNotifier<int>(0);
+  final bool active;
+  const GenesisGlobalRanking({super.key, this.active = true});
 
   @override
   State<GenesisGlobalRanking> createState() => _GenesisGlobalRankingState();
@@ -21,6 +23,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
   void initState() {
     super.initState();
     future = _load();
+    GenesisGlobalRanking.scoreRevision.addListener(_scoreChanged);
     if (AgcBackend.configured) {
       authSubscription = AgcBackend.client.auth.onAuthStateChange.listen((_) {
         if (mounted) _refresh();
@@ -28,10 +31,21 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
     }
   }
 
+  void _scoreChanged() {
+    if (widget.active) _refresh();
+  }
+
+  @override
+  void didUpdateWidget(GenesisGlobalRanking oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) future = _load();
+  }
+
   void _refresh() => setState(() => future = _load());
 
   @override
   void dispose() {
+    GenesisGlobalRanking.scoreRevision.removeListener(_scoreChanged);
     authSubscription?.cancel();
     super.dispose();
   }
@@ -106,6 +120,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
     'wolf' => 'WILK I JAJKA',
     'blocks' => 'GENESIS BLOCKS',
     'snake' => 'GENESIS SNAKE',
+    'ski' => 'SKOKI NARCIARSKIE',
     _ => key.replaceAll('_', ' ').toUpperCase(),
   };
 

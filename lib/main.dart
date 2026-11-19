@@ -87,7 +87,7 @@ class _AgcHomeState extends State<AgcHome> {
           children: [
             _home(),
             const GenesisGameTab(),
-            const GenesisGlobalRanking(),
+            GenesisGlobalRanking(active: selected == 2),
             _offlineInfo(),
             const AgcAccountPage(),
           ],

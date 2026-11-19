@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'agc_backend.dart';
 import 'genesis_language.dart';
+import 'genesis_global_ranking.dart';
 
 /// HTML5 games send finished scores to their authenticated Flutter parent.
 /// Only the signed-in user's personal best is stored in Supabase.
@@ -25,6 +26,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const defenderView = 'genesis-defender-html5-iframe';
   static const wolfView = 'genesis-wolf-html5-iframe';
   static const blocksView = 'genesis-blocks-html5-iframe';
+  static const skiView = 'genesis-ski-html5-iframe';
   static const snakeView = 'genesis-snake-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
@@ -35,6 +37,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   OverlayEntry? signalFullscreenOverlay;
   OverlayEntry? wolfFullscreenOverlay;
   OverlayEntry? blocksFullscreenOverlay;
+  OverlayEntry? skiOverlay;
   OverlayEntry? snakeFullscreenOverlay;
 
   static const scoreStoragePrefix = 'agc-game-pending-';
@@ -42,7 +45,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake'];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -155,6 +160,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(defenderView, 'genesis-defender.html?embed=1&version=$buildVersion', 'GENESIS DEFENDER');
       _register(wolfView, 'genesis-wolf-eggs.html?embed=1&version=$buildVersion', 'WILK I JAJKA');
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
+      _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
       _register(snakeView, 'genesis-snake.html?embed=1&version=$buildVersion', 'GENESIS SNAKE');
       registered = true;
     }
@@ -179,6 +185,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   void dispose() {
+    skiOverlay?.remove();
+    skiOverlay?.dispose();
     snakeFullscreenOverlay?.remove();
     snakeFullscreenOverlay?.dispose();
     snakeFullscreenOverlay = null;
@@ -230,6 +238,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         return frame;
       },
     );
+  }
+
+  void _showSkiFullscreen() {
+    if (skiOverlay != null) return;
+    skiOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
+      child: HtmlElementView(viewType: skiView),
+    ));
+    Overlay.of(context, rootOverlay: true).insert(skiOverlay!);
   }
 
   void _showSnakeFullscreen() {
@@ -317,6 +333,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     } catch (_) {
       return;
     }
+    if (decoded is Map && decoded['game'] == 'ski' && decoded['type'] == 'genesis-ski-exit-fullscreen') {
+      skiOverlay?.remove();
+      skiOverlay?.dispose();
+      skiOverlay = null;
+      return;
+    }
     if (decoded is Map<String, dynamic> &&
         decoded['type'] == 'genesis-snake-exit-fullscreen' &&
         decoded['game'] == 'snake') {
@@ -355,7 +377,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     // The same-origin check above still applies to every score message.
     final fullscreenScore = decoded is Map<String, dynamic> &&
         decoded['type'] == 'genesis-game-score' &&
-        (decoded['game'] == 'wolf' || decoded['game'] == 'blocks' || decoded['game'] == 'signal' || decoded['game'] == 'defender' || decoded['game'] == 'snake');
+        gameKeys.contains(decoded['game']);
     if (!isKnownFrame && !fullscreenScore) return;
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-fullscreen') {
       _showWolfFullscreen();
@@ -382,7 +404,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     if (decoded is! Map<String, dynamic> ||
         decoded['type'] != 'genesis-game-score' ||
-        !['signal', 'defender', 'wolf', 'blocks', 'snake'].contains(decoded['game']) ||
+        !gameKeys.contains(decoded['game']) ||
         decoded['score'] is! int ||
         decoded['level'] is! int) {
       return;
@@ -455,7 +477,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _recoverPendingScores() {
     if (!mounted || AgcBackend.user == null) return;
-    for (final key in ['signal', 'defender', 'wolf', 'blocks', 'snake']) {
+    for (final key in gameKeys) {
       try {
         final raw = html.window.localStorage['$scoreStoragePrefix$key'];
         if (raw == null) continue;
@@ -508,9 +530,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   void _notifyGameScoreStatus(String key, String state, int points, [String detail = '']) {
-    final view = key == 'wolf' ? wolfView : key == 'blocks' ? blocksView
-      : key == 'snake' ? snakeView : key == 'signal' ? signalView : defenderView;
-    final frame = frames[view];
+    final frame = frames[gameViews[gameKeys.indexOf(key)]];
     if (frame == null) return;
     try {
       frame.contentWindow?.postMessage(jsonEncode({
@@ -595,6 +615,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           }
           if (confirmed) {
             _clearConfirmedScore(key, points);
+            if (updated == true) GenesisGlobalRanking.scoreRevision.value++;
             _notifyGameScoreStatus(key, 'saved', points);
             lastSaveStatus = 'POTWIERDZONE: $key · $points pkt';
             setState(() {
@@ -705,7 +726,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   Widget _rankingPage(int selectedGame) {
-    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : selectedGame == 3 ? 'GENESIS BLOCKS' : selectedGame == 4 ? 'GENESIS SNAKE' : 'WILK I JAJKA';
+    final title = titles[selectedGame];
     return SafeArea(
       child: Column(children: [
         Padding(
@@ -1212,7 +1233,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                         primary: false,
                         accent: accent,
                         icon: Icons.emoji_events_outlined,
-                        label: GenesisLanguage.copy('RANKING', 'RANKING'),
+                        label: GenesisLanguage.copy('E-RANKING', 'E-RANKING'),
                       ),
                     ]),
                   ],
@@ -1257,17 +1278,26 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Widget _arcadeExtraCard({required int index}) {
     final wolf = index == 2;
+    final ski = index == 5;
     final snake = index == 4;
-    final accent = snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
-    final title = snake ? 'GENESIS SNAKE' : wolf ? 'WILK I JAJKA' : 'GENESIS BLOCKS';
+    final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
+    final title = titles[index];
     void openGame() {
+      if (ski) { _showSkiFullscreen(); return; }
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = snake
+    final features = ski
+      ? <(IconData, String)>[
+          (Icons.landscape_outlined, 'Pięć skoczni od HS 35 do HS 235'),
+          (Icons.speed_outlined, 'Wybij się na końcu progu'),
+          (Icons.air, 'Koryguj pozycję w locie'),
+          (Icons.emoji_events_outlined, 'Ląduj telemarkiem i awansuj'),
+        ]
+      : snake
       ? <(IconData, String)>[
           (Icons.gamepad_outlined, 'Steruj gestem, strzałkami lub WASD'),
           (Icons.diamond_outlined, 'Zbieraj kryształy i wydłużaj węża'),
@@ -1293,7 +1323,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: snake
+              child: ski
+                ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
+                : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
                 : wolf
                 ? Image.network('wolfart/farm-scene.jpg', fit: BoxFit.cover,
@@ -1334,7 +1366,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               decoration: BoxDecoration(
                 color: const Color(0xDD071525), borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: accent.withValues(alpha: .8))),
-              child: Text((snake || wolf) ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
+              child: Text(ski ? 'SPORTOWA' : (snake || wolf) ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
                 style: TextStyle(color: accent, fontSize: 11,
                   fontWeight: FontWeight.w700, letterSpacing: 1.1)),
             )),
@@ -1359,7 +1391,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 const SizedBox(width: 10),
                 _arcadeButton(onPressed: () => _showRanking(index),
                   primary: false, accent: accent,
-                  icon: Icons.emoji_events_outlined, label: 'RANKING'),
+                  icon: Icons.emoji_events_outlined, label: 'E-RANKING'),
               ]),
             ]))),
         ],
@@ -1400,6 +1432,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ('puzzle', GenesisLanguage.copy('Łamigłówki', 'Puzzles')),
               ('shooter', GenesisLanguage.copy('Strzelanki', 'Shooters')),
               ('arcade', GenesisLanguage.copy('Zręcznościowe', 'Arcade')),
+              ('sport', GenesisLanguage.copy('Sportowe', 'Sports')),
               ('offline', 'Offline'),
             ])
               ChoiceChip(
@@ -1433,7 +1466,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
@@ -1523,7 +1556,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ),
           const SizedBox(width: 8),
           Expanded(child: Text(
-            selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : selectedGame == 3 ? 'GENESIS BLOCKS' : 'WILK I JAJKA',
+            titles[selectedGame],
             maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontWeight: FontWeight.bold, color: gold, fontSize: 16),
@@ -1561,7 +1594,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         ),
       Expanded(child: SizedBox.expand(child: HtmlElementView(
         key: ValueKey(selectedGame),
-        viewType: selectedGame == 0 ? signalView : selectedGame == 1 ? defenderView : selectedGame == 3 ? blocksView : selectedGame == 4 ? snakeView : wolfView,
+        viewType: gameViews[selectedGame],
       ))),
     ]);
   }
