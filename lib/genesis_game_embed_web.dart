@@ -1072,58 +1072,168 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
-  Widget _wolfCard() => Card(
-    clipBehavior: Clip.antiAlias,
-    child: Padding(
-      padding: const EdgeInsets.all(18),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: SizedBox(
-            height: 180,
-            child: Image.network(
-              'wolfart/farm-scene.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                const Center(child: Icon(Icons.pets, size: 76, color: gold)),
-            ),
-          ),
+  Future<void> _showGameStatistics(int index) async {
+    final key = index == 2 ? 'wolf' : 'blocks';
+    final title = index == 2 ? 'WILK I JAJKA' : 'GENESIS BLOCKS';
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('📊 STATYSTYKI · $title'),
+        content: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _leaders(key),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Text('Nie udało się pobrać statystyk: ${snapshot.error}');
+            }
+            if (!snapshot.hasData) return const SizedBox(
+              height: 70, child: Center(child: CircularProgressIndicator()));
+            final players = snapshot.data!;
+            final mine = players.where((p) =>
+              p['member_id']?.toString() == AgcBackend.user?.id).toList();
+            final position = players.indexWhere((p) =>
+              p['member_id']?.toString() == AgcBackend.user?.id);
+            return Column(mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Gracze w rankingu TOP 100: ${players.length}'),
+                const SizedBox(height: 10),
+                Text('Twój najlepszy wynik: ${mine.isEmpty ? 'Brak zapisu online' : '${mine.first['best_score']} pkt'}'),
+                const SizedBox(height: 10),
+                Text('Twoje miejsce: ${position < 0 ? 'Poza TOP 100 / brak wyniku' : '#${position + 1}'}'),
+                const SizedBox(height: 10),
+                const Text('Statystyki pokazują wyłącznie potwierdzone wyniki online.'),
+              ]);
+          },
         ),
-        const SizedBox(height: 8),
-        const Text('WILK I JAJKA',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Text(GenesisLanguage.copy(
-          'ZRĘCZNOŚCIOWA · RETRO · ONLINE / OFFLINE',
-          'ARCADE · RETRO · ONLINE / OFFLINE'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: gold)),
-        const SizedBox(height: 10),
-        Text(GenesisLanguage.copy(
-          'Zbieraj jajka z czterech stron. Złap jak najwięcej i pobij rekord!',
-          'Catch eggs from four sides and beat your high score!'),
-          textAlign: TextAlign.center),
-        const SizedBox(height: 14),
-        Row(children: [
-          Expanded(child: FilledButton.icon(
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('ZAMKNIJ')),
+          FilledButton.icon(
             onPressed: () {
-              setState(() { game = 2; scoreNotice = null; });
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) _showWolfFullscreen();
-              });
+              Navigator.pop(dialogContext);
+              _showRanking(index);
             },
-            icon: const Icon(Icons.play_arrow),
-            label: Text(GenesisLanguage.copy('ZAGRAJ', 'PLAY')))),
-          const SizedBox(width: 10),
-          Expanded(child: OutlinedButton.icon(
-            onPressed: () => _showRanking(2),
             icon: const Icon(Icons.emoji_events_outlined),
-            label: const Text('RANKING'))),
-        ]),
-      ]),
-    ),
-  );
+            label: const Text('RANKING'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _arcadeExtraCard({required int index}) {
+    final wolf = index == 2;
+    final accent = wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
+    final title = wolf ? 'WILK I JAJKA' : 'GENESIS BLOCKS';
+    void openGame() {
+      setState(() { game = index; scoreNotice = null; });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
+      });
+    }
+    final features = wolf
+      ? <(IconData, String)>[
+          (Icons.egg_outlined, 'Łap jajka z czterech stron'),
+          (Icons.speed_outlined, 'Coraz szybsza rozgrywka'),
+          (Icons.leaderboard_outlined, 'Ranking graczy'),
+          (Icons.emoji_events_outlined, 'Pobij swój rekord'),
+        ]
+      : <(IconData, String)>[
+          (Icons.grid_view_rounded, 'Układaj klocki na planszy 8×8'),
+          (Icons.auto_awesome_outlined, 'Łącz linie i zdobywaj punkty'),
+          (Icons.leaderboard_outlined, 'Ranking graczy'),
+          (Icons.emoji_events_outlined, 'Pobij swój rekord'),
+        ];
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF071525),
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(color: accent.withValues(alpha: .9), width: 1.3),
+        boxShadow: [
+          BoxShadow(color: accent.withValues(alpha: .18), blurRadius: 20, spreadRadius: -2),
+          const BoxShadow(color: Color(0x99000000), blurRadius: 24, offset: Offset(0, 10)),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(color: Colors.transparent, child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(onTap: openGame, child: Stack(children: [
+            SizedBox(height: 235, width: double.infinity,
+              child: wolf
+                ? Image.network('wolfart/farm-scene.jpg', fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.pets, size: 90, color: Color(0xFFFFB05A))))
+                : DecoratedBox(
+                    decoration: const BoxDecoration(gradient: LinearGradient(
+                      begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [Color(0xFF0B1C39), Color(0xFF163F6B), Color(0xFF081425)])),
+                    child: Stack(alignment: Alignment.center, children: [
+                      Positioned(top: 18, left: 20, child: Icon(Icons.auto_awesome,
+                        color: accent.withValues(alpha: .8), size: 28)),
+                      Transform.rotate(angle: -.11, child: Wrap(
+                        spacing: 7, runSpacing: 7, children: [
+                          for (var i = 0; i < 16; i++)
+                            Container(width: 43, height: 43, decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft, end: Alignment.bottomRight,
+                                colors: [
+                                  [const Color(0xFF54D6FF), const Color(0xFFFFC04D),
+                                   const Color(0xFFB28BFF), const Color(0xFF64E9A2)][i % 4],
+                                  const Color(0xFF174A84),
+                                ]),
+                              border: Border.all(color: Colors.white70),
+                              boxShadow: const [BoxShadow(color: Color(0xAA000000),
+                                blurRadius: 12, offset: Offset(0, 5))])),
+                        ],
+                      )),
+                      const Positioned(bottom: 16, child: Text('GENESIS BLOCKS',
+                        style: TextStyle(color: Colors.white, fontSize: 23,
+                          fontWeight: FontWeight.w900, letterSpacing: 2,
+                          shadows: [Shadow(color: Colors.black, blurRadius: 12)]))),
+                    ])),
+            ),
+            Positioned(top: 12, right: 12, child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              decoration: BoxDecoration(
+                color: const Color(0xDD071525), borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: accent.withValues(alpha: .8))),
+              child: Text(wolf ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
+                style: TextStyle(color: accent, fontSize: 11,
+                  fontWeight: FontWeight.w700, letterSpacing: 1.1)),
+            )),
+          ])),
+          Padding(padding: const EdgeInsets.fromLTRB(17, 13, 17, 18),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text(title, style: TextStyle(color: accent, fontSize: 18,
+                fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+              const SizedBox(height: 12),
+              for (final (featureIcon, featureText) in features)
+                Padding(padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(children: [
+                    Icon(featureIcon, color: accent, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(featureText, style: const TextStyle(
+                      color: Color(0xFFD5E5F1), fontSize: 13))),
+                  ])),
+              TextButton.icon(onPressed: () => _showGameStatistics(index),
+                icon: const Icon(Icons.bar_chart_rounded),
+                label: const Text('📊 STATYSTYKI GRY')),
+              const SizedBox(height: 8),
+              Row(children: [
+                _arcadeButton(onPressed: openGame, primary: true, accent: accent,
+                  icon: Icons.play_arrow_rounded, label: 'ZAGRAJ'),
+                const SizedBox(width: 10),
+                _arcadeButton(onPressed: () => _showRanking(index),
+                  primary: false, accent: accent,
+                  icon: Icons.emoji_events_outlined, label: 'RANKING'),
+              ]),
+            ])),
+        ],
+      )),
+    );
+  }
 
   Widget _gameLibrary() => Center(
     child: ConstrainedBox(
@@ -1190,76 +1300,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   'Defend the Genesis station, survive waves and beat the high score.'),
               ),
             ];
-            final blocksCard = Card(
-              color: const Color(0xFF14254B),
-              child: InkWell(
-                onTap: () {
-                  setState(() { game = 3; scoreNotice = null; });
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) _showBlocksFullscreen();
-                  });
-                },
-                borderRadius: BorderRadius.circular(14),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 125,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF233E91), Color(0xFF0C163C)]),
-                        ),
-                        child: Stack(alignment: Alignment.center, children: [
-                          const Positioned(top: 12, left: 16,
-                            child: Icon(Icons.auto_awesome, color: Color(0xFFFFD477), size: 20)),
-                          Wrap(spacing: 5, runSpacing: 5, children: [
-                            for (final color in [
-                              const Color(0xFF4FC3FF), const Color(0xFFFFC44E),
-                              const Color(0xFFFA6BC2), const Color(0xFF6DE6A4),
-                              const Color(0xFFA68EFF), const Color(0xFF4FC3FF),
-                              const Color(0xFFFFC44E), const Color(0xFFFA6BC2),
-                              const Color(0xFF6DE6A4)])
-                              Container(width: 31, height: 31,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(7),
-                                  color: color,
-                                  border: Border.all(color: Colors.white54),
-                                  boxShadow: [BoxShadow(color: color.withValues(alpha: .35), blurRadius: 12)])),
-                          ]),
-                        ]),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text('GENESIS BLOCKS', style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Color(0xFFFFD477))),
-                      const SizedBox(height: 5),
-                      const Text('ŁAMIGŁÓWKA · ONLINE / OFFLINE', style: TextStyle(fontSize: 11, color: Color(0xFF9DDCFF))),
-                      const SizedBox(height: 9),
-                      const Text('Układaj klocki na planszy 8×8, czyść rzędy i kolumny, zdobywaj punkty!'),
-                      const SizedBox(height: 14),
-                      Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                        OutlinedButton.icon(
-                          onPressed: () => _showRanking(3),
-                          icon: const Icon(Icons.emoji_events_outlined),
-                          label: const Text('RANKING')),
-                        const SizedBox(width: 8),
-                        const Chip(label: Text('▶ ZAGRAJ')),
-                      ]),
-                    ],
-                  ),
-                ),
-              ),
-            );
             final visible = <Widget>[
               if (categoryFilter == 'all' || categoryFilter == 'puzzle') cards[0],
-              if (categoryFilter == 'all' || categoryFilter == 'puzzle' || categoryFilter == 'offline') blocksCard,
+              if (categoryFilter == 'all' || categoryFilter == 'puzzle' || categoryFilter == 'offline') _arcadeExtraCard(index: 3),
               if (categoryFilter == 'all' || categoryFilter == 'shooter') cards[1],
               if (categoryFilter == 'all' || categoryFilter == 'arcade' ||
-                  categoryFilter == 'offline') _wolfCard(),
+                  categoryFilter == 'offline') _arcadeExtraCard(index: 2),
             ];
             if (constraints.maxWidth < 700) {
               return Column(children: [
