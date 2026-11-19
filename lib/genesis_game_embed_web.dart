@@ -25,6 +25,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const defenderView = 'genesis-defender-html5-iframe';
   static const wolfView = 'genesis-wolf-html5-iframe';
   static const blocksView = 'genesis-blocks-html5-iframe';
+  static const snakeView = 'genesis-snake-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
@@ -34,6 +35,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   OverlayEntry? signalFullscreenOverlay;
   OverlayEntry? wolfFullscreenOverlay;
   OverlayEntry? blocksFullscreenOverlay;
+  OverlayEntry? snakeFullscreenOverlay;
 
   static const scoreStoragePrefix = 'agc-game-pending-';
   static const buildVersion = String.fromEnvironment(
@@ -54,7 +56,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   bool saving = false;
   final Map<String, (int, int)> pendingScores = {};
 
-  String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : game == 3 ? 'blocks' : 'wolf';
+  String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : game == 3 ? 'blocks' : game == 4 ? 'snake' : 'wolf';
   Map<String, dynamic> get gameAuthStatus {
     final user = AgcBackend.user;
     final handle = user?.userMetadata?['handle']?.toString().trim();
@@ -80,6 +82,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(defenderView, 'genesis-defender.html?embed=1&version=$buildVersion', 'GENESIS DEFENDER');
       _register(wolfView, 'genesis-wolf-eggs.html?embed=1&version=$buildVersion', 'WILK I JAJKA');
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
+      _register(snakeView, 'genesis-snake.html?embed=1&version=$buildVersion', 'GENESIS SNAKE');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
@@ -101,6 +104,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   void dispose() {
+    snakeFullscreenOverlay?.remove();
+    snakeFullscreenOverlay?.dispose();
+    snakeFullscreenOverlay = null;
     defenderFullscreenOverlay?.remove();
     defenderFullscreenOverlay?.dispose();
     defenderFullscreenOverlay = null;
@@ -149,6 +155,27 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         return frame;
       },
     );
+  }
+
+  void _showSnakeFullscreen() {
+    if (!mounted || snakeFullscreenOverlay != null) return;
+    snakeFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
+      child: Material(color: const Color(0xFF07140D), child: Stack(children: [
+        const Positioned.fill(child: HtmlElementView(viewType: snakeView)),
+        Positioned(right: 8, top: MediaQuery.of(context).padding.top + 8,
+          child: IconButton.filled(
+            onPressed: _closeSnakeFullscreen,
+            tooltip: 'Zamknij Snake',
+            icon: const Icon(Icons.close))),
+      ])),
+    ));
+    Overlay.of(context, rootOverlay: true).insert(snakeFullscreenOverlay!);
+  }
+  void _closeSnakeFullscreen() {
+    snakeFullscreenOverlay?.remove();
+    snakeFullscreenOverlay?.dispose();
+    snakeFullscreenOverlay = null;
+    if (mounted) setState(() { game = null; scoreNotice = null; });
   }
 
   void _showDefenderFullscreen() {
@@ -281,6 +308,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     if (decoded is Map<String, dynamic> &&
+        decoded['type'] == 'genesis-snake-exit-fullscreen' &&
+        decoded['game'] == 'snake') {
+      _closeSnakeFullscreen();
+      return;
+    }
+    if (decoded is Map<String, dynamic> &&
         decoded['type'] == 'genesis-defender-exit-fullscreen' &&
         decoded['game'] == 'defender') {
       _closeDefenderFullscreen();
@@ -307,7 +340,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     // The same-origin check above still applies to every score message.
     final fullscreenScore = decoded is Map<String, dynamic> &&
         decoded['type'] == 'genesis-game-score' &&
-        (decoded['game'] == 'wolf' || decoded['game'] == 'blocks' || decoded['game'] == 'signal' || decoded['game'] == 'defender');
+        (decoded['game'] == 'wolf' || decoded['game'] == 'blocks' || decoded['game'] == 'signal' || decoded['game'] == 'defender' || decoded['game'] == 'snake');
     if (!isKnownFrame && !fullscreenScore) return;
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-wolf-fullscreen') {
       _showWolfFullscreen();
@@ -337,7 +370,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     if (decoded is! Map<String, dynamic> ||
         decoded['type'] != 'genesis-game-score' ||
-        !['signal', 'defender', 'wolf', 'blocks'].contains(decoded['game']) ||
+        !['signal', 'defender', 'wolf', 'blocks', 'snake'].contains(decoded['game']) ||
         decoded['score'] is! int ||
         decoded['level'] is! int) {
       return;
@@ -410,7 +443,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   void _recoverPendingScores() {
     if (!mounted || AgcBackend.user == null) return;
-    for (final key in ['signal', 'defender', 'wolf', 'blocks']) {
+    for (final key in ['signal', 'defender', 'wolf', 'blocks', 'snake']) {
       try {
         final raw = html.window.localStorage['$scoreStoragePrefix$key'];
         if (raw == null) continue;
@@ -660,7 +693,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   Widget _rankingPage(int selectedGame) {
-    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : selectedGame == 3 ? 'GENESIS BLOCKS' : 'WILK I JAJKA';
+    final title = selectedGame == 0 ? 'GENESIS SIGNAL' : selectedGame == 1 ? 'GENESIS DEFENDER' : selectedGame == 3 ? 'GENESIS BLOCKS' : selectedGame == 4 ? 'GENESIS SNAKE' : 'WILK I JAJKA';
     return SafeArea(
       child: Column(children: [
         Padding(
@@ -1308,6 +1341,32 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     ));
   }
 
+  Widget _snakeCard() => Card(
+    color: const Color(0xFF102819),
+    child: InkWell(
+      onTap: () {
+        setState(() { game = 4; scoreNotice = null; });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showSnakeFullscreen();
+        });
+      },
+      child: Padding(padding: const EdgeInsets.all(22), child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.grid_on, size: 44, color: Color(0xFFB9F47A)),
+          const SizedBox(height: 10),
+          const Text('GENESIS SNAKE', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFB9F47A))),
+          const SizedBox(height: 8),
+          const Text('ARKADOWA · OFFLINE'),
+          const SizedBox(height: 10),
+          const Text('Klasyczny wąż jak w Nokii. Zbieraj jedzenie, unikaj ogona, pobij rekord. Sterowanie dotykiem lub klawiaturą.'),
+          const SizedBox(height: 14),
+          const Align(alignment: Alignment.centerRight, child: Chip(label: Text('▶ ZAGRAJ'))),
+        ],
+      )),
+    ),
+  );
+
   Widget _gameLibrary() => Center(
     child: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 1050),
@@ -1379,6 +1438,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               if (categoryFilter == 'all' || categoryFilter == 'shooter') cards[1],
               if (categoryFilter == 'all' || categoryFilter == 'arcade' ||
                   categoryFilter == 'offline') _arcadeExtraCard(index: 2),
+              if (categoryFilter == 'all' || categoryFilter == 'arcade' || categoryFilter == 'offline') _snakeCard(),
             ];
             if (constraints.maxWidth < 700) {
               return Column(children: [
@@ -1498,7 +1558,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         ),
       Expanded(child: SizedBox.expand(child: HtmlElementView(
         key: ValueKey(selectedGame),
-        viewType: selectedGame == 0 ? signalView : selectedGame == 1 ? defenderView : selectedGame == 3 ? blocksView : wolfView,
+        viewType: selectedGame == 0 ? signalView : selectedGame == 1 ? defenderView : selectedGame == 3 ? blocksView : selectedGame == 4 ? snakeView : wolfView,
       ))),
     ]);
   }
