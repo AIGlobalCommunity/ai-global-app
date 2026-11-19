@@ -31,6 +31,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   StreamSubscription<AuthState>? authChanges;
   bool rulesOpen = false;
   OverlayEntry? wolfFullscreenOverlay;
+  OverlayEntry? blocksFullscreenOverlay;
 
   static const scoreStoragePrefix = 'agc-game-pending-';
   static const buildVersion = String.fromEnvironment(
@@ -101,6 +102,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     wolfFullscreenOverlay?.remove();
     wolfFullscreenOverlay?.dispose();
     wolfFullscreenOverlay = null;
+    blocksFullscreenOverlay?.remove();
+    blocksFullscreenOverlay?.dispose();
+    blocksFullscreenOverlay = null;
     messages?.cancel();
     authChanges?.cancel();
     scoreRetryTimer?.cancel();
@@ -168,6 +172,33 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     wolfFullscreenOverlay?.remove();
     wolfFullscreenOverlay?.dispose();
     wolfFullscreenOverlay = null;
+  }
+
+  void _showBlocksFullscreen() {
+    if (!mounted || blocksFullscreenOverlay != null) return;
+    blocksFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
+      child: Material(
+        color: const Color(0xFF070E23),
+        child: Stack(children: [
+          const Positioned.fill(child: HtmlElementView(viewType: blocksView)),
+          Positioned(
+            right: 8, top: MediaQuery.of(context).padding.top + 8,
+            child: IconButton.filled(
+              onPressed: _hideBlocksFullscreen,
+              tooltip: 'Zamknij grę',
+              icon: const Icon(Icons.close),
+            ),
+          ),
+        ]),
+      ),
+    ));
+    Overlay.of(context, rootOverlay: true).insert(blocksFullscreenOverlay!);
+  }
+
+  void _hideBlocksFullscreen() {
+    blocksFullscreenOverlay?.remove();
+    blocksFullscreenOverlay?.dispose();
+    blocksFullscreenOverlay = null;
   }
 
   Future<void> _onMessage(html.MessageEvent event) async {
@@ -1150,14 +1181,47 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             final blocksCard = Card(
               color: const Color(0xFF14254B),
               child: InkWell(
-                onTap: () => setState(() { game = 3; scoreNotice = null; }),
+                onTap: () {
+                  setState(() { game = 3; scoreNotice = null; });
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _showBlocksFullscreen();
+                  });
+                },
                 borderRadius: BorderRadius.circular(14),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.grid_view_rounded, color: Color(0xFFFFD477), size: 44),
+                      Container(
+                        height: 125,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF233E91), Color(0xFF0C163C)]),
+                        ),
+                        child: Stack(alignment: Alignment.center, children: [
+                          const Positioned(top: 12, left: 16,
+                            child: Icon(Icons.auto_awesome, color: Color(0xFFFFD477), size: 20)),
+                          Wrap(spacing: 5, runSpacing: 5, children: [
+                            for (final color in [
+                              const Color(0xFF4FC3FF), const Color(0xFFFFC44E),
+                              const Color(0xFFFA6BC2), const Color(0xFF6DE6A4),
+                              const Color(0xFFA68EFF), const Color(0xFF4FC3FF),
+                              const Color(0xFFFFC44E), const Color(0xFFFA6BC2),
+                              const Color(0xFF6DE6A4)])
+                              Container(width: 31, height: 31,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(7),
+                                  color: color,
+                                  border: Border.all(color: Colors.white54),
+                                  boxShadow: [BoxShadow(color: color.withValues(alpha: .35), blurRadius: 12)])),
+                          ]),
+                        ]),
+                      ),
                       const SizedBox(height: 12),
                       const Text('GENESIS BLOCKS', style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Color(0xFFFFD477))),
                       const SizedBox(height: 5),
