@@ -78,7 +78,7 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
     if (submitting || !formKey.currentState!.validate()) return;
     setState(() { submitting = true; error = null; });
     try {
-      await widget.onSignUp(email.text.trim(), password.text, nick.text.trim(), showNickPublicly);
+      await widget.onSignUp(email.text.trim(), password.text, nick.text.trim(), true);
       if (mounted) setState(() { submitted = true; });
     } on AuthException catch (e) {
       final code = e.code;
@@ -204,19 +204,6 @@ class _AgcRegistrationPageState extends State<AgcRegistrationPage> {
                 helperText: GenesisLanguage.copy('3–20 znaków: litery, cyfry i _', '3–20 characters: letters, digits and _'),
               ),
               validator: validateAgcNick,
-            ),
-            CheckboxListTile(
-              key: const Key('signup_show_nick_publicly'),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              activeColor: _gold,
-              value: showNickPublicly,
-              onChanged: submitting ? null : (value) =>
-                setState(() => showNickPublicly = value ?? false),
-              title: Text(GenesisLanguage.copy('Pokazuj mój nick publicznie', 'Show my nickname publicly')),
-              subtitle: Text(showNickPublicly
-                ? 'Twój nick będzie widoczny w rankingu THE GENESIS ERA.'
-                : 'Twój nick pozostanie prywatny. W rankingu pojawi się anonimowy identyfikator.'),
             ),
             const SizedBox(height: 10),
             Padding(
