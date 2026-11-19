@@ -3,6 +3,8 @@
 <style>
 *{box-sizing:border-box}body{margin:0;background:#102638;color:white;font:600 15px system-ui}main{height:100vh;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto}header,footer{background:#102638;padding:10px max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left))}header{display:flex;align-items:center;justify-content:space-between;padding-top:max(8px,env(safe-area-inset-top));gap:8px}header strong{font-size:clamp(16px,3.2vw,24px)}small{display:block;color:#a1dbe7}button{min-height:44px;border:1px solid #528194;border-radius:10px;background:#1b4054;color:white;font:inherit;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.53}#exit{width:44px;font-size:24px}canvas{width:100%;height:100%;display:block;background:#92c6df}footer{padding-bottom:max(10px,env(safe-area-inset-bottom));text-align:center}#note{margin:0 0 8px}nav{display:flex;justify-content:center;gap:8px}nav button{min-width:50px}#action{background:#ffcc70;color:#102638;border:0;padding:0 22px}#metrics{font-variant-numeric:tabular-nums;color:#c9eff4;font-size:14px}@media(max-height:430px){header,footer{padding-top:4px;padding-bottom:4px}#note{margin:0 0 3px}}
 header{gap:6px}header>div:first-child{min-width:0;flex:1}#hill{display:block;width:100%;max-width:350px;border:0;background:#102638;color:#b5ecff;font:inherit;font-size:13px}#hill:disabled{opacity:1}#music{min-width:44px}#music[aria-pressed=false]{color:#99aaba;text-decoration:line-through}#scene{touch-action:none}#action{min-width:min(54vw,235px)}#metrics{max-width:130px}#note{min-height:2.4em;align-content:center}@media(max-height:430px){#note{min-height:1.25em}}@media(max-width:480px){#metrics{max-width:82px;font-size:12px}header,footer{padding-left:8px;padding-right:8px}}
+#action[data-cue="now"]{background:#88f1af;box-shadow:0 0 0 3px #315d50;font-weight:800}
+#action[data-cue="set"]{background:#abdfec}
 </style></head><body><main><header><div><strong>Skoki narciarskie</strong><select id="hill" aria-label="Wybierz odblokowaną skocznię"></select></div><div id="metrics"></div><button id="music" aria-label="Muzyka" aria-pressed="true">♫</button><button id="exit" aria-label="Zamknij grę">×</button></header><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script>
 'use strict';
 // HS, venue, scenery, qualifying distance as a fraction of HS, wind strength.
@@ -33,6 +35,14 @@ const curvature=()=>.52+.34*difficulty()+.045*Math.sin(stage*2);
 let phase='ready',x=-.52,y=0,vx=0,vy=0,lean=0,wind=0,elapsed=0,landingAt=null;
 let result=0,advance=false,previous=0,distance=0;
 const held=new Set();
+const balanceLimit=.72;
+let landingCue=false,earlyPress=false,cleanLanding=false;
+function landingWindow(){
+  // Predict contact with the actual slope, including its flatter outrun.
+  const lead=.88-.16*difficulty();
+  const gravity=.233+.09*Math.abs(lean);
+  return vy>0 && y+vy*lead+.5*gravity*lead*lead>=slope(x+vx*lead);
+}
 function ramp(t){return .29*t-curvature()*t*t}
 function slope(t){return .085+.41*Math.min(t,1.25)+.09*Math.max(0,t-1.25)}
 function tell(note,button){
@@ -41,27 +51,34 @@ function tell(note,button){
 }
 function ready(){
   phase='ready';x=-.52;y=ramp(x);lean=0;advance=false;held.clear();
+  landingCue=false;earlyPress=false;cleanLanding=false;el('action').setAttribute('data-cue','');
   takeoff=null;drag=0;gesture=null;landingAt=null;
   const picker=el('hill');picker.replaceChildren();
   hills.slice(0,unlocked+1).forEach((h,i)=>picker.add(new Option((i+1)+'/25 · '+h.name+' · HS '+h.hs,i)));
   picker.value=String(stage);picker.disabled=false;
-  tell('Cel: telemark za linią '+target()+' m. Dotknij planszy lub naciśnij spację.','Rozpocznij najazd');
+  tell('Cel: telemark za linią '+target()+' m. Telemark to lądowanie z jedną nartą wysuniętą. Na zielony sygnał stuknij raz lub naciśnij spację.','Rozpocznij najazd');
 }
 function send(message){if(parent!==window)parent.postMessage(JSON.stringify(message),location.origin)}
 function lift(quality){
   phase='flight';x=0;y=0;elapsed=0;lean=0;landingAt=null;
   vx=.32+quality*.08+wind*.008;vy=-.075-quality*.10;
-  tell('Przeciągnij palcem lub użyj strzałek. Dotknij przy zeskoku.','Telemark');
+  tell('Przeciągnij palcem lub użyj strzałek. Trzymaj kropkę w zielonym polu.','Poczekaj na sygnał');
 }
 function finish(){
   phase='result';distance=Math.round(x*hills[stage].hs*2)/2;
-  const clean=landingAt!==null && elapsed-landingAt<=.79-.22*difficulty() && Math.abs(lean)<.72;
+  const clean=landingAt!==null && Math.abs(lean)<=balanceLimit;
+  cleanLanding=clean;el('action').setAttribute('data-cue','');
   result=Math.max(10,Math.round(distance*(clean?1.8:1)+ (clean?30:0)));
   advance=clean && distance>=target() && stage<hills.length-1;
   if(advance){unlocked=Math.max(unlocked,stage+1);persist('ski-tour-unlocked',unlocked)}
   if(result>best){best=result;persist('ski-local-best',best)}
   send({type:'genesis-game-score',game:'ski',score:result,level:stage+1,at:Date.now()});
-  tell((stage===24 && clean && distance>=target()?'Puchar zdobyty! · ':'')+distance+' m · '+(clean?'Telemark':'Lądowanie bez telemarku')+' · '+result+' pkt',advance?'Następna skocznia':'Skocz ponownie');
+  let feedback;
+  if(clean)feedback=distance<target()?'Telemark udany. Do awansu brakuje '+(target()-distance)+' m.':'Telemark udany!';
+  else if(landingAt!==null)feedback='Za duże pochylenie. Wyrównaj kropkę do zielonego pola.';
+  else if(earlyPress)feedback='Za wcześnie. Po zielonym sygnale naciśnij ponownie.';
+  else feedback='Brak telemarku. Przy zielonym sygnale stuknij raz lub naciśnij spację.';
+  tell((stage===24 && clean && distance>=target()?'Puchar zdobyty! · ':'')+distance+' m · '+result+' pkt · '+feedback,advance?'Następna skocznia':'Skocz ponownie');
 }
 function act(){
   startMusic();
@@ -73,8 +90,9 @@ function act(){
     tell('Wybicie przygotowane.','Wybicie');return;
   }
   if(phase==='flight' && landingAt===null){
-    if(vy<=0 || slope(x)-y>.16){tell('Jeszcze za wysoko. Poczekaj na sygnał lądowania.','Telemark');return}
-    landingAt=elapsed;tell('Telemark przygotowany.','Lądowanie')
+    if(!landingCue){earlyPress=true;tell('Jeszcze za wysoko. Naciśnij ponownie, gdy przycisk zrobi się zielony.','Poczekaj na sygnał');return}
+    landingAt=elapsed;el('action').setAttribute('data-cue','set');
+    tell('Telemark przyjęty. Utrzymaj kropkę w zielonym polu do lądowania.','Telemark przyjęty ✓')
   }
 }
 function step(dt){
@@ -84,9 +102,12 @@ function step(dt){
     if(x>=0)lift(takeoff??.12);
   }else if(phase==='flight'){
     const steer=drag || Number(held.has('forward'))-Number(held.has('back'));
-    lean=Math.max(-1,Math.min(1,lean+dt*(steer*2.4-lean*1.45+wind*(.28+.38*difficulty())+.16*Math.sin(elapsed*(2+stage%4)))));
+    lean=Math.max(-1,Math.min(1,lean+dt*(steer*2.2-lean*(steer?1.6:2.7)+wind*(.28+.38*difficulty())+.16*Math.sin(elapsed*(2+stage%4)))));
     x+=vx*dt;y+=vy*dt;vy+=(.233+.09*Math.abs(lean))*dt;
-    if(landingAt===null && vy>0 && slope(x)-y<.12)tell('Teraz telemark!','Telemark');
+    if(!landingCue && landingWindow()){
+      landingCue=true;el('action').setAttribute('data-cue','now');
+      tell('Teraz! Stuknij planszę lub zielony przycisk. Na klawiaturze naciśnij spację.','TELEMARK TERAZ');
+    }
     if(y>=slope(x)){y=slope(x);finish()}
   }
 }
@@ -261,7 +282,7 @@ function draw(){
   ctx.save();ctx.translate(X(x),Y(y));ctx.rotate(phase==='flight'?-.09+lean*.36:phase==='inrun'?Math.atan(.29-2*curvature()*x):.16);
   ctx.scale(size,size);
   // Silhouette changes from a low tuck to a long V-flight and split telemark.
-  const flying=phase==='flight',split=phase==='result'||(flying&&landingAt!==null);
+  const flying=phase==='flight',split=(phase==='result'&&cleanLanding)||(flying&&landingAt!==null);
   line(-.89,.08,.76,.025,'#243c59',.07);
   line(-.91,0,.88,-.035,'#eb653f',.075);
   line(.88,-.035,.97,-.11,'#ffae65',.055);
@@ -278,7 +299,7 @@ function draw(){
   if(phase==='flight'){
     const center=w*.5,bar=Math.min(140,w*.33),top=22;
     line(center-bar/2,top,center+bar/2,top,'#17354e',8);
-    line(center-bar*.20,top,center+bar*.20,top,'#60d9ad',5);
+    line(center-bar*.47*balanceLimit,top,center+bar*.47*balanceLimit,top,'#60d9ad',5);
     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(center+lean*bar*.47,top,5,0,Math.PI*2);ctx.fill();
   }
   const meters=phase==='flight'||phase==='result'?Math.max(0,Math.round(x*hills[stage].hs)):0;
@@ -288,11 +309,13 @@ function draw(){
   if(el('metrics').textContent!==metric)el('metrics').textContent=metric;
 }
 function frame(now){const dt=previous?Math.min(.05,(now-previous)/1000):0;previous=now;if(!document.hidden)step(dt);draw();requestAnimationFrame(frame)}
-el('action').onclick=act;
+// React on press for time-sensitive actions. Keep native keyboard and AT clicks.
+el('action').onpointerdown=e=>{if(e.isPrimary && e.button===0)act()};
+el('action').onclick=e=>{if(e.detail===0)act()};
 el('hill').onchange=()=>{stage=Number(el('hill').value);ready()};
 canvas.onpointerdown=e=>{
   if(gesture)return;
-  canvas.setPointerCapture(e.pointerId);gesture={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+  canvas.setPointerCapture(e.pointerId);gesture={id:e.pointerId,x:e.clientX,y:e.clientY,phase,moved:false};
 };
 canvas.onpointermove=e=>{
   if(!gesture||gesture.id!==e.pointerId)return;
@@ -302,7 +325,7 @@ canvas.onpointermove=e=>{
 };
 canvas.onpointerup=e=>{
   if(!gesture||gesture.id!==e.pointerId)return;
-  const tap=!gesture.moved;gesture=null;drag=0;if(tap)act();
+  const tap=!gesture.moved && gesture.phase===phase;gesture=null;drag=0;if(tap)act();
 };
 canvas.onlostpointercapture=()=>{drag=0;gesture=null};
 for(const key of ['back','forward']){
