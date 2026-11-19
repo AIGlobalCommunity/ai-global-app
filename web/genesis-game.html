@@ -225,7 +225,7 @@ function showStart(){
  overlay.hidden=false;modalSymbol.textContent="✦";modalTitle.textContent="GENESIS SIGNAL";
  modalText.textContent="Odkryj drogę dla sygnału. Dotykaj kafelków, aby obracać przewody. Gdy świecąca linia połączy S z C, przejdziesz na kolejny poziom. Masz 2 wskazówki na misję.";
  modalButton.textContent="Rozpocznij misję →";
- modalButton.onclick=function(){overlay.hidden=true;level=1;score=0;buildLevel();};
+ modalButton.onclick=function(){overlay.hidden=true;level=1;score=0;buildLevel();full(true);};
 }
 document.getElementById("hint").addEventListener("click",function(){
  if(locked||hints<1)return;
@@ -249,7 +249,7 @@ function full(on){document.body.classList.toggle("signal-full",on);document.getE
 document.getElementById("fullToggle").onclick=function(){full(!document.body.classList.contains("signal-full"))};
 document.getElementById("exitSignal").onclick=function(){save();full(false);try{window.parent.postMessage(JSON.stringify({type:"genesis-signal-exit-fullscreen",game:"signal"}),location.origin)}catch(_){}};
 document.addEventListener("keydown",function(e){if(e.key==="Escape")full(false)});
-if(restore()){overlay.hidden=false;modalSymbol.textContent="◈";modalTitle.textContent="ZAPISANA KAMPANIA";modalText.textContent="Poziom "+level+" · "+score+" pkt. "+(completed?"Misja ukończona.":"Kontynuuj od zapisanej planszy.");modalButton.textContent="Kontynuuj →";modalButton.onclick=function(){overlay.hidden=true;if(completed){level++;buildLevel()}else{locked=false;startedAt=Date.now()-elapsed*1000;clearInterval(tick);tick=setInterval(clockTick,1000);draw();updateStats()}}}else showStart();
+if(restore()){overlay.hidden=false;modalSymbol.textContent="◈";modalTitle.textContent="ZAPISANA KAMPANIA";modalText.textContent="Poziom "+level+" · "+score+" pkt. "+(completed?"Misja ukończona.":"Kontynuuj od zapisanej planszy.");modalButton.textContent="Kontynuuj →";modalButton.onclick=function(){overlay.hidden=true;full(true);if(completed){level++;buildLevel()}else{locked=false;startedAt=Date.now()-elapsed*1000;clearInterval(tick);tick=setInterval(clockTick,1000);draw();updateStats()}}}else showStart();
 })();
 </script>
 </body>
