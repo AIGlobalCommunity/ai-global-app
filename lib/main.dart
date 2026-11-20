@@ -3,6 +3,7 @@ import 'genesis_language.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
 import 'genesis_artwork.dart';
+import 'genesis_financial_support.dart';
 import 'genesis_global_ranking.dart';
 import 'agc_luxury_theme.dart';
 import 'dart:async';
@@ -45,7 +46,7 @@ class AgcHome extends StatefulWidget {
 }
 
 class _AgcHomeState extends State<AgcHome> {
-  int selected = 0;
+  int selected = 1;
   StreamSubscription<AuthState>? authEvents;
 
   @override
@@ -78,7 +79,7 @@ class _AgcHomeState extends State<AgcHome> {
       centerTitle: true,
       backgroundColor: background,
       foregroundColor: gold,
-      actions: const [GenesisLanguagePicker()],
+      actions: [IconButton(tooltip: GenesisLanguage.copy('Tablica fundatorów', 'Founders wall'), icon: const Icon(Icons.volunteer_activism_outlined), onPressed: () => setState(() => selected = 5)), const GenesisLanguagePicker()],
     ),
     body: SafeArea(
       child: AgcLuxuryBackdrop(
@@ -90,6 +91,7 @@ class _AgcHomeState extends State<AgcHome> {
             GenesisGlobalRanking(active: selected == 2),
             _offlineInfo(),
             const AgcAccountPage(),
+            if (selected == 5) const GenesisFinancialSupport() else const SizedBox.shrink(),
           ],
         ),
       ),
@@ -113,6 +115,7 @@ class _AgcHomeState extends State<AgcHome> {
         NavigationDestination(
           icon: const Icon(Icons.person_outline),
           label: GenesisLanguage.copy('Konto', 'Account')),
+        NavigationDestination(icon: const Icon(Icons.volunteer_activism_outlined), label: GenesisLanguage.copy('Fundatorzy', 'Founders')),
       ],
     ),
   );
