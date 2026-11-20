@@ -179,7 +179,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   bool saving = false;
   final Map<String, (int, int)> pendingScores = {};
 
-  String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : game == 3 ? 'blocks' : game == 4 ? 'snake' : 'wolf';
+  String get gameKey {
+    final index = game;
+    if (index == null || index < 0 || index >= gameKeys.length) return 'wolf';
+    return gameKeys[index];
+  }
   Map<String, dynamic> get gameAuthStatus {
     final user = AgcBackend.user;
     final handle = user?.userMetadata?['handle']?.toString().trim();
