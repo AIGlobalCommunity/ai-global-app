@@ -71,7 +71,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
         final key = row['game_key']?.toString();
         final score = row['best_score'];
         if (id == null || key == null || score is! num || score < 0) continue;
-        if (!const ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze'].contains(key)) continue;
+        if (!const ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'siege'].contains(key)) continue;
         final games = byPlayer.putIfAbsent(id, () => <String, int>{});
         final points = score.toInt();
         if (points > (games[key] ?? -1)) games[key] = points;
@@ -120,6 +120,8 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
     'blocks' => 'GENESIS BLOCKS',
     'snake' => 'GENESIS SNAKE',
     'ski' => 'SKOKI NARCIARSKIE',
+    'maze' => 'GENESIS MAZE',
+    'siege' => 'GENESIS SIEGE',
     _ => key.replaceAll('_', ' ').toUpperCase(),
   };
 

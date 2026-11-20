@@ -15,7 +15,7 @@
 <script>
 (()=>{
 const params=new URLSearchParams(location.search);
-const names={signal:'GENESIS SIGNAL',defender:'GENESIS DEFENDER',wolf:'WILK I JAJKA',blocks:'GENESIS BLOCKS',snake:'GENESIS SNAKE',ski:'SKOKI NARCIARSKIE',city:'GENESIS CITY'};
+const names={signal:'GENESIS SIGNAL',defender:'GENESIS DEFENDER',wolf:'WILK I JAJKA',blocks:'GENESIS BLOCKS',snake:'GENESIS SNAKE',ski:'SKOKI NARCIARSKIE',maze:'GENESIS MAZE',siege:'GENESIS SIEGE',city:'GENESIS CITY'};
 const game=Object.hasOwn(names,params.get('game'))?params.get('game'):'signal';
 const score=Math.max(0,Math.min(10000000,Number.parseInt(params.get('score')||'0',10)||0));
 const nick=(params.get('nick')||'Gracz').replace(/[^a-zA-Z0-9_]/g,'').slice(0,20)||'Gracz';
@@ -33,6 +33,7 @@ if(game==='snake'){for(let i=0;i<7;i++){ctx.fillRect(100+i*80,100+(i%3)*50,68,68
 else if(game==='wolf'){ctx.font='190px Arial';ctx.fillText('🐺',90,270);ctx.fillText('🥚',800,270)}
 else if(game==='blocks'){for(let i=0;i<6;i++)for(let j=0;j<3;j++)if((i+j)%3!==0)ctx.fillRect(110+i*100,80+j*95,82,82)}
 else if(game==='city'){ctx.font='190px Arial';ctx.fillText('🚘',150,260);ctx.fillText('🌆',750,260)}
+else if(game==='siege'){ctx.font='180px Arial';ctx.fillText('☄️',160,260);ctx.fillText('🤖',760,260)}
 else if(game==='ski'){ctx.font='200px Arial';ctx.fillText('⛷️',160,260);ctx.fillText('🏔️',760,260)}
 ctx.restore()}
 ctx.fillStyle=background?'rgba(3,13,29,.53)':'rgba(3,13,29,.68)';ctx.fillRect(0,0,W,H);
