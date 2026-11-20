@@ -26,6 +26,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const defenderView = 'genesis-defender-html5-iframe';
   static const wolfView = 'genesis-wolf-html5-iframe';
   static const blocksView = 'genesis-blocks-html5-iframe';
+  static const crystalsView = 'genesis-crystals-html5-iframe';
+  OverlayEntry? crystalsOverlay;
   static const slingshotView = 'genesis-slingshot-html5-iframe';
   static const mazeView = 'genesis-maze-html5-iframe';
   static const skiView = 'genesis-ski-html5-iframe';
@@ -49,9 +51,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -211,6 +213,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(defenderView, 'genesis-defender.html?embed=1&version=$buildVersion', 'GENESIS DEFENDER');
       _register(wolfView, 'genesis-wolf-eggs.html?embed=1&version=$buildVersion', 'WILK I JAJKA');
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
+      _register(crystalsView, 'genesis-crystals.html?embed=1&version=$buildVersion', 'GENESIS CRYSTALS');
       _register(slingshotView, 'genesis-slingshot.html?embed=1&version=$buildVersion', 'GENESIS SLINGSHOT');
       _register(mazeView, 'genesis-maze.html?embed=1&version=$buildVersion', 'GENESIS MAZE');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
@@ -238,6 +241,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   void dispose() {
+    crystalsOverlay?.remove();
+    crystalsOverlay?.dispose();
     slingshotOverlay?.remove();
     slingshotOverlay?.dispose();
     mazeOverlay?.remove();
@@ -297,6 +302,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
+  void _showCrystalsFullscreen() {
+    if (!mounted || crystalsOverlay != null) return;
+    crystalsOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: crystalsView)));
+    Overlay.of(context, rootOverlay: true).insert(crystalsOverlay!);
+  }
   void _showSlingshotFullscreen() {
     if (!mounted || slingshotOverlay != null) return;
     slingshotOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: slingshotView)));
@@ -415,6 +425,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       });
       html.window.open(url.toString(), '_blank');
       return;
+    }
+    if (decoded is Map && decoded['game'] == 'crystals' && decoded['type'] == 'genesis-crystals-exit-fullscreen') {
+      crystalsOverlay?.remove(); crystalsOverlay?.dispose(); crystalsOverlay = null;
     }
     if (decoded is Map && decoded['game'] == 'slingshot' && decoded['type'] == 'genesis-slingshot-exit-fullscreen') {
       slingshotOverlay?.remove(); slingshotOverlay?.dispose(); slingshotOverlay = null;
@@ -1371,12 +1384,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   Widget _arcadeExtraCard({required int index}) {
     final wolf = index == 2;
     final maze = index == 6;
+    final crystals = index == 8;
     final sling = index == 7;
     final ski = index == 5;
     final snake = index == 4;
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
     void openGame() {
+      if (crystals) { _showCrystalsFullscreen(); return; }
       if (sling) { _showSlingshotFullscreen(); return; }
       if (maze) { _showMazeFullscreen(); return; }
       if (ski) { _showSkiFullscreen(); return; }
@@ -1386,7 +1401,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
+    final features = crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1419,7 +1434,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1507,11 +1522,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
       : index == 4 ? Icons.gamepad_outlined
-      : index == 7 ? Icons.track_changes : index == 6 ? Icons.route_outlined : Icons.downhill_skiing_outlined;
+      : index == 8 ? Icons.diamond_outlined : index == 7 ? Icons.track_changes : index == 6 ? Icons.route_outlined : Icons.downhill_skiing_outlined;
     final color = index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     void open() {
+      if (index == 8) { _showCrystalsFullscreen(); return; }
       if (index == 7) { _showSlingshotFullscreen(); return; }
       if (index == 6) { _showMazeFullscreen(); return; }
       if (index == 5) { _showSkiFullscreen(); return; }
@@ -1638,7 +1654,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
@@ -1845,4 +1861,14 @@ class _SlingshotCover extends CustomPainter {
  c.restore();
  }
  @override bool shouldRepaint(covariant _SlingshotCover oldDelegate)=>false;
+}
+
+class _CrystalsCover extends CustomPainter {
+ const _CrystalsCover();
+ @override void paint(Canvas canvas, Size size) {
+ final p=Paint(); canvas.drawRect(Offset.zero & size,p..color=const Color(0xFF10283E));
+ final d=size.height/5; const colors=[Color(0xFFFC5278),Color(0xFF50E6FF),Color(0xFF65F89B),Color(0xFFFFD75A),Color(0xFFAB8CFF)];
+ for(var y=0;y<4;y++){for(var x=0;x<7;x++){final c=Offset(size.width/2+(x-3)*d,d*(y+.9));final path=Path()..moveTo(c.dx,c.dy-d*.43)..lineTo(c.dx+d*.38,c.dy-d*.12)..lineTo(c.dx+d*.27,c.dy+d*.24)..lineTo(c.dx,c.dy+d*.43)..lineTo(c.dx-d*.38,c.dy-d*.12)..close();canvas.drawPath(path,p..color=colors[(x+y*3)%5]);canvas.drawPath(Path()..moveTo(c.dx,c.dy-d*.43)..lineTo(c.dx,c.dy+d*.43)..lineTo(c.dx-d*.38,c.dy-d*.12)..close(),p..color=const Color(0x55FFFFFF));}}
+ }
+ @override bool shouldRepaint(covariant _CrystalsCover oldDelegate)=>false;
 }
