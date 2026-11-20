@@ -1399,7 +1399,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: maze ? const ColoredBox(color: Color(0xFF0B243B), child: Center(child: Icon(Icons.route_outlined, size: 145, color: Color(0xFF71F7C4)))) : ski
+              child: maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1762,4 +1762,46 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       ))),
     ]);
   }
+}
+
+class _MazeCoverPainter extends CustomPainter {
+  const _MazeCoverPainter();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    final p = Paint();
+    canvas.drawRect(Offset.zero & size, p..shader = const LinearGradient(colors: [Color(0xFF070D25), Color(0xFF193F73), Color(0xFF090C24)]).createShader(Offset.zero & size));
+    p.shader = null;
+    final scale = (w / 360 < h / 235 ? w / 360 : h / 235);
+    canvas.save();
+    canvas.translate(w / 2, h / 2);
+    canvas.scale(scale);
+    canvas.translate(-180, -117.5);
+    for (final wall in <Rect>[
+      const Rect.fromLTWH(12, 12, 336, 14), const Rect.fromLTWH(12, 209, 336, 14),
+      const Rect.fromLTWH(12, 26, 14, 183), const Rect.fromLTWH(334, 26, 14, 183),
+      const Rect.fromLTWH(45, 48, 90, 16), const Rect.fromLTWH(226, 48, 90, 16),
+      const Rect.fromLTWH(45, 172, 90, 16), const Rect.fromLTWH(226, 172, 90, 16),
+      const Rect.fromLTWH(45, 83, 16, 70), const Rect.fromLTWH(300, 83, 16, 70),
+    ]) {
+      canvas.drawRRect(RRect.fromRectAndRadius(wall, const Radius.circular(6)), p..color=const Color(0xFF2375BD));
+      canvas.drawRRect(RRect.fromRectAndRadius(wall.deflate(3), const Radius.circular(4)), p..color=const Color(0xFF132C58));
+    }
+    for(var i=0;i<9;i++) {
+      canvas.drawCircle(Offset(74+i*25.0,118),3.5,p..color=const Color(0xFF9FFCF0));
+    }
+    final hero = const Offset(116,118);
+    canvas.drawArc(Rect.fromCircle(center:hero,radius:36),0.48,5.323185,true,p..color=const Color(0xFFFFD43F));
+    canvas.drawCircle(const Offset(124,100),4,p..color=const Color(0xFF352810));
+    for(var i=0;i<3;i++){
+      final center=Offset(205+i*37.0, i==1?96:134);
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center:center,width:32,height:34),const Radius.circular(9)),p..color=[const Color(0xFFFF527C),const Color(0xFFB17AFF),const Color(0xFF42D3FF)][i]);
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center:center-const Offset(0,3),width:25,height:13),const Radius.circular(4)),p..color=const Color(0xFF071125));
+      canvas.drawCircle(center+const Offset(-6,-3),3,p..color=Colors.white);
+      canvas.drawCircle(center+const Offset(6,-3),3,p..color=Colors.white);
+    }
+    canvas.restore();
+  }
+  @override
+  bool shouldRepaint(covariant _MazeCoverPainter oldDelegate) => false;
 }
