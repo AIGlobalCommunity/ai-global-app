@@ -26,6 +26,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const defenderView = 'genesis-defender-html5-iframe';
   static const wolfView = 'genesis-wolf-html5-iframe';
   static const blocksView = 'genesis-blocks-html5-iframe';
+  static const mazeView = 'genesis-maze-html5-iframe';
   static const skiView = 'genesis-ski-html5-iframe';
   static const snakeView = 'genesis-snake-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
@@ -38,6 +39,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   OverlayEntry? wolfFullscreenOverlay;
   OverlayEntry? blocksFullscreenOverlay;
   OverlayEntry? skiOverlay;
+  OverlayEntry? mazeOverlay;
   OverlayEntry? snakeFullscreenOverlay;
 
   static const scoreStoragePrefix = 'agc-game-pending-';
@@ -45,9 +47,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -203,6 +205,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(defenderView, 'genesis-defender.html?embed=1&version=$buildVersion', 'GENESIS DEFENDER');
       _register(wolfView, 'genesis-wolf-eggs.html?embed=1&version=$buildVersion', 'WILK I JAJKA');
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
+      _register(mazeView, 'genesis-maze.html?embed=1&version=$buildVersion', 'GENESIS MAZE');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
       _register(snakeView, 'genesis-snake.html?embed=1&version=$buildVersion', 'GENESIS SNAKE');
       registered = true;
@@ -228,6 +231,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   @override
   void dispose() {
+    mazeOverlay?.remove();
+    mazeOverlay?.dispose();
     skiOverlay?.remove();
     skiOverlay?.dispose();
     snakeFullscreenOverlay?.remove();
@@ -283,6 +288,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
+  void _showMazeFullscreen() {
+    if (!mounted || mazeOverlay != null) return;
+    mazeOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: mazeView)));
+    Overlay.of(context, rootOverlay: true).insert(mazeOverlay!);
+  }
   void _showSkiFullscreen() {
     if (skiOverlay != null) return;
     skiOverlay = OverlayEntry(builder: (_) => const Positioned.fill(
@@ -390,6 +400,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         'nick': handle,
       });
       html.window.open(url.toString(), '_blank');
+      return;
+    }
+    if (decoded is Map && decoded['game'] == 'maze' && decoded['type'] == 'genesis-maze-exit-fullscreen') {
+      mazeOverlay?.remove(); mazeOverlay?.dispose(); mazeOverlay = null;
       return;
     }
     if (decoded is Map && decoded['game'] == 'ski' && decoded['type'] == 'genesis-ski-exit-fullscreen') {
@@ -1338,11 +1352,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Widget _arcadeExtraCard({required int index}) {
     final wolf = index == 2;
+    final maze = index == 6;
     final ski = index == 5;
     final snake = index == 4;
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
     void openGame() {
+      if (maze) { _showMazeFullscreen(); return; }
       if (ski) { _showSkiFullscreen(); return; }
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1350,7 +1366,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = ski
+    final features = maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1383,7 +1399,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: ski
+              child: maze ? const ColoredBox(color: Color(0xFF0B243B), child: Center(child: Icon(Icons.route_outlined, size: 145, color: Color(0xFF71F7C4)))) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1471,11 +1487,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
       : index == 4 ? Icons.gamepad_outlined
-      : Icons.downhill_skiing_outlined;
+      : index == 6 ? Icons.route_outlined : Icons.downhill_skiing_outlined;
     final color = index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     void open() {
+      if (index == 6) { _showMazeFullscreen(); return; }
       if (index == 5) { _showSkiFullscreen(); return; }
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1600,7 +1617,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
