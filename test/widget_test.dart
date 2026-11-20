@@ -226,10 +226,17 @@ void main() {
   });
   testWidgets('Games portal home is accessible without authentication',
       (tester) async {
+    GenesisLanguage.selected.value = 'pl';
     await tester.pumpWidget(const AgcApp());
+    await tester.pumpAndSettle();
+    expect(tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex, 1);
+    expect(find.text('WYBIERZ GRĘ I ODKRYWAJ NOWE WYZWANIA'), findsOneWidget);
+    expect(find.text('Fundatorzy'), findsOneWidget);
+    expect(find.text('GENESIS RANKING'), findsNothing);
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
     expect(find.text('TWOJE CENTRUM GIER'), findsOneWidget);
     expect(find.text('ZAGRAJ TERAZ'), findsOneWidget);
-    expect(find.text('GENESIS RANKING'), findsNothing);
   });
 
   testWidgets('Genesis tiers and GP rules expand on demand', (tester) async {
