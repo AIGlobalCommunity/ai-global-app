@@ -181,7 +181,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   bool saving = false;
   final Map<String, (int, int)> pendingScores = {};
 
-  String get gameKey => game == 0 ? 'signal' : game == 1 ? 'defender' : game == 3 ? 'blocks' : game == 4 ? 'snake' : 'wolf';
+  String get gameKey => gameKeys[game];
   Map<String, dynamic> get gameAuthStatus {
     final user = AgcBackend.user;
     final handle = user?.userMetadata?['handle']?.toString().trim();
@@ -1504,7 +1504,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
       : index == 4 ? Icons.gamepad_outlined
-      : index == 6 ? Icons.route_outlined : Icons.downhill_skiing_outlined;
+      : index == 7 ? Icons.rocket_launch_outlined : index == 6 ? Icons.route_outlined : Icons.downhill_skiing_outlined;
     final color = index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
