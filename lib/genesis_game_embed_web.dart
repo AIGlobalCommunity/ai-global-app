@@ -28,9 +28,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const blocksView = 'genesis-blocks-html5-iframe';
   static const skiView = 'genesis-ski-html5-iframe';
   static const snakeView = 'genesis-snake-html5-iframe';
-  static const cityView = 'genesis-city-html5-iframe';
-  static const city3dView = 'genesis-city-3d-html5-iframe';
-  static const cityMultiView = 'genesis-city-multiplayer-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
@@ -42,17 +39,15 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   OverlayEntry? blocksFullscreenOverlay;
   OverlayEntry? skiOverlay;
   OverlayEntry? snakeFullscreenOverlay;
-  OverlayEntry? cityFullscreenOverlay;
-  String activeCityView = cityView;
 
   static const scoreStoragePrefix = 'agc-game-pending-';
   static const buildVersion = String.fromEnvironment(
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'city'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS CITY 2D'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, cityView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -210,9 +205,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
       _register(snakeView, 'genesis-snake.html?embed=1&version=$buildVersion', 'GENESIS SNAKE');
-      _register(cityView, 'genesis-city.html?embed=1&version=$buildVersion', 'GENESIS CITY 2D');
-      _register(city3dView, 'genesis-city-3d.html?embed=1&version=$buildVersion', 'GENESIS CITY 3D');
-      _register(cityMultiView, 'genesis-city-multiplayer.html?embed=1&version=$buildVersion', 'GENESIS CITY Multiplayer');
       registered = true;
     }
     messages = html.window.onMessage.listen(_onMessage);
@@ -238,8 +230,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   void dispose() {
     skiOverlay?.remove();
     skiOverlay?.dispose();
-    cityFullscreenOverlay?.remove();
-    cityFullscreenOverlay?.dispose();
     snakeFullscreenOverlay?.remove();
     snakeFullscreenOverlay?.dispose();
     snakeFullscreenOverlay = null;
@@ -301,21 +291,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     Overlay.of(context, rootOverlay: true).insert(skiOverlay!);
   }
 
-  void _showCityFullscreen([String view = cityView]) {
-    if (view != cityView && !_cityPreviewAllowed) return;
-    activeCityView = view;
-    if (!mounted || cityFullscreenOverlay != null) return;
-    cityFullscreenOverlay = OverlayEntry(builder: (_) => Positioned.fill(
-      child: HtmlElementView(viewType: activeCityView),
-    ));
-    Overlay.of(context, rootOverlay: true).insert(cityFullscreenOverlay!);
-  }
-  void _closeCityFullscreen() {
-    cityFullscreenOverlay?.remove();
-    cityFullscreenOverlay?.dispose();
-    cityFullscreenOverlay = null;
-    if (mounted) setState(() { game = null; scoreNotice = null; });
-  }
 
   void _showSnakeFullscreen() {
     if (!mounted || snakeFullscreenOverlay != null) return;
@@ -421,11 +396,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       skiOverlay?.remove();
       skiOverlay?.dispose();
       skiOverlay = null;
-      return;
-    }
-    if (decoded is Map<String, dynamic> &&
-        decoded['type'] == 'genesis-city-exit-fullscreen') {
-      _closeCityFullscreen();
       return;
     }
     if (decoded is Map<String, dynamic> &&
@@ -1370,21 +1340,17 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final wolf = index == 2;
     final ski = index == 5;
     final snake = index == 4;
-    final city = index == 6;
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
     void openGame() {
       if (ski) { _showSkiFullscreen(); return; }
-      if (city) { _showCityFullscreen(); return; }
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = city
-      ? <(IconData, String)>[(Icons.directions_car_outlined, 'Otwarty świat i swobodna jazda'),(Icons.local_shipping_outlined, 'Misje kurierskie i punkty'),(Icons.map_outlined, 'Mapa miasta i ruch uliczny'),(Icons.phone_android_outlined, 'Sterowanie na telefonie')]
-      : ski
+    final features = ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1417,21 +1383,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: city
-                ? DecoratedBox(decoration: const BoxDecoration(gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    colors: [Color(0xFF0A1C30), Color(0xFF237C75), Color(0xFF071629)])),
-                    child: Stack(alignment: Alignment.center, children: [
-                      const Positioned(top: 15, left: 20, child: Icon(Icons.location_city,
-                        size: 68, color: Color(0x886AD8BD))),
-                      const Icon(Icons.directions_car_filled_rounded, size: 145,
-                        color: Color(0xFFFFC65A)),
-                      const Positioned(bottom: 14, child: Text('WARSZAWA · OPEN CITY',
-                        style: TextStyle(fontSize: 20, color: Colors.white,
-                          fontWeight: FontWeight.w900, letterSpacing: 1.3,
-                          shadows: [Shadow(color: Colors.black, blurRadius: 10)]))),
-                    ]))
-                : ski
+              child: ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1474,7 +1426,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               decoration: BoxDecoration(
                 color: const Color(0xDD071525), borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: accent.withValues(alpha: .8))),
-              child: Text(city ? 'OTWARTY ŚWIAT' : ski ? 'SPORTOWA' : (snake || wolf) ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
+              child: Text(ski ? 'SPORTOWA' : (snake || wolf) ? 'ZRĘCZNOŚCIOWA' : 'ŁAMIGŁÓWKA',
                 style: TextStyle(color: accent, fontSize: 11,
                   fontWeight: FontWeight.w700, letterSpacing: 1.1)),
             )),
@@ -1508,80 +1460,23 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
-  bool get _cityPreviewAllowed =>
+  bool get _diagnosticsAllowed =>
       AgcBackend.user?.email?.trim().toLowerCase() == 'mpiw123@gmail.com';
 
-  Widget _cityPreviewCard(String title, String subtitle, String view,
-      IconData icon, Color accent) => Container(
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(colors: [
-        Color(0xFF0C263D), Color(0xFF081522)]),
-      border: Border.all(color: accent, width: 1.4),
-      borderRadius: BorderRadius.circular(20)),
-    padding: const EdgeInsets.all(18),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Container(height: 142, decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(colors: [
-          accent.withValues(alpha: .36), const Color(0xFF091728)])),
-        child: Icon(icon, size: 76, color: accent)),
-      const SizedBox(height: 14),
-      Text(title, style: const TextStyle(fontWeight: FontWeight.w900,
-        fontSize: 19, color: Colors.white)),
-      const SizedBox(height: 8),
-      Text(subtitle, style: const TextStyle(color: Colors.white70)),
-      const SizedBox(height: 16),
-      FilledButton.icon(
-        onPressed: () => _showCityFullscreen(view),
-        icon: const Icon(Icons.play_arrow_rounded),
-        label: const Text('URUCHOM PROTOTYP')),
-    ]));
-
-  Widget _cityPreviews() {
-    if (!_cityPreviewAllowed) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SizedBox(height: 24),
-      const Text('🔒 GENESIS CITY · PROTOTYPY PRYWATNE',
-        style: TextStyle(fontWeight: FontWeight.w900,
-          color: Color(0xFFF5C86C), fontSize: 18)),
-      const SizedBox(height: 8),
-      const Text('Widoczne tylko dla konta testowego. Multiplayer to obecnie symulacja botów, bez połączenia między graczami.'),
-      const SizedBox(height: 14),
-      LayoutBuilder(builder: (context, constraints) {
-        final cards = [
-          _cityPreviewCard('GENESIS CITY 3D',
-            'Perspektywa zza auta, jazda i znaczniki misji. Prototyp pseudo-3D.',
-            city3dView, Icons.view_in_ar_outlined, const Color(0xFFFFC86D)),
-          _cityPreviewCard('GENESIS CITY Multiplayer',
-            'Prototyp wspólnego miasta z botami; sieciowy multiplayer w kolejnym etapie.',
-            cityMultiView, Icons.groups_outlined, const Color(0xFF9CAFFF)),
-        ];
-        if (constraints.maxWidth < 800) {
-          return Column(children: [
-            for (final card in cards) Padding(
-              padding: const EdgeInsets.only(bottom: 12), child: card)]);
-        }
-        return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          for (final card in cards) Expanded(child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5), child: card))]);
-      }),
-    ]);
-  }
 
   Widget _compactGameCard(int index, {required bool listMode}) {
     final title = titles[index];
-    final icon = index == 6 ? Icons.directions_car_filled_outlined : index == 0 ? Icons.hub_outlined
+    final icon = index == 0 ? Icons.hub_outlined
       : index == 1 ? Icons.rocket_launch_outlined
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
       : index == 4 ? Icons.gamepad_outlined
       : Icons.downhill_skiing_outlined;
-    final color = index == 6 ? const Color(0xFF6AD8BD) : index == 2 ? const Color(0xFFFFB05A)
+    final color = index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     void open() {
       if (index == 5) { _showSkiFullscreen(); return; }
-      if (index == 6) { _showCityFullscreen(); return; }
       setState(() { game = index; scoreNotice = null; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -1654,7 +1549,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           _versionLabel(),
           if (AgcBackend.user == null) const Card(child: Padding(padding: EdgeInsets.all(12), child: Text('⚠ TRYB GOŚCIA — możesz grać, ale punkty NIE są zapisywane w rankingu online. Zaloguj się w zakładce KONTO przed grą.', textAlign: TextAlign.center))),
           TextButton.icon(onPressed: () => setState(() => rulesOpen = true), icon: const Icon(Icons.gavel_outlined), label: const Text('REGULAMIN GIER I RANKINGÓW')),
-          _cityPreviews(),
           const SizedBox(height: 10),
           Wrap(spacing: 7, runSpacing: 7, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
@@ -1706,7 +1600,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
@@ -1785,7 +1679,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   Widget build(BuildContext context) {
     if (rulesOpen) return _rulesPage();
     if (diagnosticsOpen) {
-      return _cityPreviewAllowed ? _diagnosticsPage() : _gameLibrary();
+      return _diagnosticsAllowed ? _diagnosticsPage() : _gameLibrary();
     }
     if (rankingGame != null) {
       return _rankingPage(rankingGame!);
