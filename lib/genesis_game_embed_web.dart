@@ -423,7 +423,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     }
     if (decoded is Map<String, dynamic> && (decoded['type'] == 'snake-server-begin' || decoded['type'] == 'snake-server-step')) {
       final source = event.source;
-      if (source is! html.WindowBase || !frames.values.any((f) => f.contentWindow == source && f.src.contains('genesis-snake.html'))) return;
+      if (source is! html.WindowBase || !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-snake.html') ?? false))) return;
       final request = decoded['request'];
       if (request is! String || request.length > 80) return;
       dynamic result;
