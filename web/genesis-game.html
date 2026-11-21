@@ -243,7 +243,7 @@ function showStart(){if(serverBusy)return;serverMode=false;genesisHideEndShare()
  modalButton.textContent="Rozpocznij misję →";
  modalButton.onclick=function(){overlay.hidden=true;level=1;score=0;buildLevel();full(true);};
 }
-const signalServerButton=document.createElement('button');signalServerButton.textContent='🛡 TRYB SERWEROWY (TEST)';signalServerButton.onclick=signalStart;modalButton.after(signalServerButton);
+
 document.getElementById("hint").addEventListener("click",function(){
  if(locked||hints<1)return;
  var incorrect=path.filter(function(i){return tiles[i]!==solution[i];});
