@@ -578,6 +578,30 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'blocks-server-result','request':request,'state':result}), html.window.location.origin);
       return;
     }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'defender-shop-buy') {
+      final source = event.source;
+      final request = decoded['request'];
+      final product = decoded['product'];
+      if (source is! html.WindowBase || request is! String || !RegExp(r'^[0-9a-f-]{36}$').hasMatch(request) || !['bomb1','bomb3','bomb5','guard15','guard30','guard60','life'].contains(product)) return;
+      dynamic balance;
+      bool ok = false, retry = false;
+      String message = 'Zaloguj się na stałe konto.';
+      try {
+        if (AgcBackend.user != null && !AgcBackend.user!.isAnonymous) {
+          balance = product == 'life'
+              ? await AgcBackend.client.rpc('agc_coin_buy_life', params: {'p_game':'defender','p_request':request})
+              : await AgcBackend.client.rpc('agc_defender_buy', params: {'p_product':product,'p_request':request});
+          ok = true;
+          message = 'Zakup potwierdzony.';
+        }
+      } on PostgrestException catch (e) {
+        retry = !e.message.contains('Insufficient GCO');
+        message = retry ? 'Nie potwierdzono zakupu. Ponów.' : 'Za mało GCO.';
+        if (!retry) { try { balance = await AgcBackend.client.rpc('agc_coin_balance'); } catch (_) {} }
+      } catch (_) { retry = true; message = 'Brak odpowiedzi. Ponów zakup.'; }
+      source.postMessage(jsonEncode({'type':'defender-shop-result','request':request,'ok':ok,'retry':retry,'balance':balance,'message':message}), html.window.location.origin);
+      return;
+    }
     if (decoded is Map<String, dynamic> && (decoded['type'] == 'genesis-buy-life' || decoded['type'] == 'genesis-life-balance')) {
       final source = event.source;
       final request = decoded['request'];
