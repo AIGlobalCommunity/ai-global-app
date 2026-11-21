@@ -94,7 +94,13 @@ function finish(){
   else feedback='Brak telemarku. Przy zielonym sygnale stuknij raz lub naciśnij spację.';
   tell((stage===24 && clean && distance>=target()?'Puchar zdobyty! · ':'')+distance+' m · '+result+' pkt · '+feedback,advance?'Następna skocznia':'Skocz ponownie');
 }
-function act(){
+let serverMode=false,serverBusy=false,serverRun=null,serverTimer=null,serverAct=false;
+function skiRpc(type,args={}){return new Promise((resolve,reject)=>{const request=crypto.randomUUID();const timeout=setTimeout(()=>{removeEventListener('message',receive);reject(Error('Timeout'))},7000);function receive(e){if(e.source!==parent||e.origin!==location.origin)return;let d;try{d=JSON.parse(e.data)}catch{return}if(d.type!=='ski-server-result'||d.request!==request)return;clearTimeout(timeout);removeEventListener('message',receive);d.state?resolve(d.state):reject(Error('Server rejected'))}addEventListener('message',receive);parent.postMessage(JSON.stringify({type,request,...args}),location.origin)})}
+function applySki(s){serverRun=s;({phase,x,y,vx,vy,lean,wind,elapsed,distance}=s);result=s.score;landingCue=s.cue;landingAt=s.landing?elapsed:null;cleanLanding=s.landing&&Math.abs(lean)<=balanceLimit;el('wind').textContent='Wiatr '+wind+' m/s';el('action').setAttribute('data-cue',s.cue?'now':'');tell(s.ended?'Wynik serwerowy: '+result+' pkt':phase==='inrun'?'Wybij się na progu':s.cue?'Telemark teraz':'Utrzymaj równowagę',s.ended?'Skocz ponownie':phase==='inrun'?'Wybicie':s.cue?'TELEMARK':'Poczekaj na sygnał')}
+async function skiStart(){if(serverBusy)return;serverBusy=true;clearTimeout(serverTimer);try{const s=await skiRpc('ski-server-begin');serverMode=true;stage=0;el('hill').value='0';el('hill').disabled=true;serverAct=false;applySki(s);serverTimer=setTimeout(skiStep,100)}catch{tell('Zaloguj się i sprawdź połączenie.','Spróbuj ponownie')}finally{serverBusy=false}}
+async function skiStep(){if(!serverMode||serverBusy||serverRun.ended)return;serverBusy=true;const actNow=serverAct;serverAct=false;try{const old=serverRun.seq;const s=await skiRpc('ski-server-step',{run:serverRun.id,seq:old+1,steer:Math.round(100*(drag||Number(held.has('forward'))-Number(held.has('back')))),act:actNow});if(s.seq===old&&actNow)serverAct=true;applySki(s);if(!s.ended)serverTimer=setTimeout(skiStep,100)}catch{phase='result';tell('Sesja wygasła lub utracono połączenie.','Skocz ponownie')}finally{serverBusy=false}}
+const localSkiButton=document.createElement('button');localSkiButton.textContent='Zwykła gra';localSkiButton.onclick=()=>{if(serverBusy)return;serverMode=false;clearTimeout(serverTimer);stage=unlocked;ready()};el('action').after(localSkiButton);const skiServerButton=document.createElement('button');skiServerButton.textContent='🛡 TRYB SERWEROWY (TEST)';skiServerButton.onclick=skiStart;el('action').after(skiServerButton);
+function act(){if(serverMode){if(phase==='result')skiStart();else serverAct=true;return}if(serverBusy)return;
   startMusic();
   if(phase==='result'){if(advance){stage++;ready()}else if(cleanLanding && distance>=target()){GcoLives.reset();ready()}else GcoLives.lost(()=>ready());return}
   if(phase==='ready'){phase='inrun';el('hill').disabled=true;elapsed=0;tell('Wybij się w żółtej strefie na końcu progu.','Wybicie');return}
@@ -322,11 +328,11 @@ function draw(){
     : meters+' m · rekord '+best+' pkt';
   if(el('metrics').textContent!==metric)el('metrics').textContent=metric;
 }
-function frame(now){const dt=previous?Math.min(.05,(now-previous)/1000):0;previous=now;if(!document.hidden)step(dt);draw();requestAnimationFrame(frame)}
+function frame(now){const dt=previous?Math.min(.05,(now-previous)/1000):0;previous=now;if(!document.hidden&&!serverMode)step(dt);draw();requestAnimationFrame(frame)}
 // React on press for time-sensitive actions. Keep native keyboard and AT clicks.
 el('action').onpointerdown=e=>{if(e.isPrimary && e.button===0)act()};
 el('action').onclick=e=>{if(e.detail===0)act()};
-el('hill').onchange=()=>{stage=Number(el('hill').value);ready()};
+el('hill').onchange=()=>{if(serverMode||serverBusy)return;stage=Number(el('hill').value);ready()};
 canvas.onpointerdown=e=>{
   if(gesture)return;
   canvas.setPointerCapture(e.pointerId);gesture={id:e.pointerId,x:e.clientX,y:e.clientY,phase,moved:false};
