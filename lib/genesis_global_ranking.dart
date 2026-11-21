@@ -65,8 +65,8 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
     // the first 100 or 1000 scores.
     const pageSize = 500;
     for (var offset = 0; ; offset += pageSize) {
-      var query = AgcBackend.client.from(selectedMode == 'daily' ? 'agc_daily_scores' : 'agc_game_scores').select('member_id,game_key,best_score');
-      if (selectedMode == 'daily') query = query.eq('score_day', selectedDay);
+      var query = AgcBackend.client.from(selectedMode == 'verified' ? 'agc_verified_daily_scores' : selectedMode == 'daily' ? 'agc_daily_scores' : 'agc_game_scores').select('member_id,game_key,best_score');
+      if (selectedMode == 'daily' || selectedMode == 'verified') query = query.eq('score_day', selectedDay);
       if (selectedMode == 'game') query = query.eq('game_key', selectedGame);
       final raw = await query.order('member_id')
           .order('game_key')
@@ -200,11 +200,12 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
               textAlign: TextAlign.center),
             const SizedBox(height: 10),
             Wrap(spacing: 8, children: [
-              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'game': GenesisLanguage.copy('Każda gra','By game'), 'daily': GenesisLanguage.copy('Dzienny','Daily')}.entries)
+              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'game': GenesisLanguage.copy('Każda gra','By game'), 'daily': GenesisLanguage.copy('Dzienny','Daily'), 'verified': GenesisLanguage.copy('Zweryfikowany','Verified')}.entries)
                 ChoiceChip(label: Text(entry.value), selected: mode == entry.key, onSelected: (_) => setState(() { mode = entry.key; future = _load(); })),
             ]),
             if (mode == 'game') DropdownButton<String>(value: game, isExpanded: true, items: [for (final key in games) DropdownMenuItem(value: key, child: Text(_gameName(key)))], onChanged: (value) { if (value != null) setState(() { game = value; future = _load(); }); }),
-            if (mode == 'daily') Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
+            if (mode == 'verified') Padding(padding: const EdgeInsets.all(8), child: Text(GenesisLanguage.copy('Wyłącznie wyniki zatwierdzone po niezależnej weryfikacji. Konkurs nieaktywny.','Independently verified scores only. Competition inactive.'), textAlign: TextAlign.center)),
+            if (mode == 'daily' || mode == 'verified') Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
               IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => setState(() { day = DateTime(day.year,day.month,day.day-1); future = _load(); })),
               TextButton.icon(icon: const Icon(Icons.calendar_month), label: Text(dayKey), onPressed: () async { final picked = await showDatePicker(context: context, initialDate: day, firstDate: DateTime(2020), lastDate: DateTime.now()); if (picked != null && mounted) setState(() { day = picked; future = _load(); }); }),
               IconButton(icon: const Icon(Icons.chevron_right), onPressed: dayKey == DateTime.now().toIso8601String().substring(0,10) ? null : () => setState(() { day = DateTime(day.year,day.month,day.day+1); future = _load(); })),
