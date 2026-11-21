@@ -286,7 +286,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ..style.height = '100%'
           ..setAttribute('loading', 'lazy');
         frames[type] = frame;
-        purchaseFrames.removeWhere((element, _) => !element.isConnected);
+        purchaseFrames.removeWhere((element, _) => element.isConnected == false);
         purchaseFrames[frame] = type;
         // The iframe may request auth before the Flutter message listener is ready.
         // Send the current state again whenever the game document finishes loading.
