@@ -227,7 +227,7 @@ function applyWolf(s){serverRun=s;points=s.score;misses=3-s.lives;eggs=s.eggs.ma
 function wolfEnd(message){playing=false;clearTimeout(serverTimer);el('heading').textContent='TRYB SERWEROWY';el('message').textContent=message;overlay.classList.remove('hidden')}
 async function wolfServerStart(){if(serverBusy)return;serverMode=true;playing=false;cancelAnimationFrame(raf);clearTimeout(serverTimer);serverBusy=true;try{ensureAudio();applyWolf(await wolfRpc('wolf-server-begin'));playing=true;choose(0);overlay.classList.add('hidden');setGameFullscreen(true);serverTimer=setTimeout(wolfServerStep,100)}catch{wolfEnd('Zaloguj się na stałe konto i sprawdź połączenie.')}finally{serverBusy=false}}
 async function wolfServerStep(){if(!serverMode||!playing||serverBusy)return;serverBusy=true;try{const s=await wolfRpc('wolf-server-step',{run:serverRun.id,seq:serverRun.seq+1,lane:active});applyWolf(s);if(s.ended){wolfEnd('Wynik serwerowy: '+points+' pkt');return}if(musicOn)musicTick(performance.now());serverTimer=setTimeout(wolfServerStep,100)}catch{wolfEnd('Sesja wygasła lub utracono połączenie.')}finally{serverBusy=false}}
-const wolfServerButton=document.createElement('button');wolfServerButton.textContent='🛡 TRYB SERWEROWY (TEST)';wolfServerButton.onclick=wolfServerStart;el('play').after(wolfServerButton);
+
 function start(){if(serverBusy)return;serverMode=false;clearTimeout(serverTimer);wolfX=.5;wolfY=.56;wolfFromX=.5;wolfFromY=.56;wolfToX=.5;wolfToY=.56;wolfMotion=1;cancelAnimationFrame(raf);lastReportedScore=0;points=0;misses=0;level=1;eggs=[];effects=[];elapsed=0;last=0;playing=true;ensureAudio();stats();choose(0);overlay.classList.add('hidden');raf=requestAnimationFrame(tick)}
 el('play').addEventListener('click',()=>{
  setGameFullscreen(true);
