@@ -8,6 +8,7 @@ header{gap:6px}header>div:first-child{min-width:0;flex:1}#hill{display:block;wid
 
 #view{position:relative;min-height:0}#wind{position:absolute;left:max(8px,env(safe-area-inset-left));bottom:8px;pointer-events:none;background:#0c2539ed;border:1px solid #6890a6;border-radius:8px;padding:6px 10px;color:#f1fbff;font-size:14px;font-variant-numeric:tabular-nums}
 </style></head><body><main><header><div><strong>Skoki narciarskie</strong><select id="hill" aria-label="Wybierz odblokowaną skocznię"></select></div><div id="metrics"></div><button id="music" aria-label="Muzyka" aria-pressed="true">♫</button><button id="exit" aria-label="Zamknij grę">×</button></header><div id="view"><canvas id="scene" aria-label="Profil skoczni i pozycja zawodnika"></canvas><div id="wind" role="status"></div></div><footer><p id="note" aria-live="polite"></p><nav><button id="back" aria-label="Odchyl się">◀</button><button id="action"></button><button id="forward" aria-label="Pochyl się">▶</button></nav></footer></main><script src="genesis-share-end.js"></script>
+<script src="genesis-lives.js?v=1"></script><script>GcoLives.init('ski');</script>
 <script>
 'use strict';
 // HS, venue, scenery, qualifying distance as a fraction of HS, wind strength.
@@ -95,7 +96,7 @@ function finish(){
 }
 function act(){
   startMusic();
-  if(phase==='result'){if(advance)stage++;ready();return}
+  if(phase==='result'){if(advance){stage++;ready()}else if(cleanLanding && distance>=target()){GcoLives.reset();ready()}else GcoLives.lost(()=>ready());return}
   if(phase==='ready'){phase='inrun';el('hill').disabled=true;elapsed=0;tell('Wybij się w żółtej strefie na końcu progu.','Wybicie');return}
   if(phase==='inrun'){
     if(x<-.14){tell('Poczekaj na złoty odcinek progu.','Wybicie');return}
