@@ -578,32 +578,47 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'blocks-server-result','request':request,'state':result}), html.window.location.origin);
       return;
     }
-    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-buy-life') {
+    if (decoded is Map<String, dynamic> && (decoded['type'] == 'genesis-buy-life' || decoded['type'] == 'genesis-life-balance')) {
       final source = event.source;
       final request = decoded['request'];
       final key = decoded['game'];
-      if (source is! html.WindowBase || request is! String || !RegExp(r'^[0-9a-f-]{36}$').hasMatch(request)) return;
-      if (!gameKeys.contains(key) || !purchaseFrames.entries.any((entry) => entry.key.contentWindow == source && entry.value == gameViews[gameKeys.indexOf(key)])) {
-        source.postMessage(jsonEncode({'type':'genesis-life-result','request':request,'ok':false,'message':'Otwórz ponownie grę z katalogu.'}), html.window.location.origin);
-        return;
-      }
+      final buying = decoded['type'] == 'genesis-buy-life';
+      final responseType = buying ? 'genesis-life-result' : 'genesis-life-balance-result';
+      if (source == null || request is! String || !RegExp(r'^[0-9a-f-]{36}$').hasMatch(request)) return;
+      if (!gameKeys.contains(key)) return;
+      // Same-origin messages only (validated above); also bind the game to a registered iframe.
+      final known = purchaseFrames.entries.any((entry) => entry.key.contentWindow == source && entry.value == gameViews[gameKeys.indexOf(key)]) || frames[gameViews[gameKeys.indexOf(key)]]?.contentWindow == source;
       bool ok = false;
       dynamic balance;
       bool retry = false;
       String message = 'Zaloguj się na stałe konto.';
       try {
-        if (AgcBackend.user != null && !AgcBackend.user!.isAnonymous) {
-          balance = await AgcBackend.client.rpc('agc_coin_buy_life', params: {'p_game':key,'p_request':request});
+        if (!known) {
+          message = 'Otwórz grę ponownie z katalogu.';
+        } else if (AgcBackend.user != null && !AgcBackend.user!.isAnonymous) {
+          if (buying) {
+            // Atomic debit also checks balance and deduplicates the request UUID.
+            balance = await AgcBackend.client.rpc('agc_coin_buy_life', params: {'p_game':key,'p_request':request});
+          } else {
+            balance = await AgcBackend.client.rpc('agc_coin_balance');
+          }
           ok = true;
+          message = 'OK';
         }
       } on PostgrestException catch (e) {
-        message = e.message.contains('Insufficient GCO') ? 'Za mało GCO. Potrzebujesz 5 GCO.' : 'Nie potwierdzono zakupu. Ponów próbę.';
-        retry = !e.message.contains('Insufficient GCO');
+        final insufficient = e.message.contains('Insufficient GCO');
+        message = insufficient ? 'Za mało GCO. Potrzebujesz 5 GCO.' : 'Nie potwierdzono operacji. Ponów próbę.';
+        retry = !insufficient;
+        if (insufficient) {
+          try { balance = await AgcBackend.client.rpc('agc_coin_balance'); } catch (_) {}
+        }
       } catch (_) {
-        message = 'Brak potwierdzenia zakupu. Ponów próbę.';
+        message = 'Brak potwierdzenia. Ponów próbę.';
         retry = true;
       }
-      source.postMessage(jsonEncode({'type':'genesis-life-result','request':request,'ok':ok,'balance':balance,'retry':retry,'message':message}), html.window.location.origin);
+      if (source is html.WindowBase) {
+        source.postMessage(jsonEncode({'type':responseType,'request':request,'ok':ok,'balance':balance,'retry':retry,'message':message}), html.window.location.origin);
+      }
       return;
     }
     if (decoded is Map<String, dynamic> &&
