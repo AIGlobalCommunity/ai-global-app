@@ -17,6 +17,11 @@ class GenesisGlobalRanking extends StatefulWidget {
 
 class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
   late Future<List<_PlayerTotal>> future;
+  String mode = 'all';
+  String game = 'signal';
+  DateTime day = DateTime.now();
+  String get dayKey => '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+  static const games = ['signal','defender','wolf','blocks','snake','ski','maze','slingshot','crystals'];
   StreamSubscription<AuthState>? authSubscription;
 
   @override
@@ -54,15 +59,16 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
     if (!AgcBackend.configured) {
       throw StateError('Brak połączenia z bazą wyników.');
     }
+    final selectedMode = mode, selectedGame = game, selectedDay = dayKey;
     final byPlayer = <String, Map<String, int>>{};
     // Fetch all visible records in pages, rather than silently ranking only
     // the first 100 or 1000 scores.
     const pageSize = 500;
     for (var offset = 0; ; offset += pageSize) {
-      final raw = await AgcBackend.client
-          .from('agc_game_scores')
-          .select('member_id,game_key,best_score')
-          .order('member_id')
+      var query = AgcBackend.client.from(selectedMode == 'daily' ? 'agc_daily_scores' : 'agc_game_scores').select('member_id,game_key,best_score');
+      if (selectedMode == 'daily') query = query.eq('score_day', selectedDay);
+      if (selectedMode == 'game') query = query.eq('game_key', selectedGame);
+      final raw = await query.order('member_id')
           .order('game_key')
           .range(offset, offset + pageSize - 1);
       final rows = List<Map<String, dynamic>>.from(raw);
@@ -192,6 +198,18 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
               'Sum of personal best scores across all games. '
               'Tap a player to see their game-by-game scores.'),
               textAlign: TextAlign.center),
+            const SizedBox(height: 10),
+            Wrap(spacing: 8, children: [
+              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'game': GenesisLanguage.copy('Każda gra','By game'), 'daily': GenesisLanguage.copy('Dzienny','Daily')}.entries)
+                ChoiceChip(label: Text(entry.value), selected: mode == entry.key, onSelected: (_) => setState(() { mode = entry.key; future = _load(); })),
+            ]),
+            if (mode == 'game') DropdownButton<String>(value: game, isExpanded: true, items: [for (final key in games) DropdownMenuItem(value: key, child: Text(_gameName(key)))], onChanged: (value) { if (value != null) setState(() { game = value; future = _load(); }); }),
+            if (mode == 'daily') Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => setState(() { day = DateTime(day.year,day.month,day.day-1); future = _load(); })),
+              TextButton.icon(icon: const Icon(Icons.calendar_month), label: Text(dayKey), onPressed: () async { final picked = await showDatePicker(context: context, initialDate: day, firstDate: DateTime(2020), lastDate: DateTime.now()); if (picked != null && mounted) setState(() { day = picked; future = _load(); }); }),
+              IconButton(icon: const Icon(Icons.chevron_right), onPressed: dayKey == DateTime.now().toIso8601String().substring(0,10) ? null : () => setState(() { day = DateTime(day.year,day.month,day.day+1); future = _load(); })),
+              TextButton(onPressed: () => setState(() { day = DateTime.now(); future = _load(); }), child: Text(GenesisLanguage.copy('Dzisiaj','Today'))),
+            ]),
             if (AgcBackend.user == null)
               Padding(padding: const EdgeInsets.only(top: 10), child: Text(
                 GenesisLanguage.copy('⚠ Tryb gościa: możesz oglądać ranking, ale Twoje punkty nie są zapisywane. Zaloguj się w KONTO przed grą.', '⚠ Guest mode: you can view rankings, but your scores are not saved. Sign in before playing.'),
@@ -231,8 +249,8 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
             final players = snapshot.data ?? [];
             if (players.isEmpty) {
               return Center(child: Text(GenesisLanguage.copy(
-                'Brak wyników widocznych w bazie. Jeśli zdobyto już punkty, sprawdź logowanie, zapis wyników i uprawnienia Supabase.',
-                'No scores are visible in the database. If scores were earned, check sign-in, score submission and Supabase permissions.'),
+                mode == 'daily' ? 'Brak wyników w wybranym dniu.' : 'Brak wyników widocznych w bazie.',
+                mode == 'daily' ? 'No scores on the selected day.' : 'No scores are visible in the database.'),
                 textAlign: TextAlign.center));
             }
             return ListView.builder(
