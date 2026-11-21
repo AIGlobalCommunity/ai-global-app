@@ -53,6 +53,7 @@ body > button.genesis-close-game{
 <div id="controls"><button class="control active" data-lane="0">↖ LEWA GÓRA</button><button class="control" data-lane="1">PRAWA GÓRA ↗</button><button class="control" data-lane="2">↙ LEWA DÓŁ</button><button class="control" data-lane="3">PRAWA DÓŁ ↘</button></div>
 <div id="help"><span id="device">Wykrywanie urządzenia…</span> · Telefon: dotknij ćwiartki planszy · Komputer: Q / E / A / D · Offline: lokalny rekord</div>
 </div><script src="genesis-share-end.js"></script>
+<script src="genesis-lives.js?v=1"></script><script>GcoLives.init('wolf');</script>
 <script>
 (function(){
 'use strict';
@@ -215,7 +216,7 @@ function drawScene(){
 }
 function resize(){const rect=canvas.getBoundingClientRect(),ratio=Math.min(window.devicePixelRatio||1,2);width=Math.max(1,rect.width);height=Math.max(1,rect.height);canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);if(wolfMotion>=1){const t=wolfTarget(active);wolfX=t.x;wolfY=t.y;wolfToX=t.x;wolfToY=t.y}render()}
 if(window.ResizeObserver)new ResizeObserver(resize).observe(canvas);window.addEventListener('resize',resize);
-function stats(){level=1+Math.floor(points/100);el('score').textContent=points;el('lives').textContent='❤️'.repeat(Math.max(0,3-misses));el('level').textContent=level}
+function stats(){GcoLives.sync(3-misses);level=1+Math.floor(points/100);el('score').textContent=points;el('lives').textContent='❤️'.repeat(Math.max(0,3-misses));el('level').textContent=level}
 function choose(n){if(active!==n){setWolfLane(n);beep(330,.06,'triangle',.025)}document.querySelectorAll('[data-lane]').forEach((b,i)=>b.classList.toggle('active',i===n));render()}
 document.querySelectorAll('[data-lane]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();choose(Number(b.dataset.lane))})});
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;choose((y>=.5?2:0)+(x>=.5?1:0))});
@@ -283,7 +284,7 @@ function reportScore(){
   localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}));
  }catch(e){console.warn('Score bridge unavailable',e)}
 }
-function end(){reportScore();genesisShowEndShare('wolf',points);playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
+function end(){GcoLives.exhausted(()=>{misses=2;eggs=[];playing=true;last=0;overlay.classList.add('hidden');genesisHideEndShare();stats();raf=requestAnimationFrame(tick)});reportScore();genesisShowEndShare('wolf',points);playing=false;cancelAnimationFrame(raf);if(points>best){best=points;try{localStorage.setItem('genesis-wolf-best',String(best))}catch(_){}el('best').textContent=best}
 if(points>0){try{localStorage.setItem('genesis-wolf-last-score',JSON.stringify({score:points,level:level,at:Date.now()}))}catch(_){}
 try{window.parent.postMessage(JSON.stringify({type:'genesis-game-score',game:'wolf',score:points,level:level}),location.origin)}catch(_){}}
 
