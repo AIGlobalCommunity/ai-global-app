@@ -1,4 +1,5 @@
 import 'agc_backend.dart';
+import 'genesis_wallet.dart';
 import 'genesis_language.dart';
 import 'genesis_game_embed_stub.dart'
     if (dart.library.html) 'genesis_game_embed_web.dart';
@@ -92,6 +93,7 @@ class _AgcHomeState extends State<AgcHome> {
             _offlineInfo(),
             const AgcAccountPage(),
             if (selected == 5) const GenesisFinancialSupport() else const SizedBox.shrink(),
+            if (selected == 6) GenesisWallet(key: ValueKey(AgcBackend.user?.id)) else const SizedBox.shrink(),
           ],
         ),
       ),
@@ -116,6 +118,7 @@ class _AgcHomeState extends State<AgcHome> {
           icon: const Icon(Icons.person_outline),
           label: GenesisLanguage.copy('Konto', 'Account')),
         NavigationDestination(icon: const Icon(Icons.volunteer_activism_outlined), label: GenesisLanguage.copy('Fundatorzy', 'Founders')),
+        NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), label: GenesisLanguage.copy('Portfel','Wallet')),
       ],
     ),
   );
