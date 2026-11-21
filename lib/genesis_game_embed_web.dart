@@ -506,6 +506,23 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'crystals-server-result','request':request,'state':result}), html.window.location.origin);
       return;
     }
+    if (decoded is Map<String, dynamic> && (decoded['type'] == 'ski-server-begin' || decoded['type'] == 'ski-server-step')) {
+      final source = event.source;
+      if (source is! html.WindowBase || !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('skoki-narciarskie.html') ?? false))) return;
+      final request = decoded['request'];
+      if (request is! String || request.length > 80) return;
+      dynamic result;
+      try {
+        if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Login required');
+        if (decoded['type'] == 'ski-server-begin') {
+          result = await AgcBackend.client.rpc('agc_ski_begin');
+        } else {
+          result = await AgcBackend.client.rpc('agc_ski_step', params: {'p_run':decoded['run'],'p_seq':decoded['seq'],'p_steer':decoded['steer'],'p_act':decoded['act']});
+        }
+      } catch (_) {}
+      source.postMessage(jsonEncode({'type':'ski-server-result','request':request,'state':result}), html.window.location.origin);
+      return;
+    }
     if (decoded is Map<String, dynamic> && (decoded['type'] == 'blocks-server-begin' || decoded['type'] == 'blocks-server-step')) {
       final source = event.source;
       if (source is! html.WindowBase || !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-blocks.html') ?? false))) return;
