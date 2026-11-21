@@ -105,6 +105,7 @@ body > button.genesis-close-game{
 <p class="foot">Sterowanie: dotknij segmentu lub wybierz go klawiszem Tab i naciśnij Enter. Najlepszy wynik zapisuje się w przeglądarce, a po zalogowaniu w zakładce GRA również w rankingu graczy. Otwórz ranking przyciskiem 🏆 nad grą. Gra jest fikcyjną łamigłówką — nie symuluje rzeczywistego kontaktu z AI. <span id="best"></span></p>
 </main>
 <script src="genesis-share-end.js"></script>
+<script src="genesis-lives.js?v=1"></script><script>GcoLives.init('signal');</script>
 <script>
 (function(){
 "use strict";
@@ -136,7 +137,7 @@ function generatePath(){
 }
 function direction(a,b){for(var d=0;d<4;d++)if(neighbor(a,d)===b)return d;return -1;}
 function missionName(){return ({connect:"POŁĄCZ SIEĆ",relay:"AKTYWUJ WĘZŁY ◆",moves:"LIMIT RUCHÓW",blackout:"ZAKŁÓCENIA",timed:"WYŚCIG Z CZASEM"})[missionType];}
-function fail(reason){if(locked)return;genesisShowEndShare('signal',score);locked=true;clearInterval(tick);modalSymbol.textContent="⚠";modalTitle.textContent="MISJA NIEUDANA";modalText.textContent=reason;modalButton.textContent="↺ Spróbuj ponownie";overlay.hidden=false;modalButton.onclick=function(){overlay.hidden=true;buildLevel();};try{localStorage.removeItem("genesis-signal-progress-v2")}catch(_){}}
+function fail(reason){if(locked)return;genesisShowEndShare('signal',score);locked=true;clearInterval(tick);modalSymbol.textContent="⚠";modalTitle.textContent="MISJA NIEUDANA";modalText.textContent=reason;modalButton.textContent="↺ Spróbuj ponownie";overlay.hidden=false;modalButton.onclick=function(){GcoLives.lost(()=>{overlay.hidden=true;buildLevel();});};try{localStorage.removeItem("genesis-signal-progress-v2")}catch(_){}}
 function save(){try{localStorage.setItem("genesis-signal-progress-v2",JSON.stringify({level,score,moves,hints,elapsed,tiles,solution,path,size,missionType,missionLimit,relays,blocked:[...blocked],completed}))}catch(_){}}
 function restore(){try{var d=JSON.parse(localStorage.getItem("genesis-signal-progress-v2")||"null");if(!d||!Array.isArray(d.tiles)||!Array.isArray(d.solution)||!Number.isInteger(d.size)||d.size<5||d.size>9||d.tiles.length!==d.size*d.size||d.solution.length!==d.tiles.length||!Number.isInteger(d.level)||d.level<1)return false;level=d.level;score=d.score||0;moves=d.moves||0;hints=d.hints||0;elapsed=d.elapsed||0;tiles=d.tiles;solution=d.solution;path=d.path||[];size=d.size;missionType=d.missionType||"connect";missionLimit=d.missionLimit||0;relays=d.relays||[];blocked=new Set(d.blocked||[]);completed=!!d.completed;locked=true;board.style.gridTemplateColumns="repeat("+size+",1fr)";draw();updateStats();return true}catch(_){return false}}
 function clockTick(){if(locked)return;elapsed=Math.floor((Date.now()-startedAt)/1000);updateStats();if(missionType==="timed"&&elapsed>=missionLimit)fail("Upłynął limit czasu.")}
