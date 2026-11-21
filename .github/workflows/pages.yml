@@ -84,27 +84,70 @@ jobs:
           PY
           test -s build/web/favicon.svg
           grep -q 'THE GENESIS ERA | AI Global Community' build/web/index.html
-      - name: Verify bundled HTML5 Genesis Signal game
+      - name: Verify all bundled HTML5 games and scripts
         run: |
-          test -s build/web/genesis-game.html
-          test -s build/web/genesis-defender.html
-          test -s build/web/genesis-wolf-eggs.html
           test -s build/web/assets/assets/genesis_signal_cinematic.jpg
           test -s build/web/assets/assets/genesis_defender_cinematic.jpg
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          for name in ('genesis-game', 'genesis-defender', 'genesis-wolf-eggs'):
-              page = Path(f'build/web/{name}.html').read_text(encoding='utf-8')
-              scripts = re.findall(r'<script>(.*?)</script>', page, re.DOTALL)
-              if len(scripts) != 1:
-                  raise SystemExit(f'Expected one self-contained {name} game script')
-              Path(f'/tmp/{name}-check.js').write_text(scripts[0], encoding='utf-8')
+          from html.parser import HTMLParser
+          from urllib.parse import urlsplit
+          import subprocess
+          import tempfile
+
+          root = Path('build/web').resolve()
+          names = ('genesis-game', 'genesis-defender', 'genesis-wolf-eggs',
+                   'genesis-blocks', 'genesis-snake', 'skoki-narciarskie',
+                   'genesis-maze', 'genesis-slingshot', 'genesis-crystals')
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.blocks = []
+                  self.current = None
+              def handle_starttag(self, tag, attrs):
+                  if tag == 'script':
+                      self.current = [dict(attrs), '']
+              def handle_data(self, data):
+                  if self.current is not None:
+                      self.current[1] += data
+              def handle_endtag(self, tag):
+                  if tag == 'script' and self.current is not None:
+                      self.blocks.append(self.current)
+                      self.current = None
+
+          checked = set()
+          with tempfile.TemporaryDirectory() as tmp:
+              for name in names:
+                  page = root / f'{name}.html'
+                  parser = Scripts()
+                  parser.feed(page.read_text(encoding='utf-8'))
+                  if parser.current is not None or not parser.blocks:
+                      raise SystemExit(f'Missing or unclosed script in {name}')
+                  for i, (attrs, code) in enumerate(parser.blocks):
+                      kind = attrs.get('type', '').lower()
+                      if kind not in ('', 'text/javascript', 'application/javascript', 'module'):
+                          continue
+                      if 'src' in attrs:
+                          url = urlsplit(attrs['src'])
+                          if url.scheme or url.netloc:
+                              continue
+                          file = (root / url.path.lstrip('/')).resolve()
+                          if not file.is_relative_to(root) or not file.is_file() or not file.stat().st_size:
+                              raise SystemExit(f'Missing local script: {name}: {url.path}')
+                          if file in checked:
+                              continue
+                          checked.add(file)
+                      elif code.strip():
+                          file = Path(tmp) / f'{name}-{i}.{"mjs" if kind == "module" else "js"}'
+                          file.write_text(code, encoding='utf-8')
+                      else:
+                          continue
+                      print(f'Checking {name}: {file.name}', flush=True)
+                      subprocess.run(['node', '--check', str(file)], check=True)
+                  if not any(code.strip() and 'src' not in attrs for attrs, code in parser.blocks):
+                      raise SystemExit(f'Missing inline game logic: {name}')
           PY
-          node --check /tmp/genesis-game-check.js
-          node --check /tmp/genesis-defender-check.js
-          node --check /tmp/genesis-wolf-eggs-check.js
-          echo "Both HTML5 games bundled and JavaScript syntax verified"
+          echo "All nine HTML5 games bundled and JavaScript syntax verified"
       - name: Verify bundled AGC artwork
         run: |
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
