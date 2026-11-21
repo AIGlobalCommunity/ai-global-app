@@ -116,7 +116,7 @@ function panel(title,description,label,action){
 }
 const seasons=[{name:'WIOSNA · Zielona planeta',top:'#1b5548',bottom:'#071b25',color:'#85efb7'},{name:'LATO · Pustynia',top:'#86502b',bottom:'#26172d',color:'#ffd18a'},{name:'JESIEŃ · Burze',top:'#64344a',bottom:'#171b32',color:'#ff9866'},{name:'ZIMA · Lodowy sektor',top:'#315d81',bottom:'#081a38',color:'#c4eaff'}];
 const botTypes=[{name:'Zwiadowca',color:'#ff9c88',r:15,hp:1,v:85,pattern:'aim'},{name:'Widmo',color:'#bd92ff',r:17,hp:2,v:65,pattern:'zig'},{name:'Czołg',color:'#ffca65',r:24,hp:7,v:35,pattern:'fan'},{name:'Snajper',color:'#ff5577',r:19,hp:3,v:48,pattern:'sniper'},{name:'Rój',color:'#80e9ff',r:12,hp:1,v:105,pattern:'straight'},{name:'Korsarz',color:'#6dffad',r:19,hp:4,v:55,pattern:'orbit'}];
-let special=null,waveStartScore=0,waveBossKills=0,waveEscapes=0,wavePickups=0,seasonBanner=0;
+let special=null,waveStartScore=0,waveBossKills=0,waveEscapes=0,wavePickups=0,seasonBanner=0,seasonBlend=1,pointerTarget=null;
 function season(){return seasons[Math.floor((wave-1)/3)%4]}
 function specialStart(){const types=['escort','intercept','asteroid','elite','survival','supply'];const type=types[Math.floor(wave/3-1)%types.length];special={type,progress:0,target:{escort:20,intercept:8,asteroid:4,elite:5,survival:20,supply:3}[type],failed:false,done:false,convoyHp:3};if(type==='asteroid'){obstacles=[];for(let i=0;i<4;i++)obstacles.push({x:65+i%2*290,y:110+Math.floor(i/2)*100,r:26,hp:5,turret:false})}if(type==='supply')for(let i=0;i<3;i++)pickups.push({x:70+i*140,y:90-i*80,kind:'supply'});}
 function specialEvent(type,n=1){if(!special||special.done||special.failed||special.type!==type)return;special.progress=Math.min(special.target,special.progress+n)}
@@ -125,7 +125,7 @@ function specialLabel(){if(!special)return '';const names={escort:'Eskorta konwo
 function missionType(){return ['survive','eliminate','clean','boss','score'][(Math.floor((wave-1)/2))%5]}
 function missionTitle(){return ({survive:'PRZETRWAJ NAWAŁNICĘ',eliminate:'WYELIMINUJ '+(8+wave*2)+' WROGÓW',clean:'OBRONA BEZ STRAT',boss:'POLUJ NA BOSSÓW',score:'ZDOBĄDŹ '+(wave*500)+' PKT'})[missionType()]}
 function missionUpdate(){document.getElementById('missionLabel').textContent=season().name+' | '+(special?specialLabel():'FALA '+wave+' · '+missionTitle());}
-function spawnObstacles(){obstacles=[];if(wave<2)return;for(let i=0;i<Math.min(6,1+Math.floor(wave/3));i++){const turret=wave>=4&&i%2===0;obstacles.push({x:55+i%3*150,y:135+Math.floor(i/3)*120,r:turret?23:27,hp:turret?12+wave*2:8+wave,turret,cooldown:1})}}
+function spawnObstacles(){obstacles=[];if(wave<4)return;for(let i=0;i<Math.min(6,1+Math.floor(wave/3));i++){const turret=wave>=4&&i%2===0;obstacles.push({x:55+i%3*150,y:135+Math.floor(i/3)*120,r:turret?23:27,hp:turret?12+wave*2:8+wave,turret,cooldown:1})}}
 function useNuke(){if(serverMode)return;if(mode!=='playing'||nukes<1)return;nukes--;nukeFlash=.9;shake=22;beep(75,.65,'sawtooth',.08);for(const e of enemies){if(e.dead)continue;e.hp-=e.boss?Math.ceil(e.max*.4):999;if(e.hp<=0){e.dead=true;score+=e.value;missionKills++;if(e.boss){bossKills++;waveBossKills++;}if(e.kind===0)specialEvent('intercept');if([2,3,5].includes(e.kind))specialEvent('elite');particles(e.x,e.y,'#ffe6a1',25)}}for(const o of obstacles){if(!o.turret)specialEvent('asteroid');score+=o.turret?150:70;particles(o.x,o.y,'#ffd58a',15)}obstacles=[];enemyShots=[];reportScore(true);hud()}
 document.getElementById('nuke').onclick=useNuke;
 let serverMode=false,serverBusy=false,serverRun=null,serverTimer=null,serverTarget=210;
@@ -136,8 +136,8 @@ async function defenderStep(){if(!serverMode||serverBusy)return;if(mode==='pause
 
 
 function reset(){if(serverBusy)return;serverMode=false;clearTimeout(serverTimer);
- score=0;wave=1;lives=3;special=null;waveStartScore=0;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=4;GcoLives.reset();shield=0;nukes=1;obstacles=[];lastReportedScore=0;lastReportedAt=-10;ship.x=210;ship.y=536;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
- elapsed=0;gameTime=0;missionKills=0;missionHits=0;bossKills=0;missionRewardWave=0;combo=0;comboTimer=0;weapon=1;weaponMode='cannon';weaponTimer=0;bossWave=0;shake=0;flash=0;spawnTimer=.7;fireTimer=0;invincible=1.5;mode='playing';overlay.hidden=true;last=performance.now();hud();missionUpdate();full(true);canvas.focus({preventScroll:true});
+ score=0;wave=1;lives=3;special=null;waveStartScore=0;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=4;seasonBlend=1;pointerTarget=null;GcoLives.reset();shield=2;nukes=1;obstacles=[];lastReportedScore=0;lastReportedAt=-10;ship.x=210;ship.y=536;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
+ elapsed=0;gameTime=0;missionKills=0;missionHits=0;bossKills=0;missionRewardWave=0;combo=0;comboTimer=0;weapon=1;weaponMode='cannon';weaponTimer=0;bossWave=0;shake=0;flash=0;spawnTimer=.7;fireTimer=0;invincible=4;mode='playing';overlay.hidden=true;last=performance.now();hud();missionUpdate();full(true);canvas.focus({preventScroll:true});
 }
 function end(){mode='over';GcoLives.exhausted(()=>{lives=1;GcoLives.sync(lives);enemies=[];enemyShots=[];invincible=2;resume();hud()});genesisShowEndShare('defender',score);reportScore(true);if(score>best){best=score;try{localStorage.setItem('genesis-defender-best',String(best));}catch(_){}}
  hud();panel('KONIEC MISJI','Wynik: '+score+' punktów. Dotarłeś do fali '+wave+'. Spróbuj ponownie i pobij swój rekord!','ZAGRAJ PONOWNIE →',reset);
@@ -151,7 +151,7 @@ function particles(x,y,color,n){
  for(let i=0;i<n;i++)sparks.push({x,y,vx:rand(-125,125),vy:rand(-125,125),life:rand(.25,.65),max:.65,color});
 }
 function spawnBoss(){const tier=Math.floor(wave/5)%4;const hp=35+wave*9;enemies.push({x:W/2,y:-65,r:38+tier*4,hp,max:hp,vy:24,vx:75+tier*20,cooldown:.8,value:1600+wave*180,boss:true,tier});beep(110,.5,'sawtooth',.06);}
-function spawn(){const pool=[[0,1,4],[0,2,3],[1,3,5],[2,4,5]][Math.floor((wave-1)/3)%4];let kind=pool[Math.floor(Math.random()*pool.length)];if(special&&!special.done){if(special.type==='intercept'&&Math.random()<.65)kind=0;if(special.type==='elite'&&Math.random()<.65)kind=2}const t=botTypes[kind],hp=t.hp+Math.min(4,Math.floor(wave/15));enemies.push({x:rand(28,W-28),y:-25,r:t.r,hp,max:hp,vy:t.v+Math.min(35,wave*2),vx:rand(-18,18),cooldown:rand(1.2,2.5),value:35+t.hp*20,kind,age:0,pattern:t.pattern});}
+function spawn(){const pool=wave===1?[0]:wave===2?[0,0,4]:wave===3?[0,1,4]:[[0,1,4],[0,2,3],[1,3,5],[2,4,5]][Math.floor((wave-1)/3)%4];let kind=pool[Math.floor(Math.random()*pool.length)];if(special&&!special.done){if(special.type==='intercept'&&Math.random()<.65)kind=0;if(special.type==='elite'&&Math.random()<.65)kind=2}const t=botTypes[kind],hp=t.hp+Math.min(4,Math.floor(wave/15));enemies.push({x:rand(28,W-28),y:-25,r:t.r,hp,max:hp,vy:t.v*(wave<=3?.55+.1*wave:.9)+Math.min(25,wave*1.5),vx:rand(-18,18),cooldown:wave<=2?rand(3,5):rand(1.5,3),value:35+t.hp*20,kind,age:0,pattern:t.pattern});}
 function collision(a,b,r){return (a.x-b.x)**2+(a.y-b.y)**2<r*r;}
 function hit(){
  if(invincible>0||mode!=='playing')return;
@@ -159,22 +159,22 @@ function hit(){
  lives--;GcoLives.sync(lives);missionHits++;if(special&&!special.done&&special.type==='survival')special.failed=true;combo=0;shake=12;flash=.22;beep(95,.25,'sawtooth',.07);invincible=1.5;particles(ship.x,ship.y,'#ffd18a',24);hud();if(lives<=0)end();
 }
 function update(dt){
- elapsed+=dt;gameTime+=dt;const nextWave=1+Math.floor(elapsed/24);if(nextWave!==wave){wave=nextWave;spawnObstacles();special=null;waveStartScore=score;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=3;if(wave%3===0)specialStart();if(wave%5===0)nukes=Math.min(3,nukes+1);missionKills=0;missionHits=0;missionRewardWave=0;missionUpdate();beep(650,.15);if(wave%5===0&&bossWave!==wave){bossWave=wave;spawnBoss();}}invincible=Math.max(0,invincible-dt);comboTimer-=dt;if(comboTimer<=0)combo=0;weaponTimer=Math.max(0,weaponTimer-dt);if(weaponTimer===0){weapon=1;weaponMode='cannon';}shake=Math.max(0,shake-35*dt);flash=Math.max(0,flash-dt);nukeFlash=Math.max(0,nukeFlash-dt);
+ elapsed+=dt;gameTime+=dt;const nextWave=1+Math.floor(elapsed/24);if(nextWave!==wave){wave=nextWave;if((wave-1)%3===0)seasonBlend=0;spawnTimer=1.5;if(wave<=3){shield=Math.min(3,shield+1);invincible=2;}spawnObstacles();special=null;waveStartScore=score;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=3;if(wave%3===0)specialStart();if(wave%5===0)nukes=Math.min(3,nukes+1);missionKills=0;missionHits=0;missionRewardWave=0;missionUpdate();beep(650,.15);if(wave%5===0&&bossWave!==wave){bossWave=wave;spawnBoss();}}invincible=Math.max(0,invincible-dt);comboTimer-=dt;if(comboTimer<=0)combo=0;weaponTimer=Math.max(0,weaponTimer-dt);if(weaponTimer===0){weapon=1;weaponMode='cannon';}shake=Math.max(0,shake-35*dt);flash=Math.max(0,flash-dt);nukeFlash=Math.max(0,nukeFlash-dt);
  for(const s of stars){s.y+=s.v*dt*(1+wave*.06);if(s.y>H){s.y=0;s.x=Math.random()*W;}}
  const dx=Number(!!(keys.ArrowRight||keys.KeyD))-Number(!!(keys.ArrowLeft||keys.KeyA));
  const dy=Number(!!(keys.ArrowDown||keys.KeyS))-Number(!!(keys.ArrowUp||keys.KeyW));
  const distance=Math.hypot(dx,dy)||1;
  ship.x=clamp(ship.x+dx/distance*280*dt,22,W-22);
- ship.y=clamp(ship.y+dy/distance*280*dt,80,H-32);
+ ship.y=clamp(ship.y+dy/distance*280*dt,80,H-32);if(pointerTarget){const k=1-Math.exp(-dt*18);ship.x+=(pointerTarget.x-ship.x)*k;ship.y+=(pointerTarget.y-ship.y)*k;}
  fireTimer-=dt;if(fireTimer<=0){const offsets=weaponMode==='laser'?[0]:weaponMode==='spread'?[-24,-12,0,12,24]:weaponMode==='missile'?[-15,15]:weapon===1?[0]:weapon===2?[-11,11]:[-17,0,17];for(const off of offsets)bullets.push({x:ship.x+off,y:ship.y-20,vy:weaponMode==='laser'?-850:weaponMode==='missile'?-350:-560,vx:weaponMode==='spread'?off*3:off*.6,damage:weaponMode==='laser'?3:weaponMode==='missile'?4:1,kind:weaponMode,life:0});if(weaponMode==='pulse')for(let i=0;i<12;i++){const a=i*Math.PI/6;bullets.push({x:ship.x,y:ship.y,vx:Math.cos(a)*320,vy:Math.sin(a)*320,damage:2,kind:'pulse',life:0})}fireTimer=weaponMode==='laser'?.12:weaponMode==='missile'?.65:weaponMode==='pulse'?.9:weapon>1?.14:.19;beep(510,.025,'triangle',.009);}
- spawnTimer-=dt;if(spawnTimer<=0){spawn();spawnTimer=Math.max(.55,1.15-wave*.025)*rand(.8,1.3);}
+ spawnTimer-=dt;if(spawnTimer<=0){spawn();spawnTimer=(wave<=3?2.7-wave*.35:Math.max(.78,1.9-wave*.035))*rand(.85,1.15);}
  for(const b of bullets){b.life=(b.life||0)+dt;if(b.kind==='missile'){const e=enemies.find(e=>!e.dead);if(e){const dx=e.x-b.x,dy=e.y-b.y,l=Math.hypot(dx,dy)||1;b.vx+=(dx/l*440-b.vx)*Math.min(1,dt*4);b.vy+=(dy/l*440-b.vy)*Math.min(1,dt*4)}}b.y+=b.vy*dt;b.x+=(b.vx||0)*dt;if(b.life>3)b.dead=true;}
  for(const e of enemies){
  e.age=(e.age||0)+dt;if(!e.boss){if(e.pattern==='zig')e.vx=Math.cos(e.age*3)*90;if(e.pattern==='orbit')e.vx=Math.sin(e.age*2)*75;if(e.pattern==='sniper'&&e.y>120&&e.y<140)e.vy=8;if(e.pattern==='fan'&&e.y>200)e.vy=28;}e.y+=e.vy*dt;e.x=clamp(e.x+e.vx*dt,e.r,W-e.r);if(e.x<=e.r||e.x>=W-e.r)e.vx*=-1;if(e.boss&&e.y>95)e.vy=0;
  e.cooldown-=dt;
- if(e.cooldown<=0&&e.y>25&&e.y<H-90){
+ if(e.cooldown<=0&&e.y>25&&e.y<H-90&&wave>1){
   const dx=ship.x-e.x,dy=ship.y-e.y,len=Math.hypot(dx,dy)||1;
-  const speed=120+Math.min(70,wave*3);const shot=(angle,v,kind)=>enemyShots.push({x:e.x,y:e.y,vx:Math.sin(angle)*v,vy:Math.cos(angle)*v,kind});const aim=Math.atan2(dx,dy);
+  const speed=wave<=3?85:110+Math.min(60,wave*3);const shot=(angle,v,kind)=>enemyShots.push({x:e.x,y:e.y,vx:Math.sin(angle)*v,vy:Math.cos(angle)*v,kind});const aim=Math.atan2(dx,dy);
   if(e.pattern==='sniper'){if(!e.warn){e.warn=true;e.aim=aim;e.cooldown=.75;continue}shot(e.aim,320,'sniper');e.warn=false;}
   else if(e.pattern==='fan'){for(let k=-2;k<=2;k++)shot(aim+k*.25,110,'fan')}
   else if(e.pattern==='straight'){shot(0,185,'straight');}
@@ -191,23 +191,23 @@ function update(dt){
    for(const e of enemies){if(e.dead)continue;
      if(collision(b,e,e.r+5)){b.dead=true;e.hp-=b.damage||1;particles(b.x,b.y,'#8deeff',e.boss?7:4);
        if(e.hp<=0){e.dead=true;missionKills++;if(e.kind===0)specialEvent('intercept');if(e.kind===2||e.kind===3||e.kind===5)specialEvent('elite');if(e.boss){bossKills++;waveBossKills++;}combo=comboTimer>0?combo+1:1;comboTimer=3.5;const multiplier=Math.min(5,1+Math.floor(combo/5));score+=e.value*multiplier;particles(e.x,e.y,'#e6c480',e.boss?90:18);shake=e.boss?17:3;beep(e.boss?160:780,e.boss?.5:.09,'triangle',e.boss?.07:.025);
-         if(e.boss){pickups.push({x:e.x-22,y:e.y,kind:'special'},{x:e.x+22,y:e.y,kind:'heal'});}else if(Math.random()<.14)pickups.push({x:e.x,y:e.y,kind:Math.random()<.38?'special':Math.random()<.6?'shield':'heal'});}
+         if(e.boss){pickups.push({x:e.x-22,y:e.y,kind:'special'},{x:e.x+22,y:e.y,kind:'heal'});}else if(Math.random()<(wave<=4?.32:.17))pickups.push({x:e.x,y:e.y,kind:Math.random()<.38?'special':Math.random()<.6?'shield':'heal'});}
        break;
      }
    }
  }
  obstacles=obstacles.filter(o=>o.hp>0);for(const o of obstacles)if(collision(ship,o,o.r+12))hit();for(const e of enemies){if(!e.dead&&collision(ship,e,e.r+13)){e.dead=true;particles(e.x,e.y,'#ff9b8e',13);hit();}
-   if(e.y>H+25){e.dead=true;hit();}
+   if(e.y>H+25){e.dead=true;waveEscapes++;if(wave>=6&&waveEscapes%4===0)hit();}
  }
  for(const b of enemyShots)if(!b.dead&&collision(ship,b,15)){b.dead=true;hit();}
  for(const p of pickups)if(!p.dead&&collision(ship,p,22)){p.dead=true;if(p.kind==='supply'){specialEvent('supply');score+=100;}else if(p.kind==='nuke')nukes=Math.min(3,nukes+1);else if(p.kind==='heal'){lives=Math.min(3,lives+1);GcoLives.sync(lives);}else if(p.kind==='weapon'){weapon=Math.min(3,weapon+1);weaponMode='cannon';weaponTimer=22;}else if(p.kind==='special'){weaponMode=['laser','missile','spread','pulse'][Math.floor(Math.random()*4)];weaponTimer=22;}else shield=Math.min(3,shield+1);beep(980,.18,'sine',.035);particles(p.x,p.y,'#91f4c9',18);}
  bullets=bullets.filter(b=>!b.dead&&b.y>-20&&b.y<H+20&&b.x>-20&&b.x<W+20);enemies=enemies.filter(e=>!e.dead);enemyShots=enemyShots.filter(b=>!b.dead&&b.y<H+20&&b.x>-20&&b.x<W+20);
- pickups=pickups.filter(p=>!p.dead&&p.y<H+20);sparks=sparks.filter(p=>p.life>0);if(missionRewardWave!==wave){const type=missionType();const done=(type==='eliminate'&&missionKills>=8+wave*2)||(type==='clean'&&elapsed%24>=22&&missionHits===0)||(type==='score'&&score-waveStartScore>=wave*500)||(type==='boss'&&waveBossKills>0)||(type==='survive'&&elapsed%24>=22);if(done){missionRewardWave=wave;score+=300+wave*80;shield=Math.min(3,shield+1);particles(ship.x,ship.y,'#77fff2',32);beep(990,.22,'triangle',.05);}}specialUpdate(dt);seasonBanner=Math.max(0,seasonBanner-dt);missionUpdate();reportScore();hud();
+ pickups=pickups.filter(p=>!p.dead&&p.y<H+20);sparks=sparks.filter(p=>p.life>0);if(missionRewardWave!==wave){const type=missionType();const done=(type==='eliminate'&&missionKills>=8+wave*2)||(type==='clean'&&elapsed%24>=22&&missionHits===0)||(type==='score'&&score-waveStartScore>=wave*500)||(type==='boss'&&waveBossKills>0)||(type==='survive'&&elapsed%24>=22);if(done){missionRewardWave=wave;score+=300+wave*80;shield=Math.min(3,shield+1);particles(ship.x,ship.y,'#77fff2',32);beep(990,.22,'triangle',.05);}}specialUpdate(dt);seasonBanner=Math.max(0,seasonBanner-dt);seasonBlend=Math.min(1,seasonBlend+dt*.45);missionUpdate();reportScore();hud();
 }
 function polygon(x,y,r,n,rot){ctx.beginPath();for(let i=0;i<n;i++){const a=rot+i*Math.PI*2/n;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.closePath();}
 function render(){
  ctx.save();if(shake>0)ctx.translate(rand(-shake,shake),rand(-shake,shake));ctx.fillStyle='#071524';ctx.fillRect(-25,-25,W+50,H+50);if(spriteReady.background){ctx.globalAlpha=.55;ctx.drawImage(png.background,0,0,W,H);ctx.globalAlpha=1;}
- const grad=ctx.createRadialGradient(W/2,H*.35,20,W/2,H*.35,320);grad.addColorStop(0,season().top);grad.addColorStop(1,season().bottom);ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+ const grad=ctx.createRadialGradient(W/2,H*.35,20,W/2,H*.35,320);const prior=seasons[(Math.floor((wave-1)/3)+3)%4];const blend=(a,b)=>'#'+[1,3,5].map(i=>Math.round(parseInt(a.slice(i,i+2),16)*(1-seasonBlend)+parseInt(b.slice(i,i+2),16)*seasonBlend).toString(16).padStart(2,'0')).join('');grad.addColorStop(0,blend(prior.top,season().top));grad.addColorStop(1,blend(prior.bottom,season().bottom));ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
  ctx.strokeStyle=season().color;ctx.globalAlpha=.13;ctx.lineWidth=.5;for(let x=0;x<W;x+=42){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
  for(let y=0;y<H;y+=42){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
  ctx.globalAlpha=1;for(const s of stars){ctx.fillStyle=season().color;ctx.globalAlpha=.3+s.r*.28;ctx.fillRect(s.x,s.y,s.r,s.r);}ctx.globalAlpha=1;
@@ -236,12 +236,11 @@ function frame(t){
 }
 function setPointer(event){
  const r=canvas.getBoundingClientRect();
- if(serverMode){serverTarget=clamp((event.clientX-r.left)/r.width*W,22,W-22);return}ship.x=clamp((event.clientX-r.left)/r.width*W,22,W-22);
- ship.y=clamp((event.clientY-r.top)/r.height*H,80,H-32);
+ if(serverMode){serverTarget=clamp((event.clientX-r.left)/r.width*W,22,W-22);return}pointerTarget={x:clamp((event.clientX-r.left)/r.width*W,22,W-22),y:clamp((event.clientY-r.top)/r.height*H,80,H-32)};
 }
 canvas.addEventListener('pointerdown',e=>{if(mode!=='playing')return;dragging=true;canvas.setPointerCapture(e.pointerId);setPointer(e);});
 canvas.addEventListener('pointermove',e=>{if(dragging&&mode==='playing')setPointer(e);});
-canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
+canvas.addEventListener('pointerup',()=>{dragging=false;pointerTarget=null});canvas.addEventListener('pointercancel',()=>{dragging=false;pointerTarget=null});
 window.addEventListener('keydown',e=>{if(e.code==='KeyB'&&!e.repeat){useNuke();e.preventDefault()}if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','KeyA','KeyD','KeyW','KeyS'].includes(e.code)&&e.target===canvas)e.preventDefault();keys[e.code]=true;if(e.code==='Space'&&!e.repeat&&e.target===canvas)pause();});
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 window.addEventListener('blur',()=>{keys={};if(mode==='playing')pause();});
@@ -251,7 +250,7 @@ document.getElementById('fullToggle').onclick=()=>full(!document.body.classList.
 document.getElementById('exitDefender').onclick=()=>{if(mode==='playing')pause();full(false);try{window.parent.postMessage(JSON.stringify({type:'genesis-defender-exit-fullscreen',game:'defender'}),location.origin)}catch(_){}};
 document.getElementById('pause').onclick=pause;
 document.getElementById('restart').onclick=()=>{reportScore(true);mode='menu';panel('NOWA MISJA','Rozpocznij nową rozgrywkę. Poprzedni wynik zostanie wyzerowany.','ROZPOCZNIJ →',reset);};
-panel('GENESIS DEFENDER','DEFENDER 3.0: cztery pory roku, sześć klas botów, różne wzory ostrzału, misje specjalne co 3 fale i bossowie co 5 fal! Lataj do przodu, do tyłu i na boki: przeciągaj palcem lub użyj strzałek / W A S D. Statek strzela automatycznie. Zbieraj tarcze i naprawy, unikaj dronów!','ROZPOCZNIJ MISJĘ →',reset);
+panel('GENESIS DEFENDER','DEFENDER 3.1: cztery pory roku, sześć klas botów, różne wzory ostrzału, misje specjalne co 3 fale i bossowie co 5 fal! Lataj do przodu, do tyłu i na boki: przeciągaj palcem lub użyj strzałek / W A S D. Statek strzela automatycznie. Zbieraj tarcze i naprawy, unikaj dronów!','ROZPOCZNIJ MISJĘ →',reset);
 last=performance.now();raf=requestAnimationFrame(frame);
 })();
 
