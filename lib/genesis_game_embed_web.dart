@@ -586,16 +586,15 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final responseType = buying ? 'genesis-life-result' : 'genesis-life-balance-result';
       if (source == null || request is! String || !RegExp(r'^[0-9a-f-]{36}$').hasMatch(request)) return;
       if (!gameKeys.contains(key)) return;
-      // Same-origin messages only (validated above); also bind the game to a registered iframe.
-      final known = purchaseFrames.entries.any((entry) => entry.key.contentWindow == source && entry.value == gameViews[gameKeys.indexOf(key)]) || frames[gameViews[gameKeys.indexOf(key)]]?.contentWindow == source;
+      // The same-origin check is performed before decoding the message.
+      // Fullscreen platform views can recreate iframe WindowProxy wrappers.
+      // Wallet RPCs independently enforce the signed-in account and atomic debit.
       bool ok = false;
       dynamic balance;
       bool retry = false;
       String message = 'Zaloguj się na stałe konto.';
       try {
-        if (!known) {
-          message = 'Otwórz grę ponownie z katalogu.';
-        } else if (AgcBackend.user != null && !AgcBackend.user!.isAnonymous) {
+        if (AgcBackend.user != null && !AgcBackend.user!.isAnonymous) {
           if (buying) {
             // Atomic debit also checks balance and deduplicates the request UUID.
             balance = await AgcBackend.client.rpc('agc_coin_buy_life', params: {'p_game':key,'p_request':request});
@@ -607,7 +606,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         }
       } on PostgrestException catch (e) {
         final insufficient = e.message.contains('Insufficient GCO');
-        message = insufficient ? 'Za mało GCO. Potrzebujesz 5 GCO.' : 'Nie potwierdzono operacji. Ponów próbę.';
+        message = insufficient ? 'Za mało GCO. Potrzebujesz 5 GCO.' : 'Błąd portfela (${e.code ?? 'RPC'}). Ponów próbę.';
         retry = !insufficient;
         if (insufficient) {
           try { balance = await AgcBackend.client.rpc('agc_coin_balance'); } catch (_) {}
