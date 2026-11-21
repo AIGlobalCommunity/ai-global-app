@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 
@@ -19,6 +20,19 @@ class _GenesisWalletState extends State<GenesisWallet> {
     return {'balance':balance,'rows':rows};
   }
   void refresh() => setState(() => data=load());
+  bool sending=false;
+  String requestId(){ final r=Random.secure(); final a=List.generate(16,(_)=>r.nextInt(256)); a[6]=(a[6]&15)|64;a[8]=(a[8]&63)|128;final h=a.map((v)=>v.toRadixString(16).padLeft(2,'0')).join();return '${h.substring(0,8)}-${h.substring(8,12)}-${h.substring(12,16)}-${h.substring(16,20)}-${h.substring(20)}';}
+  Future<void> transfer() async {
+    if(sending)return;
+    String recipient='',amount='';
+    final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(title:Text(t('Przelew GCO','Send GCO')),content:Column(mainAxisSize:MainAxisSize.min,children:[TextField(onChanged:(v)=>recipient=v,decoration:InputDecoration(labelText:t('E-mail lub nick','Email or nickname'))),TextField(onChanged:(v)=>amount=v,keyboardType:TextInputType.number,decoration:const InputDecoration(labelText:'GCO'))]),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:Text(t('Anuluj','Cancel'))),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:Text(t('Dalej','Next')))]));
+    if(ok!=true||!mounted)return;
+    final points=int.tryParse(amount.trim());if(points==null||points<=0||recipient.trim().isEmpty)return;
+    final confirm=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(title:Text(t('Potwierdź przelew','Confirm transfer')),content:Text('$points GCO → ${recipient.trim()}'),actions:[TextButton(onPressed:()=>Navigator.pop(ctx,false),child:Text(t('Anuluj','Cancel'))),FilledButton(onPressed:()=>Navigator.pop(ctx,true),child:Text(t('Wyślij','Send')))]));
+    if(confirm!=true||!mounted||sending)return;
+    setState(()=>sending=true);
+    try{await AgcBackend.client.rpc('agc_coin_transfer',params:{'p_recipient':recipient.trim(),'p_amount':points,'p_request':requestId()});if(mounted){refresh();ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t('Przelew wykonany','Transfer completed'))));}}catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t('Nie potwierdzono przelewu. Sprawdź historię i saldo.','Transfer not confirmed. Check history and balance.'))));}finally{if(mounted)setState(()=>sending=false);}
+  }
   String t(String pl,String en)=>GenesisLanguage.copy(pl,en);
   @override
   Widget build(BuildContext context) {
@@ -39,14 +53,14 @@ class _GenesisWalletState extends State<GenesisWallet> {
             const Text('GENESIS COIN'),
           ]))),
           Card(child:ListTile(leading:const Icon(Icons.shopping_cart_outlined),title:Text(t('Zakup GCO','Buy GCO')),subtitle:Text(t('Jeszcze niedostępny','Not available yet')),trailing:const Icon(Icons.lock_outline))),
-          Card(child:ListTile(leading:const Icon(Icons.swap_horiz),title:Text(t('Transfery i sprzedaż','Transfers and sales')),subtitle:Text(t('Jeszcze niedostępne','Not available yet')),trailing:const Icon(Icons.lock_outline))),
+          Card(child:ListTile(onTap:sending?null:transfer,leading:const Icon(Icons.swap_horiz),title:Text(t('Przelej GCO','Send GCO')),subtitle:Text(t('E-mail lub nick · bez opłat','Email or nickname · free')),trailing:const Icon(Icons.chevron_right))),
           const SizedBox(height:16),Text(t('Historia operacji','Transaction history'),style:const TextStyle(fontSize:19,fontWeight:FontWeight.bold)),
           if(rows.isEmpty) Text(t('Brak operacji','No transactions')),
-          for(final row in rows) ListTile(leading:const Icon(Icons.add_circle_outline),title:Text(row['reason'].toString()),subtitle:Text(row['created_at'].toString().split('T').first),trailing:Text('+${row['amount']} GCO',style:const TextStyle(color:Colors.greenAccent))),
+          for(final row in rows) ListTile(leading:const Icon(Icons.add_circle_outline),title:Text(row['reason'].toString()),subtitle:Text(row['created_at'].toString().split('T').first),trailing:Text('${(row['amount'] as num)>0?'+':''}${row['amount']} GCO',style:TextStyle(color:(row['amount'] as num)>0?Colors.greenAccent:Colors.orangeAccent))),
         ]);
       }),
       const Divider(),
-      ExpansionTile(title:Text(t('Zasady GENESIS COIN – etap testowy','GENESIS COIN – pilot rules')),children:[Padding(padding:const EdgeInsets.all(12),child:Text(t('GCO to bezpłatne, niezbywalne punkty przypisane do konta. Administrator przyznaje je ręcznie. Nie są kryptowalutą, środkiem płatniczym ani inwestycją. Nie mają kursu ani prawa do wypłaty. Zakup, transfer, sprzedaż i wydawanie są obecnie niedostępne. Błędy salda zgłoś operatorowi platformy. Nieuprawnione działania mogą skutkować korektą po wyjaśnieniu. Zasady nie ograniczają ustawowych praw użytkownika.','GCO are free, non-transferable account points granted manually by the administrator. They are not cryptocurrency, money or an investment. No exchange rate or redemption applies. Purchases, transfers, sales and spending are currently unavailable. Report balance errors to the platform operator. Unauthorised activity may result in corrections after review. Statutory rights remain unaffected.')))])
+      ExpansionTile(title:Text(t('Zasady GENESIS COIN – etap testowy','GENESIS COIN – pilot rules')),children:[Padding(padding:const EdgeInsets.all(12),child:Text(t('GCO to bezpłatne żetony przypisane do konta. Administrator przyznaje je ręcznie. Nie są kryptowalutą, środkiem płatniczym ani inwestycją. Nie mają kursu ani prawa do wypłaty. Transfer żetonów między kontami jest bezpłatny. Zakup za pieniądze i sprzedaż są niedostępne. Błędy salda zgłoś operatorowi platformy. Nieuprawnione działania mogą skutkować korektą po wyjaśnieniu. Zasady nie ograniczają ustawowych praw użytkownika.','GCO are free account tokens granted manually by the administrator. They are not cryptocurrency, money or an investment. No exchange rate or redemption applies. Free transfers between accounts are available. Cash purchases and sales are unavailable. Report balance errors to the platform operator. Unauthorised activity may result in corrections after review. Statutory rights remain unaffected.')))])
     ])));
   }
 }
