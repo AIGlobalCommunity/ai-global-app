@@ -33,6 +33,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const skiView = 'genesis-ski-html5-iframe';
   static const snakeView = 'genesis-snake-html5-iframe';
   static final Map<String, html.IFrameElement> frames = {};
+  static final Map<html.IFrameElement, String> purchaseFrames = {};
+
   StreamSubscription<html.MessageEvent>? messages;
   Timer? scoreRetryTimer;
   StreamSubscription<AuthState>? authChanges;
@@ -284,6 +286,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           ..style.height = '100%'
           ..setAttribute('loading', 'lazy');
         frames[type] = frame;
+        purchaseFrames.removeWhere((element, _) => !element.isConnected);
+        purchaseFrames[frame] = type;
         // The iframe may request auth before the Flutter message listener is ready.
         // Send the current state again whenever the game document finishes loading.
         frame.onLoad.listen((_) {
@@ -578,16 +582,28 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final source = event.source;
       final request = decoded['request'];
       final key = decoded['game'];
-      if (source is! html.WindowBase || !frames.values.any((f) => f.contentWindow == source) || !gameKeys.contains(key) || request is! String || !RegExp(r'^[0-9a-f-]{36}$').hasMatch(request)) return;
+      if (source is! html.WindowBase || request is! String || !RegExp(r'^[0-9a-f-]{36}$').hasMatch(request)) return;
+      if (!gameKeys.contains(key) || !purchaseFrames.entries.any((entry) => entry.key.contentWindow == source && entry.value == gameViews[gameKeys.indexOf(key)])) {
+        source.postMessage(jsonEncode({'type':'genesis-life-result','request':request,'ok':false,'message':'Otwórz ponownie grę z katalogu.'}), html.window.location.origin);
+        return;
+      }
       bool ok = false;
-      String message = 'Zaloguj się na stałe konto i sprawdź saldo GCO.';
+      dynamic balance;
+      bool retry = false;
+      String message = 'Zaloguj się na stałe konto.';
       try {
         if (AgcBackend.user != null && !AgcBackend.user!.isAnonymous) {
-          await AgcBackend.client.rpc('agc_coin_buy_life', params: {'p_game':key,'p_request':request});
+          balance = await AgcBackend.client.rpc('agc_coin_buy_life', params: {'p_game':key,'p_request':request});
           ok = true;
         }
-      } catch (_) { message = 'Nie potwierdzono zakupu. Sprawdź saldo portfela.'; }
-      source.postMessage(jsonEncode({'type':'genesis-life-result','request':request,'ok':ok,'message':message}), html.window.location.origin);
+      } on PostgrestException catch (e) {
+        message = e.message.contains('Insufficient GCO') ? 'Za mało GCO. Potrzebujesz 5 GCO.' : 'Nie potwierdzono zakupu. Ponów próbę.';
+        retry = !e.message.contains('Insufficient GCO');
+      } catch (_) {
+        message = 'Brak potwierdzenia zakupu. Ponów próbę.';
+        retry = true;
+      }
+      source.postMessage(jsonEncode({'type':'genesis-life-result','request':request,'ok':ok,'balance':balance,'retry':retry,'message':message}), html.window.location.origin);
       return;
     }
     if (decoded is Map<String, dynamic> &&
