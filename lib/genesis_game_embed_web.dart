@@ -399,6 +399,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     blocksFullscreenOverlay = null;
   }
 
+  final Map<String, Future<dynamic>> _auditSessions = {};
+  Future<void> _auditScore(String key, int points, int stage) async {
+    final user = AgcBackend.user;
+    if (user == null) return;
+    final k = '${user.id}:$key';
+    try {
+      final sid = await _auditSessions.putIfAbsent(k, () => AgcBackend.client.rpc('agc_play_begin', params: {'p_game':key}));
+      await AgcBackend.client.rpc('agc_play_report', params: {'p_session':sid,'p_score':points,'p_level':stage});
+    } catch (_) { _auditSessions.remove(k); }
+  }
   Future<void> _onMessage(html.MessageEvent event) async {
     if (!mounted ||
         event.origin != html.window.location.origin ||
@@ -555,6 +565,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       return;
     }
     final key = decoded['game'] as String;
+    await _auditScore(key, points, stage);
+    if (!mounted) return;
     final current = pendingScores[key];
     if (current == null || points > current.$1) {
       pendingScores[key] = (points, stage);
