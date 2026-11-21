@@ -489,6 +489,23 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'maze-server-result','request':request,'state':result}), html.window.location.origin);
       return;
     }
+    if (decoded is Map<String, dynamic> && (decoded['type'] == 'defender-server-begin' || decoded['type'] == 'defender-server-step')) {
+      final source = event.source;
+      if (source is! html.WindowBase || !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-defender.html') ?? false))) return;
+      final request = decoded['request'];
+      if (request is! String || request.length > 80) return;
+      dynamic result;
+      try {
+        if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Login required');
+        if (decoded['type'] == 'defender-server-begin') {
+          result = await AgcBackend.client.rpc('agc_defender_begin');
+        } else {
+          result = await AgcBackend.client.rpc('agc_defender_step', params: {'p_run':decoded['run'],'p_seq':decoded['seq'],'p_x':decoded['x']});
+        }
+      } catch (_) {}
+      source.postMessage(jsonEncode({'type':'defender-server-result','request':request,'state':result}), html.window.location.origin);
+      return;
+    }
     if (decoded is Map<String, dynamic> && (decoded['type'] == 'crystals-server-begin' || decoded['type'] == 'crystals-server-step')) {
       final source = event.source;
       if (source is! html.WindowBase || !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-crystals.html') ?? false))) return;
