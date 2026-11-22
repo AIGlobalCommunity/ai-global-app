@@ -200,11 +200,11 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
               textAlign: TextAlign.center),
             const SizedBox(height: 10),
             Wrap(spacing: 8, children: [
-              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'game': GenesisLanguage.copy('Każda gra','By game'), 'daily': GenesisLanguage.copy('Dzienny','Daily'), 'verified': GenesisLanguage.copy('Zweryfikowany','Verified')}.entries)
+              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'game': GenesisLanguage.copy('Każda gra','By game'), 'daily': GenesisLanguage.copy('Dzienny','Daily'), 'verified': GenesisLanguage.copy('Konkurs','Competition')}.entries)
                 ChoiceChip(label: Text(entry.value), selected: mode == entry.key, onSelected: (_) => setState(() { mode = entry.key; future = _load(); })),
             ]),
             if (mode == 'game') DropdownButton<String>(value: game, isExpanded: true, items: [for (final key in games) DropdownMenuItem(value: key, child: Text(_gameName(key)))], onChanged: (value) { if (value != null) setState(() { game = value; future = _load(); }); }),
-            if (mode == 'verified') Padding(padding: const EdgeInsets.all(8), child: Text(GenesisLanguage.copy('Wyłącznie wyniki zatwierdzone po niezależnej weryfikacji. Konkurs nieaktywny.','Independently verified scores only. Competition inactive.'), textAlign: TextAlign.center)),
+            if (mode == 'verified') Padding(padding: const EdgeInsets.all(8), child: Text(GenesisLanguage.copy('🏆 50 zł dziennie • wyłącznie wyniki zweryfikowane. Zapisy zamknięte. Zwycięzcę ogłasza organizator na Facebooku.','Daily prize: PLN 50. Verified scores only. Entries closed. The organizer announces the winner on Facebook.'), textAlign: TextAlign.center)),
             if (mode == 'daily' || mode == 'verified') Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
               IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => setState(() { day = DateTime(day.year,day.month,day.day-1); future = _load(); })),
               TextButton.icon(icon: const Icon(Icons.calendar_month), label: Text(dayKey), onPressed: () async { final picked = await showDatePicker(context: context, initialDate: day, firstDate: DateTime(2020), lastDate: DateTime.now()); if (picked != null && mounted) setState(() { day = picked; future = _load(); }); }),
