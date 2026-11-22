@@ -21,19 +21,25 @@ class GenesisGameTab extends StatefulWidget {
 }
 
 class _GenesisGameTabState extends State<GenesisGameTab> {
+  static const _competitionFacebook = 'https://www.facebook.com/thegenesisera';
   void _competitionInfo() {
     showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
-      title: const Text('GENESIS DAILY CHALLENGE'),
-      content: const Text('Dzienna pula nagród: 80 zł. 1. miejsce: 50 zł, 2. miejsce: 20 zł, 3. miejsce: 10 zł. Udział wymaga zalogowania, akceptacji regulaminu oraz komentarza z nickiem pod postem dnia. Zapisy są zamknięte. Zwykła gra nie stanowi zgłoszenia do konkursu.'),
-      actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('ZAMKNIJ'))],
+      title: const Text('ZASADY KONKURSU'),
+      content: const SingleChildScrollView(child: Text('80 zł dziennie: 50 zł / 20 zł / 10 zł.\n1. Zaloguj się i zaakceptuj regulamin w zakładce Konkurs.\n2. Pod postem konkursowym dotyczącym dnia rozgrywki wpisz swój nick. Post na kolejny dzień publikowany jest o 20:00.\n3. Możesz dobrowolnie udostępnić post.\n4. Graj i zdobywaj punkty od 00:00 do 23:59 czasu polskiego.\n5. Organizator weryfikuje wyniki i ogłasza laureatów na Facebooku.\nZapisy są zamknięte do oficjalnego startu.')),
+      actions: [
+        TextButton(onPressed: () => html.window.open(_competitionFacebook, '_blank', 'noopener,noreferrer'), child: const Text('POST NA FACEBOOKU')),
+        TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('ZAMKNIJ')),
+      ],
     ));
   }
 
   Future<bool> _confirmPlayRules() async {
     return await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
       title: const Text('ZAGRAJ'),
-      content: const Text('Rozpoczęcie gry oznacza akceptację regulaminu konkursu GENESIS DAILY CHALLENGE, dostępnego w zakładce Konkurs. Sama gra nie gwarantuje udziału ani nagrody.'),
+      content: const Text('Rozpoczęcie gry oznacza akceptację regulaminu konkursu. Aby uczestniczyć po jego starcie, skomentuj post dotyczący dnia rozgrywki swoim nickiem. Udostępnienie jest dobrowolne.'),
       actions: [
+        TextButton(onPressed: _competitionInfo, child: const Text('ZASADY KONKURSU')),
+        TextButton(onPressed: () => html.window.open(_competitionFacebook, '_blank', 'noopener,noreferrer'), child: const Text('FACEBOOK')),
         TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('ANULUJ')),
         FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('GRAJ')),
       ],
