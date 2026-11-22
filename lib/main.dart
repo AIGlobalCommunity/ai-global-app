@@ -95,7 +95,7 @@ class _AgcHomeState extends State<AgcHome> {
             const AgcAccountPage(),
             if (selected == 5) const GenesisFinancialSupport() else const SizedBox.shrink(),
             if (selected == 6) GenesisWallet(key: ValueKey(AgcBackend.user?.id)) else const SizedBox.shrink(),
-            const GenesisCompetitionPage(),
+            GenesisCompetitionPage(onRanking: () => setState(() => selected = 2), onGames: () => setState(() => selected = 1)),
           ],
         ),
       ),
@@ -236,7 +236,9 @@ class _AgcHomeState extends State<AgcHome> {
 
 
 class GenesisCompetitionPage extends StatelessWidget {
-  const GenesisCompetitionPage({super.key});
+  const GenesisCompetitionPage({super.key, required this.onRanking, required this.onGames});
+  final VoidCallback onRanking;
+  final VoidCallback onGames;
   static const rules = '''
 REGULAMIN GENESIS DAILY CHALLENGE — obowiązuje od ogłoszenia startu
 1. GENESIS DAILY CHALLENGE to planowany bezpłatny konkurs umiejętności dla pełnoletnich uczestników z Polski.
@@ -264,7 +266,16 @@ Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczest
       child: ListView(padding: const EdgeInsets.all(20), children: [
         const Icon(Icons.emoji_events, size: 64, color: gold),
         const Text('GENESIS DAILY CHALLENGE', textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: gold)),
-        const Text('Planowana nagroda: 50 zł dziennie', textAlign: TextAlign.center),
+        const SizedBox(height: 12),
+        const Card(child: Padding(padding: EdgeInsets.all(20), child: Column(children: [
+          Text('NAGRODA DZIENNA', style: TextStyle(letterSpacing: 2, color: gold)),
+          Text('50 zł', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: gold)),
+          Text('00:00 – 23:59 • czas polski'),
+          Text('O wyniku decyduje zweryfikowany ranking i spełnienie regulaminu.', textAlign: TextAlign.center),
+        ]))),
+        FilledButton.icon(onPressed: onRanking, icon: const Icon(Icons.leaderboard), label: const Text('ZOBACZ RANKING')),
+        OutlinedButton.icon(onPressed: onGames, icon: const Icon(Icons.sports_esports), label: const Text('PRZEJDŹ DO GIER')),
+        const Card(child: ListTile(leading: Icon(Icons.checklist), title: Text('Jak uczestniczyć?'), subtitle: Text('1. Zaloguj się.\n2. Skomentuj post dnia na Facebooku, podając nick.\n3. Zaakceptuj regulamin i graj.\n4. Organizator ręcznie zatwierdza i ogłasza zwycięzcę.'))),
         const Card(child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Zapisy zamknięte'), subtitle: Text('Zapisy i wypłaty nieaktywne. Wyniki zwykłych gier nie kwalifikują się do nagrody.'))),
         OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://www.facebook.com/thegenesisera'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.public), label: const Text('Oficjalny Facebook')),
         const ExpansionTile(title: Text('Regulamin konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
