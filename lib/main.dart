@@ -1,4 +1,5 @@
 import 'agc_backend.dart';
+import 'genesis_password_change.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'genesis_wallet.dart';
 import 'genesis_language.dart';
@@ -56,7 +57,21 @@ class _AgcHomeState extends State<AgcHome> {
     super.initState();
     GenesisLanguage.selected.addListener(_refresh);
     if (AgcBackend.configured) {
-      authEvents = AgcBackend.client.auth.onAuthStateChange.listen((_) => _refresh());
+      authEvents = AgcBackend.client.auth.onAuthStateChange.listen((event) {
+        if (event.event == AuthChangeEvent.passwordRecovery && mounted) {
+          setState(() => selected = 4);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || AgcBackend.user == null) return;
+            showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+              title: const Text('Ustaw nowe hasło'),
+              content: const SingleChildScrollView(child: SizedBox(width: 400, child: GenesisPasswordChange())),
+              actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Zamknij'))],
+            ));
+          });
+        } else {
+          _refresh();
+        }
+      });
     }
   }
 
