@@ -136,7 +136,7 @@ async function defenderStep(){if(!serverMode||serverBusy)return;if(mode==='pause
 
 
 function reset(){if(serverBusy)return;serverMode=false;clearTimeout(serverTimer);
- score=0;wave=1;lives=3;hp=100;guard=0;special=null;waveStartScore=0;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=4;seasonBlend=1;pointerTarget=null;GcoLives.reset();shield=2;nukes=1;obstacles=[];lastReportedScore=0;lastReportedAt=-10;ship.x=210;ship.y=536;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
+ score=0;wave=1;lives=3;hp=100;guard=0;special=null;waveStartScore=0;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=4;seasonBlend=1;pointerTarget=null;GcoLives.reset();shield=0;nukes=1;obstacles=[];lastReportedScore=0;lastReportedAt=-10;ship.x=210;ship.y=536;bullets=[];enemies=[];enemyShots=[];pickups=[];sparks=[];
  elapsed=0;gameTime=0;missionKills=0;missionHits=0;bossKills=0;missionRewardWave=0;combo=0;comboTimer=0;weapon=1;weaponMode='cannon';weaponTimer=0;bossWave=0;shake=0;flash=0;spawnTimer=.7;fireTimer=0;invincible=4;mode='playing';overlay.hidden=true;last=performance.now();hud();missionUpdate();full(true);canvas.focus({preventScroll:true});
 }
 function end(){mode='over';GcoLives.exhausted(()=>{lives=1;hp=100;GcoLives.sync(lives);enemies=[];enemyShots=[];invincible=2;resume();hud()});genesisShowEndShare('defender',score);reportScore(true);if(score>best){best=score;try{localStorage.setItem('genesis-defender-best',String(best));}catch(_){}}
@@ -156,11 +156,11 @@ function collision(a,b,r){return (a.x-b.x)**2+(a.y-b.y)**2<r*r;}
 function hit(damage=5){
  if(invincible>0||guard>0||mode!=='playing')return;
  if(shield>0){shield--;invincible=.7;particles(ship.x,ship.y,'#73e6ff',15);return;}
- hp=Math.max(0,hp-damage);missionHits++;combo=0;shake=5;flash=.15;beep(95,.15,'sawtooth',.04);invincible=.65;particles(ship.x,ship.y,'#ffd18a',12);
+ hp=Math.max(0,hp-Math.max(34,damage));missionHits++;combo=0;shake=5;flash=.15;beep(95,.15,'sawtooth',.04);invincible=.65;particles(ship.x,ship.y,'#ffd18a',12);
  if(hp===0){lives--;GcoLives.sync(lives);if(special&&!special.done&&special.type==='survival')special.failed=true;hp=lives>0?100:0;invincible=2;shake=12;particles(ship.x,ship.y,'#ffd18a',24);if(lives<=0)end();}hud();
 }
 function update(dt){
- elapsed+=dt;gameTime+=dt;guard=Math.max(0,guard-dt);smokeTimer-=dt;if(hp<40&&smokeTimer<=0){particles(ship.x,ship.y+12,'#798896',3);smokeTimer=.16;}const nextWave=1+Math.floor(elapsed/24);if(nextWave!==wave){wave=nextWave;if((wave-1)%3===0)seasonBlend=0;spawnTimer=1.5;if(wave<=3){shield=Math.min(3,shield+1);invincible=2;}spawnObstacles();special=null;waveStartScore=score;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=3;if(wave%3===0)specialStart();if(wave%5===0)nukes=nukes+1;missionKills=0;missionHits=0;missionRewardWave=0;missionUpdate();beep(650,.15);if(wave%5===0&&bossWave!==wave){bossWave=wave;spawnBoss();}}invincible=Math.max(0,invincible-dt);comboTimer-=dt;if(comboTimer<=0)combo=0;weaponTimer=Math.max(0,weaponTimer-dt);if(weaponTimer===0){weapon=1;weaponMode='cannon';}shake=Math.max(0,shake-35*dt);flash=Math.max(0,flash-dt);nukeFlash=Math.max(0,nukeFlash-dt);
+ elapsed+=dt;gameTime+=dt;guard=Math.max(0,guard-dt);smokeTimer-=dt;if(hp<40&&smokeTimer<=0){particles(ship.x,ship.y+12,'#798896',3);smokeTimer=.16;}const nextWave=1+Math.floor(elapsed/24);if(nextWave!==wave){wave=nextWave;if((wave-1)%3===0)seasonBlend=0;spawnTimer=1.5;if(wave<=3){invincible=2;}spawnObstacles();special=null;waveStartScore=score;waveBossKills=0;waveEscapes=0;wavePickups=0;seasonBanner=3;if(wave%3===0)specialStart();if(wave%5===0)nukes=nukes+1;missionKills=0;missionHits=0;missionRewardWave=0;missionUpdate();beep(650,.15);if(wave%5===0&&bossWave!==wave){bossWave=wave;spawnBoss();}}invincible=Math.max(0,invincible-dt);comboTimer-=dt;if(comboTimer<=0)combo=0;weaponTimer=Math.max(0,weaponTimer-dt);if(weaponTimer===0){weapon=1;weaponMode='cannon';}shake=Math.max(0,shake-35*dt);flash=Math.max(0,flash-dt);nukeFlash=Math.max(0,nukeFlash-dt);
  for(const s of stars){s.y+=s.v*dt*(1+wave*.06);if(s.y>H){s.y=0;s.x=Math.random()*W;}}
  const dx=Number(!!(keys.ArrowRight||keys.KeyD))-Number(!!(keys.ArrowLeft||keys.KeyA));
  const dy=Number(!!(keys.ArrowDown||keys.KeyS))-Number(!!(keys.ArrowUp||keys.KeyW));
