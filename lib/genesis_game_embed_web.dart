@@ -21,6 +21,14 @@ class GenesisGameTab extends StatefulWidget {
 }
 
 class _GenesisGameTabState extends State<GenesisGameTab> {
+  void _competitionInfo() {
+    showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
+      title: const Text('GENESIS DAILY CHALLENGE'),
+      content: const Text('Nagroda dzienna: 50 zł. Udział wymaga zalogowania, akceptacji regulaminu oraz komentarza z nickiem pod postem dnia. Zapisy są zamknięte. Zwykła gra nie stanowi zgłoszenia do konkursu.'),
+      actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('ZAMKNIJ'))],
+    ));
+  }
+
   static bool registered = false;
   static const signalView = 'genesis-signal-html5-iframe';
   static const defenderView = 'genesis-defender-html5-iframe';
@@ -1564,7 +1572,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                         icon: Icons.play_arrow_rounded,
                         label: GenesisLanguage.copy('ZAGRAJ', 'PLAY'),
                       ),
-                      const SizedBox(width: 10),
+                      IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
+                      const SizedBox(width: 4),
                       _arcadeButton(
                         onPressed: () => _showRanking(index),
                         primary: false,
@@ -1734,7 +1743,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               Row(children: [
                 _arcadeButton(onPressed: openGame, primary: true, accent: accent,
                   icon: Icons.play_arrow_rounded, label: 'ZAGRAJ'),
-                const SizedBox(width: 10),
+                IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
+                const SizedBox(width: 4),
                 _arcadeButton(onPressed: () => _showRanking(index),
                   primary: false, accent: accent,
                   icon: Icons.emoji_events_outlined, label: 'E-RANKING'),
@@ -1797,6 +1807,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   onPressed: () => _showRanking(index)),
                 IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_arrow_rounded),
                   onPressed: open),
+                IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
               ])
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Icon(icon, color: color, size: 45),
@@ -1808,6 +1819,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_circle_fill),
                     onPressed: open),
+                IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
                   IconButton(tooltip: 'Ranking', icon: const Icon(Icons.emoji_events_outlined),
                     onPressed: () => _showRanking(index)),
                 ]),
