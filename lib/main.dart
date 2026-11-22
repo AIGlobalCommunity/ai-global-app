@@ -238,17 +238,17 @@ class _AgcHomeState extends State<AgcHome> {
 class GenesisCompetitionPage extends StatelessWidget {
   const GenesisCompetitionPage({super.key});
   static const rules = '''
-PROJEKT REGULAMINU — konkurs nieaktywny
+REGULAMIN GENESIS DAILY CHALLENGE — obowiązuje od ogłoszenia startu
 1. GENESIS DAILY CHALLENGE to planowany bezpłatny konkurs umiejętności dla pełnoletnich uczestników z Polski.
 2. Doba konkursowa trwa od 00:00 do 24:00 czasu Europe/Warsaw. Planowana nagroda: 50 zł za najwyższy zweryfikowany wynik dnia. Przy remisie decyduje wcześniejsze osiągnięcie wyniku.
 3. Wynik zależy wyłącznie od umiejętności, refleksu, logiki i decyzji gracza. Nie przeprowadza się losowania. Warunki konkursowe, zadania, przeszkody i bonusy muszą być identyczne dla wszystkich. Gry z losowością wpływającą na wynik nie są dopuszczone.
 4. Udział wymaga bezpłatnego konta, akceptacji ostatecznego regulaminu i komentarza pod postem dnia. Obserwowanie strony, udostępnianie i oznaczanie znajomych są dobrowolne.
-5. GCO nie są oferowane do zakupu za pieniądze. Mogą być przyznawane za wsparcie platformy; wsparcie nie jest warunkiem konkursu i nie uprawnia do przewagi, dodatkowych prób ani nagród. GCO i ulepszenia za GCO nie są dostępne w trybie konkursowym. Zwykły ranking nie stanowi podstawy nagród.
+5. GCO nie są oferowane do zakupu za pieniądze. Mogą być przyznawane za wsparcie platformy; wsparcie nie jest warunkiem konkursu i nie uprawnia do przewagi, dodatkowych prób ani nagród. W zwykłych grach można korzystać z całego portfela GCO. W trybie konkursowym każdy uczestnik otrzymuje identyczny, bezpłatny zestaw ulepszeń, niezależny od portfela GCO. Zwykły ranking nie stanowi podstawy nagród.
 6. Boty, automatyzacja gry i manipulowanie wynikami są zabronione. Wyniki wymagają weryfikacji serwerowej i kontroli organizatora. Uczestnik ma możliwość złożenia reklamacji.
 7. Konkurs nie jest sponsorowany, popierany ani administrowany przez Facebook. Przed startem zostaną opublikowane dane organizatora, terminy, zasady reklamacji, odbioru nagród i rozliczeń podatkowych.
 ''';
   static const privacy = '''
-PROJEKT INFORMACJI RODO — przed uruchomieniem
+INFORMACJA RODO — GENESIS DAILY CHALLENGE
 Administrator: dane i kontakt organizatora zostaną podane przed rozpoczęciem zapisów.
 Zakres: identyfikator konta, nick, e-mail, wynik, czas rozgrywki, dane techniczne służące bezpieczeństwu oraz informacja o spełnieniu warunku komentarza. Dane do wypłaty będą wymagane tylko od zwycięzcy, w zakresie niezbędnym.
 Cele i podstawy: organizacja konkursu i wypłata nagrody (art. 6 ust. 1 lit. b RODO), obowiązki prawne i podatkowe (lit. c), zapobieganie nadużyciom i rozpatrywanie roszczeń (lit. f). Marketing wymaga odrębnej podstawy i nie jest warunkiem udziału.
@@ -265,10 +265,10 @@ Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczest
         const Icon(Icons.emoji_events, size: 64, color: gold),
         const Text('GENESIS DAILY CHALLENGE', textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: gold)),
         const Text('Planowana nagroda: 50 zł dziennie', textAlign: TextAlign.center),
-        const Card(child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Konkurs w przygotowaniu'), subtitle: Text('Zapisy i wypłaty nieaktywne. Wyniki zwykłych gier nie kwalifikują się do nagrody.'))),
+        const Card(child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Zapisy zamknięte'), subtitle: Text('Zapisy i wypłaty nieaktywne. Wyniki zwykłych gier nie kwalifikują się do nagrody.'))),
         OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://www.facebook.com/thegenesisera'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.public), label: const Text('Oficjalny Facebook')),
-        const ExpansionTile(title: Text('Projekt regulaminu konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
-        const ExpansionTile(title: Text('RODO — projekt klauzuli informacyjnej'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(privacy))]),
+        const ExpansionTile(title: Text('Regulamin konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
+        const ExpansionTile(title: Text('RODO — klauzula informacyjna'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(privacy))]),
         const Card(child: ListTile(title: Text('GCO i wsparcie platformy'), subtitle: Text('GCO nie są sprzedawane za pieniądze i nie mają związku z konkursem. Wsparcie jest dobrowolne.'))),
       ]),
     ),
