@@ -95,6 +95,12 @@ class AgcBackend {
     );
   }
 
+  static Future<void> resetPassword(String email) async {
+    final address = email.trim();
+    if (validateAgcEmail(address) != null) throw FormatException(validateAgcEmail(address)!);
+    await client.auth.resetPasswordForEmail(address, redirectTo: 'https://thegenesisera.com/');
+  }
+
   static Future<void> signIn(String email, String password) async {
     if (!configured) throw StateError('Backend is not configured.');
     if (email.trim().isEmpty || password.isEmpty) {
@@ -172,6 +178,7 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
   bool busy = false;
   bool loginExpanded = false;
   bool resendExpanded = false;
+  bool resetExpanded = false;
   StreamSubscription<AuthState>? authListener;
 
   @override
@@ -377,6 +384,24 @@ class _AgcAccountPageState extends State<AgcAccountPage> {
               icon: const Icon(Icons.mark_email_unread_outlined),
               label: Text(GenesisLanguage.copy('Nie dotarł e-mail? Wyślij link ponownie', "Didn't receive the email? Resend confirmation")),
             ),
+          ),
+          Center(child: TextButton.icon(
+            key: const Key('forgot_password'),
+            onPressed: busy ? null : () => setState(() => resetExpanded = !resetExpanded),
+            icon: const Icon(Icons.lock_reset),
+            label: Text(GenesisLanguage.copy('Zapomniałem hasła', 'Forgot password')),
+          )),
+          if (resetExpanded) Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              TextField(controller: email, keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(labelText: GenesisLanguage.copy('Adres e-mail konta', 'Account email'))),
+              const SizedBox(height: 10),
+              FilledButton(onPressed: busy ? null : () => execute(
+                () => AgcBackend.resetPassword(email.text),
+                successMessage: GenesisLanguage.copy('Jeśli konto istnieje, otrzymasz link do zmiany hasła. Sprawdź pocztę i spam.', 'If the account exists, you will receive a password reset link. Check your inbox and spam.')),
+                child: Text(GenesisLanguage.copy('Wyślij link resetowania hasła', 'Send password reset link'))),
+            ]),
           ),
           if (resendExpanded) Padding(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
