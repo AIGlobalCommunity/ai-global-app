@@ -200,7 +200,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
               textAlign: TextAlign.center),
             const SizedBox(height: 10),
             Wrap(spacing: 8, children: [
-              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'game': GenesisLanguage.copy('Każda gra','By game'), 'daily': GenesisLanguage.copy('Dzienny','Daily'), 'verified': GenesisLanguage.copy('Konkurs','Competition')}.entries)
+              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'daily': GenesisLanguage.copy('Dzienny','Daily'), 'verified': GenesisLanguage.copy('Konkurs','Competition')}.entries)
                 ChoiceChip(label: Text(entry.value), selected: mode == entry.key, onSelected: (_) => setState(() { mode = entry.key; future = _load(); })),
             ]),
             if (mode == 'game') DropdownButton<String>(value: game, isExpanded: true, items: [for (final key in games) DropdownMenuItem(value: key, child: Text(_gameName(key)))], onChanged: (value) { if (value != null) setState(() { game = value; future = _load(); }); }),
