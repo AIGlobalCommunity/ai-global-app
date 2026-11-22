@@ -174,6 +174,7 @@ class _GenesisFinancialSupportState extends State<GenesisFinancialSupport> {
 
               ],
             )),
+            OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://buycoffee.to/lektuno.pl/genesis-coins-gco-wesprzyj-rozwoj-swiata-gier'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.volunteer_activism), label: const Text('Wesprzyj • 1 zł = 10 GCO • podaj nick')),
             const SizedBox(height: 6),
             Expanded(child: LayoutBuilder(builder: (context, mosaicBounds) {
               final size = Size(
