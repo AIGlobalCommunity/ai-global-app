@@ -242,7 +242,7 @@ class GenesisCompetitionPage extends StatelessWidget {
   static const rules = '''
 REGULAMIN GENESIS DAILY CHALLENGE — obowiązuje od ogłoszenia startu
 1. GENESIS DAILY CHALLENGE to planowany bezpłatny konkurs umiejętności dla pełnoletnich uczestników z Polski.
-2. Doba konkursowa trwa od 00:00 do 24:00 czasu Europe/Warsaw. Planowana nagroda: 50 zł za najwyższy zweryfikowany wynik dnia. Przy remisie decyduje wcześniejsze osiągnięcie wyniku.
+2. Doba konkursowa trwa od 00:00 do 24:00 czasu Europe/Warsaw. Łączna dzienna pula nagród: 80 zł. Pierwsze miejsce: 50 zł, drugie: 20 zł, trzecie: 10 zł. Nagrody przyznawane są trzem najwyżej sklasyfikowanym uczestnikom spełniającym regulamin po ręcznej weryfikacji przez organizatora. Przy remisie decyduje wcześniejsze osiągnięcie wyniku.
 3. Wynik zależy wyłącznie od umiejętności, refleksu, logiki i decyzji gracza. Nie przeprowadza się losowania. Warunki konkursowe, zadania, przeszkody i bonusy muszą być identyczne dla wszystkich. Gry z losowością wpływającą na wynik nie są dopuszczone. Regulamin obejmuje wszystkie gry platformy. Do rankingu konkursowego kwalifikują się wyniki każdej gry, która spełnia wymagania techniczne i regulaminowe konkursu. Jedna akceptacja aktualnej wersji regulaminu dotyczy wszystkich zakwalifikowanych gier.
 4. Udział wymaga bezpłatnego konta, akceptacji ostatecznego regulaminu i komentarza pod postem dnia. Obserwowanie strony, udostępnianie i oznaczanie znajomych są dobrowolne.
 5. GCO nie są oferowane do bezpośredniego zakupu za pieniądze. Mogą być przyznawane za dobrowolne wsparcie platformy. Wsparcie nie jest warunkiem uczestnictwa ani gwarancją nagrody. Uczestnicy mogą wykorzystywać własne GCO na ulepszenia dostępne na jednakowych zasadach, również podczas konkursu. Różnice w saldzie GCO i wykorzystaniu ulepszeń mogą wpływać na wynik. Zwykły ranking nie stanowi podstawy nagród.
@@ -252,7 +252,7 @@ REGULAMIN GENESIS DAILY CHALLENGE — obowiązuje od ogłoszenia startu
   static const privacy = '''
 INFORMACJA RODO — GENESIS DAILY CHALLENGE
 Administrator: dane i kontakt organizatora zostaną podane przed rozpoczęciem zapisów.
-Zakres: identyfikator konta, nick, e-mail, wynik, czas rozgrywki, dane techniczne służące bezpieczeństwu oraz informacja o spełnieniu warunku komentarza. Dane do wypłaty będą wymagane tylko od zwycięzcy, w zakresie niezbędnym.
+Zakres: identyfikator konta, nick, e-mail, wynik, czas rozgrywki, dane techniczne służące bezpieczeństwu oraz informacja o spełnieniu warunku komentarza. Dane do wypłaty będą wymagane tylko od laureatów, w zakresie niezbędnym.
 Cele i podstawy: organizacja konkursu i wypłata nagrody (art. 6 ust. 1 lit. b RODO), obowiązki prawne i podatkowe (lit. c), zapobieganie nadużyciom i rozpatrywanie roszczeń (lit. f). Marketing wymaga odrębnej podstawy i nie jest warunkiem udziału.
 Odbiorcy: dostawcy infrastruktury i obsługi płatności oraz uprawnione organy. Facebook przetwarza dane komentarzy na zasadach własnej polityki prywatności. Publicznie prezentowany będzie nick i wynik, bez adresu e-mail i danych wypłaty.
 Retencja: dane konkursowe przez okres organizacji i reklamacji oraz odpowiedni okres dochodzenia roszczeń; dokumenty podatkowe zgodnie z prawem. Szczegółowe terminy, odbiorcy i informacje o transferach poza EOG zostaną ustalone i opublikowane przed zapisami.
@@ -268,14 +268,15 @@ Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczest
         const Text('GENESIS DAILY CHALLENGE', textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: gold)),
         const SizedBox(height: 12),
         const Card(child: Padding(padding: EdgeInsets.all(20), child: Column(children: [
-          Text('NAGRODA DZIENNA', style: TextStyle(letterSpacing: 2, color: gold)),
-          Text('50 zł', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: gold)),
+          Text('DZIENNA PULA NAGRÓD', style: TextStyle(letterSpacing: 2, color: gold)),
+          Text('80 zł', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: gold)),
+          Text('🥇 50 zł   •   🥈 20 zł   •   🥉 10 zł', textAlign: TextAlign.center, style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
           Text('00:00 – 23:59 • czas polski'),
           Text('O wyniku decyduje zweryfikowany ranking i spełnienie regulaminu.', textAlign: TextAlign.center),
         ]))),
         FilledButton.icon(onPressed: onRanking, icon: const Icon(Icons.leaderboard), label: const Text('ZOBACZ RANKING')),
         OutlinedButton.icon(onPressed: onGames, icon: const Icon(Icons.sports_esports), label: const Text('PRZEJDŹ DO GIER')),
-        const Card(child: ListTile(leading: Icon(Icons.checklist), title: Text('Jak uczestniczyć?'), subtitle: Text('1. Zaloguj się.\n2. Skomentuj post dnia na Facebooku, podając nick.\n3. Zaakceptuj regulamin i graj.\n4. Organizator ręcznie zatwierdza i ogłasza zwycięzcę.\nRegulamin obejmuje wszystkie gry platformy.'))),
+        const Card(child: ListTile(leading: Icon(Icons.checklist), title: Text('Jak uczestniczyć?'), subtitle: Text('1. Zaloguj się.\n2. Skomentuj post dnia na Facebooku, podając nick.\n3. Zaakceptuj regulamin i graj.\n4. Organizator ręcznie zatwierdza i ogłasza laureatów.\nRegulamin obejmuje wszystkie gry platformy.'))),
         const Card(child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Zapisy zamknięte'), subtitle: Text('Zapisy i wypłaty nieaktywne. Wyniki zwykłych gier nie kwalifikują się do nagrody.'))),
         OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://www.facebook.com/thegenesisera'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.public), label: const Text('Oficjalny Facebook')),
         const ExpansionTile(title: Text('Regulamin konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
