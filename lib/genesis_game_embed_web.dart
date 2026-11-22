@@ -24,7 +24,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   void _competitionInfo() {
     showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
       title: const Text('GENESIS DAILY CHALLENGE'),
-      content: const Text('Nagroda dzienna: 50 zł. Udział wymaga zalogowania, akceptacji regulaminu oraz komentarza z nickiem pod postem dnia. Zapisy są zamknięte. Zwykła gra nie stanowi zgłoszenia do konkursu.'),
+      content: const Text('Dzienna pula nagród: 80 zł. 1. miejsce: 50 zł, 2. miejsce: 20 zł, 3. miejsce: 10 zł. Udział wymaga zalogowania, akceptacji regulaminu oraz komentarza z nickiem pod postem dnia. Zapisy są zamknięte. Zwykła gra nie stanowi zgłoszenia do konkursu.'),
       actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('ZAMKNIJ'))],
     ));
   }
