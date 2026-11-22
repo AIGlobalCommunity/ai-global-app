@@ -1,4 +1,5 @@
 import 'agc_backend.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'genesis_wallet.dart';
 import 'genesis_language.dart';
 import 'genesis_game_embed_stub.dart'
@@ -94,6 +95,7 @@ class _AgcHomeState extends State<AgcHome> {
             const AgcAccountPage(),
             if (selected == 5) const GenesisFinancialSupport() else const SizedBox.shrink(),
             if (selected == 6) GenesisWallet(key: ValueKey(AgcBackend.user?.id)) else const SizedBox.shrink(),
+            const GenesisCompetitionPage(),
           ],
         ),
       ),
@@ -119,6 +121,7 @@ class _AgcHomeState extends State<AgcHome> {
           label: GenesisLanguage.copy('Konto', 'Account')),
         NavigationDestination(icon: const Icon(Icons.volunteer_activism_outlined), label: GenesisLanguage.copy('Fundatorzy', 'Founders')),
         NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), label: GenesisLanguage.copy('Portfel','Wallet')),
+        const NavigationDestination(icon: Icon(Icons.military_tech_outlined), label: 'Konkurs'),
       ],
     ),
   );
@@ -227,6 +230,47 @@ class _AgcHomeState extends State<AgcHome> {
           ),
         ],
       ),
+    ),
+  );
+}
+
+
+class GenesisCompetitionPage extends StatelessWidget {
+  const GenesisCompetitionPage({super.key});
+  static const rules = '''
+PROJEKT REGULAMINU — konkurs nieaktywny
+1. GENESIS DAILY CHALLENGE to planowany bezpłatny konkurs umiejętności dla pełnoletnich uczestników z Polski.
+2. Doba konkursowa trwa od 00:00 do 24:00 czasu Europe/Warsaw. Planowana nagroda: 50 zł za najwyższy zweryfikowany wynik dnia. Przy remisie decyduje wcześniejsze osiągnięcie wyniku.
+3. Wynik zależy wyłącznie od umiejętności, refleksu, logiki i decyzji gracza. Nie przeprowadza się losowania. Warunki konkursowe, zadania, przeszkody i bonusy muszą być identyczne dla wszystkich. Gry z losowością wpływającą na wynik nie są dopuszczone.
+4. Udział wymaga bezpłatnego konta, akceptacji ostatecznego regulaminu i komentarza pod postem dnia. Obserwowanie strony, udostępnianie i oznaczanie znajomych są dobrowolne.
+5. GCO nie są oferowane do zakupu za pieniądze. Mogą być przyznawane za wsparcie platformy; wsparcie nie jest warunkiem konkursu i nie uprawnia do przewagi, dodatkowych prób ani nagród. GCO i ulepszenia za GCO nie są dostępne w trybie konkursowym. Zwykły ranking nie stanowi podstawy nagród.
+6. Boty, automatyzacja gry i manipulowanie wynikami są zabronione. Wyniki wymagają weryfikacji serwerowej i kontroli organizatora. Uczestnik ma możliwość złożenia reklamacji.
+7. Konkurs nie jest sponsorowany, popierany ani administrowany przez Facebook. Przed startem zostaną opublikowane dane organizatora, terminy, zasady reklamacji, odbioru nagród i rozliczeń podatkowych.
+''';
+  static const privacy = '''
+PROJEKT INFORMACJI RODO — przed uruchomieniem
+Administrator: dane i kontakt organizatora zostaną podane przed rozpoczęciem zapisów.
+Zakres: identyfikator konta, nick, e-mail, wynik, czas rozgrywki, dane techniczne służące bezpieczeństwu oraz informacja o spełnieniu warunku komentarza. Dane do wypłaty będą wymagane tylko od zwycięzcy, w zakresie niezbędnym.
+Cele i podstawy: organizacja konkursu i wypłata nagrody (art. 6 ust. 1 lit. b RODO), obowiązki prawne i podatkowe (lit. c), zapobieganie nadużyciom i rozpatrywanie roszczeń (lit. f). Marketing wymaga odrębnej podstawy i nie jest warunkiem udziału.
+Odbiorcy: dostawcy infrastruktury i obsługi płatności oraz uprawnione organy. Facebook przetwarza dane komentarzy na zasadach własnej polityki prywatności. Publicznie prezentowany będzie nick i wynik, bez adresu e-mail i danych wypłaty.
+Retencja: dane konkursowe przez okres organizacji i reklamacji oraz odpowiedni okres dochodzenia roszczeń; dokumenty podatkowe zgodnie z prawem. Szczegółowe terminy, odbiorcy i informacje o transferach poza EOG zostaną ustalone i opublikowane przed zapisami.
+Prawa: dostęp, sprostowanie, usunięcie, ograniczenie, przenoszenie danych, sprzeciw w przypadkach przewidzianych przez RODO oraz skarga do Prezesa UODO. O przyznaniu nagrody nie decyduje wyłącznie automatyczny system.
+Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczestnictwa. Na tym etapie nie zbieramy zgłoszeń konkursowych.
+''';
+  @override
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 750),
+      child: ListView(padding: const EdgeInsets.all(20), children: [
+        const Icon(Icons.emoji_events, size: 64, color: gold),
+        const Text('GENESIS DAILY CHALLENGE', textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: gold)),
+        const Text('Planowana nagroda: 50 zł dziennie', textAlign: TextAlign.center),
+        const Card(child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Konkurs w przygotowaniu'), subtitle: Text('Zapisy i wypłaty nieaktywne. Wyniki zwykłych gier nie kwalifikują się do nagrody.'))),
+        OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://www.facebook.com/thegenesisera'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.public), label: const Text('Oficjalny Facebook')),
+        const ExpansionTile(title: Text('Projekt regulaminu konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
+        const ExpansionTile(title: Text('RODO — projekt klauzuli informacyjnej'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(privacy))]),
+        const Card(child: ListTile(title: Text('GCO i wsparcie platformy'), subtitle: Text('GCO nie są sprzedawane za pieniądze i nie mają związku z konkursem. Wsparcie jest dobrowolne.'))),
+      ]),
     ),
   );
 }
