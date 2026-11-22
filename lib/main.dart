@@ -243,7 +243,7 @@ class GenesisCompetitionPage extends StatelessWidget {
 REGULAMIN GENESIS DAILY CHALLENGE — obowiązuje od ogłoszenia startu
 1. GENESIS DAILY CHALLENGE to planowany bezpłatny konkurs umiejętności dla pełnoletnich uczestników z Polski.
 2. Doba konkursowa trwa od 00:00 do 24:00 czasu Europe/Warsaw. Planowana nagroda: 50 zł za najwyższy zweryfikowany wynik dnia. Przy remisie decyduje wcześniejsze osiągnięcie wyniku.
-3. Wynik zależy wyłącznie od umiejętności, refleksu, logiki i decyzji gracza. Nie przeprowadza się losowania. Warunki konkursowe, zadania, przeszkody i bonusy muszą być identyczne dla wszystkich. Gry z losowością wpływającą na wynik nie są dopuszczone.
+3. Wynik zależy wyłącznie od umiejętności, refleksu, logiki i decyzji gracza. Nie przeprowadza się losowania. Warunki konkursowe, zadania, przeszkody i bonusy muszą być identyczne dla wszystkich. Gry z losowością wpływającą na wynik nie są dopuszczone. Regulamin obejmuje wszystkie gry platformy. Do rankingu konkursowego kwalifikują się wyniki każdej gry, która spełnia wymagania techniczne i regulaminowe konkursu. Jedna akceptacja aktualnej wersji regulaminu dotyczy wszystkich zakwalifikowanych gier.
 4. Udział wymaga bezpłatnego konta, akceptacji ostatecznego regulaminu i komentarza pod postem dnia. Obserwowanie strony, udostępnianie i oznaczanie znajomych są dobrowolne.
 5. GCO nie są oferowane do bezpośredniego zakupu za pieniądze. Mogą być przyznawane za dobrowolne wsparcie platformy. Wsparcie nie jest warunkiem uczestnictwa ani gwarancją nagrody. Uczestnicy mogą wykorzystywać własne GCO na ulepszenia dostępne na jednakowych zasadach, również podczas konkursu. Różnice w saldzie GCO i wykorzystaniu ulepszeń mogą wpływać na wynik. Zwykły ranking nie stanowi podstawy nagród.
 6. Boty, automatyzacja gry i manipulowanie wynikami są zabronione. Wyniki wymagają weryfikacji serwerowej i kontroli organizatora. Uczestnik ma możliwość złożenia reklamacji.
@@ -275,7 +275,7 @@ Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczest
         ]))),
         FilledButton.icon(onPressed: onRanking, icon: const Icon(Icons.leaderboard), label: const Text('ZOBACZ RANKING')),
         OutlinedButton.icon(onPressed: onGames, icon: const Icon(Icons.sports_esports), label: const Text('PRZEJDŹ DO GIER')),
-        const Card(child: ListTile(leading: Icon(Icons.checklist), title: Text('Jak uczestniczyć?'), subtitle: Text('1. Zaloguj się.\n2. Skomentuj post dnia na Facebooku, podając nick.\n3. Zaakceptuj regulamin i graj.\n4. Organizator ręcznie zatwierdza i ogłasza zwycięzcę.'))),
+        const Card(child: ListTile(leading: Icon(Icons.checklist), title: Text('Jak uczestniczyć?'), subtitle: Text('1. Zaloguj się.\n2. Skomentuj post dnia na Facebooku, podając nick.\n3. Zaakceptuj regulamin i graj.\n4. Organizator ręcznie zatwierdza i ogłasza zwycięzcę.\nRegulamin obejmuje wszystkie gry platformy.'))),
         const Card(child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Zapisy zamknięte'), subtitle: Text('Zapisy i wypłaty nieaktywne. Wyniki zwykłych gier nie kwalifikują się do nagrody.'))),
         OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://www.facebook.com/thegenesisera'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.public), label: const Text('Oficjalny Facebook')),
         const ExpansionTile(title: Text('Regulamin konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
