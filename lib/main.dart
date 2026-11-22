@@ -243,7 +243,7 @@ REGULAMIN GENESIS DAILY CHALLENGE — obowiązuje od ogłoszenia startu
 2. Doba konkursowa trwa od 00:00 do 24:00 czasu Europe/Warsaw. Planowana nagroda: 50 zł za najwyższy zweryfikowany wynik dnia. Przy remisie decyduje wcześniejsze osiągnięcie wyniku.
 3. Wynik zależy wyłącznie od umiejętności, refleksu, logiki i decyzji gracza. Nie przeprowadza się losowania. Warunki konkursowe, zadania, przeszkody i bonusy muszą być identyczne dla wszystkich. Gry z losowością wpływającą na wynik nie są dopuszczone.
 4. Udział wymaga bezpłatnego konta, akceptacji ostatecznego regulaminu i komentarza pod postem dnia. Obserwowanie strony, udostępnianie i oznaczanie znajomych są dobrowolne.
-5. GCO nie są oferowane do zakupu za pieniądze. Mogą być przyznawane za wsparcie platformy; wsparcie nie jest warunkiem konkursu i nie uprawnia do przewagi, dodatkowych prób ani nagród. W zwykłych grach można korzystać z całego portfela GCO. W trybie konkursowym każdy uczestnik otrzymuje identyczny, bezpłatny zestaw ulepszeń, niezależny od portfela GCO. Zwykły ranking nie stanowi podstawy nagród.
+5. GCO nie są oferowane do bezpośredniego zakupu za pieniądze. Mogą być przyznawane za dobrowolne wsparcie platformy. Wsparcie nie jest warunkiem uczestnictwa ani gwarancją nagrody. Uczestnicy mogą wykorzystywać własne GCO na ulepszenia dostępne na jednakowych zasadach, również podczas konkursu. Różnice w saldzie GCO i wykorzystaniu ulepszeń mogą wpływać na wynik. Zwykły ranking nie stanowi podstawy nagród.
 6. Boty, automatyzacja gry i manipulowanie wynikami są zabronione. Wyniki wymagają weryfikacji serwerowej i kontroli organizatora. Uczestnik ma możliwość złożenia reklamacji.
 7. Konkurs nie jest sponsorowany, popierany ani administrowany przez Facebook. Przed startem zostaną opublikowane dane organizatora, terminy, zasady reklamacji, odbioru nagród i rozliczeń podatkowych.
 ''';
@@ -269,7 +269,7 @@ Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczest
         OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://www.facebook.com/thegenesisera'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.public), label: const Text('Oficjalny Facebook')),
         const ExpansionTile(title: Text('Regulamin konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
         const ExpansionTile(title: Text('RODO — klauzula informacyjna'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(privacy))]),
-        const Card(child: ListTile(title: Text('GCO i wsparcie platformy'), subtitle: Text('GCO nie są sprzedawane za pieniądze i nie mają związku z konkursem. Wsparcie jest dobrowolne.'))),
+        const Card(child: ListTile(title: Text('GCO i wsparcie platformy'), subtitle: Text('GCO nie są bezpośrednio sprzedawane. Wsparcie platformy jest dobrowolne, a własne GCO można wykorzystywać także w konkursie.'))),
       ]),
     ),
   );
