@@ -29,6 +29,17 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     ));
   }
 
+  Future<bool> _confirmPlayRules() async {
+    return await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('ZAGRAJ'),
+      content: const Text('Rozpoczęcie gry oznacza akceptację regulaminu konkursu GENESIS DAILY CHALLENGE, dostępnego w zakładce Konkurs. Sama gra nie gwarantuje udziału ani nagrody.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('ANULUJ')),
+        FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('GRAJ')),
+      ],
+    )) ?? false;
+  }
+
   static bool registered = false;
   static const signalView = 'genesis-signal-html5-iframe';
   static const defenderView = 'genesis-defender-html5-iframe';
@@ -1490,7 +1501,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           (Icons.shield_outlined,
             GenesisLanguage.copy('Tarcze i naprawy', 'Shields and repairs')),
         ];
-    void openGame() {
+    Future<void> openGame() async {
+      if (!await _confirmPlayRules() || !mounted) return;
       try {
         html.window.localStorage['agc-game-owner-${signal ? 'signal' : 'defender'}'] =
           AgcBackend.user?.id ?? '';
@@ -1634,7 +1646,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final snake = index == 4;
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
-    void openGame() {
+    Future<void> openGame() async {
+      if (!await _confirmPlayRules() || !mounted) return;
       if (crystals) { _showCrystalsFullscreen(); return; }
       if (sling) { _showSlingshotFullscreen(); return; }
       if (maze) { _showMazeFullscreen(); return; }
@@ -1771,7 +1784,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final color = index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
-    void open() {
+    Future<void> open() async {
+      if (!await _confirmPlayRules() || !mounted) return;
       if (index == 8) { _showCrystalsFullscreen(); return; }
       if (index == 7) { _showSlingshotFullscreen(); return; }
       if (index == 6) { _showMazeFullscreen(); return; }
