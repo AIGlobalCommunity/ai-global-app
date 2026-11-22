@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:url_launcher/url_launcher.dart';
 import 'agc_backend.dart';
 import 'genesis_language.dart';
 
@@ -52,7 +53,12 @@ class _GenesisWalletState extends State<GenesisWallet> {
             Text('${result['balance']??0} GCO',style:const TextStyle(fontSize:34,fontWeight:FontWeight.bold,color:Color(0xFFD8B66A))),
             const Text('GENESIS COIN'),
           ]))),
-          Card(child:ListTile(leading:const Icon(Icons.shopping_cart_outlined),title:Text(t('Zakup GCO','Buy GCO')),subtitle:Text(t('Jeszcze niedostępny','Not available yet')),trailing:const Icon(Icons.lock_outline))),
+          Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+            const Text('1 zł = 10 GCO',textAlign:TextAlign.center,style:TextStyle(fontSize:24,fontWeight:FontWeight.bold,color:Color(0xFFD8B66A))),
+            Text(t('Podaj dokładny nick z platformy w wiadomości do wpłaty. GCO przyznajemy po ręcznej weryfikacji.','Include your exact platform nickname in the payment message. GCO are credited after manual verification.')),
+            const SizedBox(height:12),
+            FilledButton.icon(onPressed:() async {await launchUrl(Uri.parse('https://buycoffee.to/lektuno.pl/genesis-coins-gco-wesprzyj-rozwoj-swiata-gier'),mode:LaunchMode.externalApplication);},icon:const Icon(Icons.volunteer_activism),label:Text(t('WESPRZYJ I OTRZYMAJ GCO','SUPPORT AND RECEIVE GCO'))),
+          ]))),
           Card(child:ListTile(onTap:sending?null:transfer,leading:const Icon(Icons.swap_horiz),title:Text(t('Przelej GCO','Send GCO')),subtitle:Text(t('E-mail lub nick · bez opłat','Email or nickname · free')),trailing:const Icon(Icons.chevron_right))),
           const SizedBox(height:16),Text(t('Historia operacji','Transaction history'),style:const TextStyle(fontSize:19,fontWeight:FontWeight.bold)),
           if(rows.isEmpty) Text(t('Brak operacji','No transactions')),
@@ -60,7 +66,7 @@ class _GenesisWalletState extends State<GenesisWallet> {
         ]);
       }),
       const Divider(),
-      ExpansionTile(title:Text(t('Zasady GENESIS COIN – etap testowy','GENESIS COIN – pilot rules')),children:[Padding(padding:const EdgeInsets.all(12),child:Text(t('GCO to bezpłatne żetony przypisane do konta. Administrator przyznaje je ręcznie. Nie są kryptowalutą, środkiem płatniczym ani inwestycją. Nie mają kursu ani prawa do wypłaty. Transfer żetonów między kontami jest bezpłatny. Zakup za pieniądze i sprzedaż są niedostępne. Błędy salda zgłoś operatorowi platformy. Nieuprawnione działania mogą skutkować korektą po wyjaśnieniu. Zasady nie ograniczają ustawowych praw użytkownika.','GCO are free account tokens granted manually by the administrator. They are not cryptocurrency, money or an investment. No exchange rate or redemption applies. Free transfers between accounts are available. Cash purchases and sales are unavailable. Report balance errors to the platform operator. Unauthorised activity may result in corrections after review. Statutory rights remain unaffected.')))])
+      ExpansionTile(title:Text(t('Zasady GENESIS COIN','GENESIS COIN rules')),children:[Padding(padding:const EdgeInsets.all(12),child:Text(t('GCO to wirtualne żetony przypisane do konta. Administrator przyznaje je ręcznie, także za wsparcie platformy: 10 GCO za 1 zł. Nie są kryptowalutą, środkiem płatniczym ani inwestycją. Nie podlegają wymianie na pieniądze. Transfer żetonów między kontami jest bezpłatny. Wsparcie jest dobrowolne. Błędy salda zgłoś operatorowi platformy. Nieuprawnione działania mogą skutkować korektą po wyjaśnieniu. Zasady nie ograniczają ustawowych praw użytkownika.','GCO are virtual account tokens granted manually, including for platform support at 10 GCO per PLN. They are not cryptocurrency, money or an investment. No cash redemption applies. Free transfers between accounts are available. Support is voluntary. Report balance errors to the platform operator. Unauthorised activity may result in corrections after review. Statutory rights remain unaffected.')))])
     ])));
   }
 }
