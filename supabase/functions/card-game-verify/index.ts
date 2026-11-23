@@ -92,9 +92,9 @@ Deno.serve(async(req)=>{
   const run=body.run,actions=body.actions;
   if(typeof run!=='string'||run.length!==36||!Array.isArray(actions))return fail('Invalid run');
   const {data,error}=await admin.from('agc_card_runs').select('*').eq('id',run).eq('member_id',user.id).eq('game_key',game).eq('status','active').single();
-  if(error||!data)return fail('Run missing or already submitted');
+  if(error||!data){const {data:prior}=await admin.from('agc_card_runs').select('status,verified_score,move_count,elapsed_seconds').eq('id',run).eq('member_id',user.id).eq('game_key',game).maybeSingle();if(prior?.status==='verified')return ok({verified:true,score:prior.verified_score,moves:prior.move_count,seconds:prior.elapsed_seconds,run,alreadySaved:true});return fail('Rozgrywka nie jest aktywna lub została już zakończona');}
   const elapsed=Math.floor((Date.now()-new Date(data.started_at).getTime())/1000);
-  if(elapsed<20||elapsed>14400)return fail('Invalid session duration');
+  if(elapsed<1||elapsed>14400)return fail('Nieprawidłowy czas rozgrywki');
   let moves:number;try{moves=replay(game,data.mode,data.deck,actions)}catch(e){await admin.from('agc_card_runs').update({status:'rejected',finished_at:new Date().toISOString()}).eq('id',run);return fail('Replay rejected: '+String(e)) }
   const score=Math.max(10,10000+(game==='spider'?data.mode*2000:0)-moves*3-elapsed);
   const {data:finalized,error:finalizeError}=await admin.rpc('agc_finalize_verified_card_run',{
