@@ -1929,7 +1929,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 ? Image.network('wolfart/farm-scene.jpg', fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const Center(
                       child: Icon(Icons.pets, size: 90, color: Color(0xFFFFB05A))))
-                : DecoratedBox(
+                : _GenesisArcadeCover(game: 'blocks', fallback: DecoratedBox(
                     decoration: const BoxDecoration(gradient: LinearGradient(
                       begin: Alignment.topLeft, end: Alignment.bottomRight,
                       colors: [Color(0xFF0B1C39), Color(0xFF163F6B), Color(0xFF081425)])),
@@ -1957,7 +1957,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                         style: TextStyle(color: Colors.white, fontSize: 23,
                           fontWeight: FontWeight.w900, letterSpacing: 2,
                           shadows: [Shadow(color: Colors.black, blurRadius: 12)]))),
-                    ])),
+                    ]))),
             ),
             Positioned(top: 12, right: 12, child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
