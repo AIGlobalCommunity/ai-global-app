@@ -72,7 +72,9 @@ Deno.serve(async req=>{
    if(!['ai','multiplayer'].includes(body.mode))return fail('Nieprawidłowy tryb');
    const {count}=await admin.from('agc_blackjack_rooms').select('id',{count:'exact',head:true}).eq('host_id',user.id).gte('created_at',new Date(Date.now()-600000).toISOString());
    if((count||0)>=8)return fail('Zbyt wiele pokoi. Spróbuj później.',429);
-   const seats:Player[]=[{id:user.id,name:displayName,type:'human'},...Array.from({length:body.mode==='ai'?3:10},(_,i)=>({id:null,name:'AI '+(i+1),type:'ai' as const}))];
+   const count=Number(body.players);
+   if(!Number.isInteger(count)||count<1||count>10)return fail('Wybierz od 1 do 10 uczestników');
+   const seats:Player[]=[{id:user.id,name:displayName,type:'human'},...Array.from({length:count},(_,i)=>body.mode==='ai'?({id:null,name:'AI '+(i+1),type:'ai' as const}):({id:null,name:'Oczekiwanie '+(i+1),type:'human' as const}))];
    const state=body.mode==='ai'?newRound(seats):null;if(state)advance(state,seats);
    const {data,error}=await admin.from('agc_blackjack_rooms').insert({host_id:user.id,mode:body.mode,seats,state,status:state?'playing':'lobby'}).select().single();
    if(error)throw error;return reply({room:view(data,user.id)});
@@ -110,14 +112,15 @@ Deno.serve(async req=>{
    if(existing)return fail('Zaproszenie zostało już wysłane');
    const {data:pending}=await admin.from('agc_blackjack_invites').select('seat').eq('room_id',roomId).in('status',['pending','accepted']);
    const taken=new Set((pending||[]).map(p=>p.seat));
-   const target=Array.from({length:10},(_,i)=>i+1).find(i=>seats[i].type==='ai'&&!taken.has(i));
-   if(target===undefined)return fail('Osiągnięto limit 10 zaproszeń');
+   const target=Array.from({length:seats.length-1},(_,i)=>i+1).find(i=>!seats[i].id&&!taken.has(i));
+   if(target===undefined)return fail('Wszystkie wybrane miejsca są zajęte lub zaproszone');
    const {error:insertError}=await admin.from('agc_blackjack_invites').insert({room_id:roomId,sender_id:user.id,recipient_id:recipient,seat:target});
    if(insertError)throw insertError;
    return reply({invited:true,seat:target});
   }
   if(action==='start'){
    if(room.host_id!==user.id||room.status!=='lobby')return fail('Tylko gospodarz może rozpocząć grę');
+   if(seats.slice(1).some(p=>!p.id))return fail('Poczekaj, aż wszyscy zaproszeni gracze dołączą.');
    const state=newRound(seats);advance(state,seats);
    const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({state,status:'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
    if(ce||!changed)return fail('Pokój został zmieniony, odśwież',409);
