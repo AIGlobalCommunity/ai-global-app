@@ -1880,7 +1880,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: blackjack ? const _BlackjackCover() : hearts ? const _HeartsCover() : spider ? const _SolitaireCover(spider: true) : freecell ? const _SolitaireCover(freecell: true) : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: blackjack ? const _GenesisCardCover(game: 'blackjack') : hearts ? const _GenesisCardCover(game: 'kierki') : spider ? const _GenesisCardCover(game: 'spider') : freecell ? const _GenesisCardCover(game: 'freecell') : solitaire ? const _GenesisCardCover(game: 'solitaire') : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -2008,7 +2008,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             borderRadius: BorderRadius.circular(15)),
           child: listMode
             ? Row(children: [
-                Icon(icon, color: color, size: 34),
+                if (index >= 9 && index <= 13) ClipRRect(borderRadius: BorderRadius.circular(9), child: SizedBox(width: 74, height: 56, child: _GenesisCardCover(game: _cardCoverKey(index), compact: true))) else Icon(icon, color: color, size: 34),
                 const SizedBox(width: 12),
                 Expanded(child: Text(title, maxLines: 2,
                   style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -2019,7 +2019,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
               ])
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(icon, color: color, size: 45),
+                if (index >= 9 && index <= 13) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisCardCover(game: _cardCoverKey(index), compact: true))) else Icon(icon, color: color, size: 45),
                 const SizedBox(height: 9),
                 Text(title, maxLines: 2, textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
@@ -2394,4 +2394,39 @@ class _BlackjackCover extends StatelessWidget {
       const Positioned(bottom:15,left:0,right:0,child:Text('BLACKJACK 21',textAlign:TextAlign.center,style:TextStyle(color:Color(0xFFFFE2A4),fontSize:23,fontWeight:FontWeight.w900,letterSpacing:3)))
     ]),
   );
+}
+
+String _cardCoverKey(int index) => switch (index) {
+  9 => 'solitaire', 10 => 'freecell', 11 => 'spider',
+  12 => 'kierki', 13 => 'blackjack', _ => 'solitaire',
+};
+
+/// Uses the WebP images uploaded to web/assets by the project owner.
+/// The tile image is the same on mobile/desktop; full cover chooses
+/// the portrait version for narrow screens and landscape otherwise.
+class _GenesisCardCover extends StatelessWidget {
+  const _GenesisCardCover({required this.game, this.compact = false});
+  final String game;
+  final bool compact;
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+    final variant = compact ? 'kafelek' : (mobile ? 'mobile' : 'desktop');
+    final path = 'assets/${game}_${variant}.webp';
+    return Image.network(
+      path,
+      fit: BoxFit.cover,
+      alignment: Alignment.center,
+      filterQuality: FilterQuality.medium,
+      semanticLabel: 'Grafika gry ${game.toUpperCase()}',
+      errorBuilder: (_, __, ___) => DecoratedBox(
+        decoration: const BoxDecoration(gradient: LinearGradient(
+          colors: [Color(0xFF0C3B38), Color(0xFF092438)])),
+        child: Center(child: Text(game.toUpperCase(),
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Color(0xFFFFDB95),
+            fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: 2))),
+      ),
+    );
+  }
 }
