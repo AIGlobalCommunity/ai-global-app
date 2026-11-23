@@ -97,15 +97,11 @@ Deno.serve(async(req)=>{
   if(elapsed<20||elapsed>14400)return fail('Invalid session duration');
   let moves:number;try{moves=replay(game,data.mode,data.deck,actions)}catch(e){await admin.from('agc_card_runs').update({status:'rejected',finished_at:new Date().toISOString()}).eq('id',run);return fail('Replay rejected: '+String(e)) }
   const score=Math.max(10,10000+(game==='spider'?data.mode*2000:0)-moves*3-elapsed);
-  const {error:updateError}=await admin.from('agc_card_runs').update({status:'verified',verified_score:score,finished_at:new Date().toISOString()}).eq('id',run).eq('status','active');if(updateError)throw updateError;
-  const {data:existing}=await admin.from('agc_game_scores').select('best_score').eq('member_id',user.id).eq('game_key',game).maybeSingle();
-  if(!existing||existing.best_score<score)await admin.from('agc_game_scores').upsert({member_id:user.id,game_key:game,best_score:score,best_level:data.mode,updated_at:new Date().toISOString()},{onConflict:'member_id,game_key'});
-  const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Warsaw',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  const {data:daily}=await admin.from('agc_daily_scores').select('best_score').eq('member_id',user.id).eq('game_key',game).eq('score_day',day).maybeSingle();
-  if(!daily||daily.best_score<score)await admin.from('agc_daily_scores').upsert({member_id:user.id,game_key:game,score_day:day,best_score:score},{onConflict:'member_id,game_key,score_day'});
-  await admin.from('agc_card_score_verification').insert({member_id:user.id,game_key:game,claimed_score:score,claimed_level:data.mode,verification_status:'verified',verified_at:new Date().toISOString(),verifier_note:'Server deck and complete move replay '+run});
-  const {data:verified}=await admin.from('agc_verified_daily_scores').select('best_score').eq('member_id',user.id).eq('game_key',game).eq('score_day',day).maybeSingle();
-  if(!verified||verified.best_score<score)await admin.from('agc_verified_daily_scores').upsert({member_id:user.id,game_key:game,score_day:day,best_score:score,verified_at:new Date().toISOString(),evidence_ref:'card-run:'+run},{onConflict:'member_id,game_key,score_day'});
+  const {data:finalized,error:finalizeError}=await admin.rpc('agc_finalize_verified_card_run',{
+    p_run:run,p_member:user.id,p_game:game,p_actions:actions,
+    p_moves:moves,p_seconds:elapsed,p_score:score,
+  });
+  if(finalizeError||finalized!==true)throw new Error('Atomic contest score update failed: '+(finalizeError?.message||'unknown'));
   return ok({verified:true,score,moves,seconds:elapsed,run});
  }
  return fail('Invalid action');
