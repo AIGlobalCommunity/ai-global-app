@@ -658,11 +658,51 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'blocks-server-result','request':request,'state':result}), html.window.location.origin);
       return;
     }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-crystals-shop-request') {
+      final source = event.source;
+      final request = decoded['request'];
+      if (source is! html.WindowBase || request is! String || request.length > 90 ||
+          !purchaseFrames.entries.any((entry) =>
+              entry.value == crystalsView && entry.key.contentWindow == source)) {
+        return;
+      }
+      Map<String, dynamic> response;
+      try {
+        if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) {
+          throw StateError('Zaloguj się, aby używać GCO.');
+        }
+        if (decoded['action'] == 'balance') {
+          final balance = await AgcBackend.client.rpc('agc_coin_balance');
+          response = {'balance': balance};
+        } else if (decoded['action'] == 'buy') {
+          final booster = decoded['booster'];
+          final purchase = decoded['purchase'];
+          if (!const ['hammer', 'bomb', 'shuffle'].contains(booster) ||
+              purchase is! String || purchase.length != 36) {
+            throw StateError('Nieprawidłowe zamówienie.');
+          }
+          final result = await AgcBackend.client.rpc(
+            'agc_crystals_booster_buy',
+            params: {'p_booster': booster, 'p_request': purchase},
+          );
+          if (result is! Map) throw StateError('Nieprawidłowa odpowiedź portfela.');
+          response = Map<String, dynamic>.from(result);
+        } else {
+          throw StateError('Nieznana operacja sklepu.');
+        }
+      } catch (error) {
+        response = {'error': error.toString()};
+      }
+      source.postMessage(jsonEncode({
+        'type': 'genesis-crystals-shop-result', 'request': request, ...response,
+      }), html.window.location.origin);
+      return;
+    }
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-blackjack-request') {
       final source = event.source;
       final request = decoded['request'];
       if (source is! html.WindowBase || request is! String || request.length > 90 ||
-          !purchaseFrames.entries.any((entry) => entry.value == blackjackView && entry.key.contentWindow == source)) return;
+          !purchaseFrames.entries.any((entry) => entry.value == blackjackView && entry.key.contentWindow == source)) { return; }
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
@@ -688,7 +728,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final source = event.source;
       final request = decoded['request'];
       if (source is! html.WindowBase || request is! String || request.length > 90 ||
-          !purchaseFrames.entries.any((entry) => entry.value == heartsView && entry.key.contentWindow == source)) return;
+          !purchaseFrames.entries.any((entry) => entry.value == heartsView && entry.key.contentWindow == source)) { return; }
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
@@ -718,7 +758,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       if (source is! html.WindowBase ||
           !const ['solitaire', 'freecell', 'spider'].contains(key) ||
           !const ['begin', 'finish'].contains(action) ||
-          request is! String || request.length > 90) return;
+          request is! String || request.length > 90) { return; }
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) {
@@ -2331,71 +2371,6 @@ class _CrystalsCover extends CustomPainter {
  @override bool shouldRepaint(covariant _CrystalsCover oldDelegate)=>false;
 }
 
-class _SolitaireCover extends StatelessWidget {
-  const _SolitaireCover({this.freecell = false, this.spider = false});
-  final bool freecell;
-  final bool spider;
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(gradient: LinearGradient(
-      begin: Alignment.topLeft, end: Alignment.bottomRight,
-      colors: [Color(0xFF0B3A32), Color(0xFF186451), Color(0xFF061D20)])),
-    child: Stack(children: [
-      Positioned(top: 14, left: 18, child: Text(spider ? '✦  ROYAL SPIDER' : freecell ? '✦  ROYAL FREECELL' : '✦  ROYAL KLONDIKE',
-        style: TextStyle(color: Color(0xFFFFD995), letterSpacing: 2,
-          fontSize: 13, fontWeight: FontWeight.w800))),
-      Center(child: Transform.rotate(angle: -.10,
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          for (final card in [('A','♠',false),('K','♥',true),('Q','♣',false),('J','♦',true)])
-            Container(width: 52, height: 80,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(color: const Color(0xFFFFF9EC),
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: const Color(0xFFE3C68A), width: 2),
-                boxShadow: const [BoxShadow(color: Color(0x88000000), blurRadius: 12, offset: Offset(0, 6))]),
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(card.$1, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900,
-                  color: card.$3 ? const Color(0xFFC52B40) : const Color(0xFF18252B))),
-                Text(card.$2, style: TextStyle(fontSize: 29,
-                  color: card.$3 ? const Color(0xFFC52B40) : const Color(0xFF18252B))),
-              ]),
-            ),
-        ]))),
-      Positioned(bottom: 15, left: 0, right: 0, child: Text(spider ? 'GENESIS SPIDER' : freecell ? 'GENESIS FREECELL' : 'GENESIS SOLITAIRE',
-        textAlign: TextAlign.center, style: TextStyle(color: Color(0xFFFFE2A4),
-          fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2))),
-    ]),
-  );
-}
-
-class _HeartsCover extends StatelessWidget {
-  const _HeartsCover();
-  @override Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(gradient: LinearGradient(colors:[Color(0xFF0B3A32),Color(0xFF186451),Color(0xFF061D20)])),
-    child: Stack(children:[
-      const Positioned(top:14,left:18,child:Text('✦ ROYAL HEARTS',style:TextStyle(color:Color(0xFFFFD995),letterSpacing:2,fontSize:13,fontWeight:FontWeight.w800))),
-      Center(child:Transform.rotate(angle:-.08,child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[
-        for(final suit in ['♥','♠','♦','♣']) Container(width:54,height:85,margin:const EdgeInsets.symmetric(horizontal:3),decoration:BoxDecoration(color:const Color(0xFFFFF8EA),borderRadius:BorderRadius.circular(8),border:Border.all(color:const Color(0xFFE5C588),width:2),boxShadow:const [BoxShadow(color:Colors.black45,blurRadius:8,offset:Offset(2,5))]),alignment:Alignment.center,child:Text(suit,style:TextStyle(fontSize:42,color:suit=='♥'||suit=='♦'?const Color(0xFFC52B40):const Color(0xFF18252B))))
-      ]))),
-      const Positioned(bottom:15,left:0,right:0,child:Text('GENESIS KIERKI',textAlign:TextAlign.center,style:TextStyle(color:Color(0xFFFFE2A4),fontSize:20,fontWeight:FontWeight.w900,letterSpacing:2)))
-    ]),
-  );
-}
-
-class _BlackjackCover extends StatelessWidget {
-  const _BlackjackCover();
-  @override Widget build(BuildContext context) => DecoratedBox(
-    decoration: const BoxDecoration(gradient: LinearGradient(colors:[Color(0xFF071D2D),Color(0xFF155C52),Color(0xFF071C2A)])),
-    child: Stack(children:[
-      const Positioned(top:14,left:18,child:Text('♠ ROYAL CARD COLLECTION',style:TextStyle(color:Color(0xFFFFD995),letterSpacing:2,fontSize:12,fontWeight:FontWeight.w800))),
-      Center(child:Transform.rotate(angle:-.07,child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[
-        for(final rank in ['A♠','K♠']) Container(width:84,height:120,margin:const EdgeInsets.symmetric(horizontal:6),decoration:BoxDecoration(color:const Color(0xFFFFF8EA),borderRadius:BorderRadius.circular(10),border:Border.all(color:const Color(0xFFE5C588),width:2),boxShadow:const [BoxShadow(color:Colors.black45,blurRadius:8,offset:Offset(2,5))]),alignment:Alignment.center,child:Text(rank,style:const TextStyle(fontSize:38,fontWeight:FontWeight.w900,color:Color(0xFF172631))))
-      ]))),
-      const Positioned(bottom:15,left:0,right:0,child:Text('BLACKJACK 21',textAlign:TextAlign.center,style:TextStyle(color:Color(0xFFFFE2A4),fontSize:23,fontWeight:FontWeight.w900,letterSpacing:3)))
-    ]),
-  );
-}
-
 String _cardCoverKey(int index) => switch (index) {
   9 => 'solitaire', 10 => 'freecell', 11 => 'spider',
   12 => 'kierki', 13 => 'blackjack', _ => 'solitaire',
@@ -2412,7 +2387,7 @@ class _GenesisCardCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final variant = compact ? 'kafelek' : (mobile ? 'mobile' : 'desktop');
-    final path = 'assets/${game}_${variant}.webp';
+    final path = 'assets/${game}_$variant.webp';
     return Image.network(
       path,
       fit: BoxFit.cover,
