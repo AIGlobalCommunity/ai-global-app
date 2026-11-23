@@ -1748,7 +1748,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: spider ? const _SolitaireCover(spider: true) : freecell ? const _SolitaireCover(freecell: true) : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: spider ? Image.network('assets/card-cover-spider.svg', fit: BoxFit.cover, errorBuilder: (_, __, ___) => const _SolitaireCover(spider: true)) : freecell ? Image.network('assets/card-cover-freecell.svg', fit: BoxFit.cover, errorBuilder: (_, __, ___) => const _SolitaireCover(freecell: true)) : solitaire ? Image.network('assets/card-cover-solitaire.svg', fit: BoxFit.cover, errorBuilder: (_, __, ___) => const _SolitaireCover()) : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
