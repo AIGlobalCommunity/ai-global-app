@@ -9,14 +9,14 @@ Dla każdej gry:
 
 Gry: solitaire, freecell, spider, kierki, blackjack.
 
-Sugerowany katalog w repozytorium: web/assets/card-games/
+Rzeczywisty katalog w repozytorium: web/assets/
 
 Przykład użycia w HTML/CSS:
 <picture>
-  <source media="(max-width: 600px)" srcset="assets/card-games/blackjack_mobile.webp">
-  <img src="assets/card-games/blackjack_desktop.webp" alt="Blackjack 21" style="width:100%;height:auto">
+  <source media="(max-width: 600px)" srcset="/assets/blackjack_mobile.webp">
+  <img src="/assets/blackjack_desktop.webp" alt="Blackjack 21" style="width:100%;height:auto">
 </picture>
 
-Kafelek: assets/card-games/blackjack_kafelek.webp
+Kafelek: /assets/blackjack_kafelek.webp
 
 Grafiki zachowują proporcje, nie są rozciągane.
