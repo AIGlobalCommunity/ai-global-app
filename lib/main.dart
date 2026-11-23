@@ -255,24 +255,24 @@ class GenesisCompetitionPage extends StatelessWidget {
   final VoidCallback onRanking;
   final VoidCallback onGames;
   static const rules = '''
-REGULAMIN GENESIS DAILY CHALLENGE — obowiązuje od ogłoszenia startu
-1. GENESIS DAILY CHALLENGE to planowany bezpłatny konkurs umiejętności dla pełnoletnich uczestników z Polski.
+REGULAMIN GENESIS DAILY CHALLENGE — zasady konkursu
+1. GENESIS DAILY CHALLENGE to bezpłatny konkurs umiejętności dla pełnoletnich uczestników z Polski.
 2. Doba konkursowa trwa od 00:00 do 24:00 czasu Europe/Warsaw. Łączna dzienna pula nagród: 80 zł. Pierwsze miejsce: 50 zł, drugie: 20 zł, trzecie: 10 zł. Nagrody przyznawane są trzem najwyżej sklasyfikowanym uczestnikom spełniającym regulamin po ręcznej weryfikacji przez organizatora. Przy remisie decyduje wcześniejsze osiągnięcie wyniku.
 3. Wynik zależy wyłącznie od umiejętności, refleksu, logiki i decyzji gracza. Nie przeprowadza się losowania. Warunki konkursowe, zadania, przeszkody i bonusy muszą być identyczne dla wszystkich. Gry z losowością wpływającą na wynik nie są dopuszczone. Regulamin obejmuje wszystkie gry platformy. Do rankingu konkursowego kwalifikują się wyniki każdej gry, która spełnia wymagania techniczne i regulaminowe konkursu. Jedna akceptacja aktualnej wersji regulaminu dotyczy wszystkich zakwalifikowanych gier.
 4. Udział wymaga bezpłatnego konta, akceptacji ostatecznego regulaminu i komentarza z nickiem pod postem dotyczącym dnia rozgrywki. Post na kolejny dzień publikowany jest o 20:00 czasu polskiego. Obserwowanie strony, udostępnianie i oznaczanie znajomych są dobrowolne.
-5. GCO nie są oferowane do bezpośredniego zakupu za pieniądze. Mogą być przyznawane za dobrowolne wsparcie platformy. Wsparcie nie jest warunkiem uczestnictwa ani gwarancją nagrody. Uczestnicy mogą wykorzystywać własne GCO na ulepszenia dostępne na jednakowych zasadach, również podczas konkursu. Różnice w saldzie GCO i wykorzystaniu ulepszeń mogą wpływać na wynik. Zwykły ranking nie stanowi podstawy nagród.
+5. GCO nie są oferowane do bezpośredniego zakupu za pieniądze. Mogą być przyznawane za dobrowolne wsparcie platformy. Wsparcie nie jest warunkiem uczestnictwa ani gwarancją nagrody. Uczestnicy mogą wykorzystywać własne GCO na ulepszenia dostępne na jednakowych zasadach, również podczas konkursu. Różnice w saldzie GCO i wykorzystaniu ulepszeń mogą wpływać na wynik. Wyniki osiągane w zwykłych grach również mogą kwalifikować się do nagród, pod warunkiem spełnienia zasad konkursu i potwierdzenia autentyczności wyniku przez organizatora.
 6. Boty, automatyzacja gry i manipulowanie wynikami są zabronione. Wyniki wymagają weryfikacji serwerowej i kontroli organizatora. Uczestnik ma możliwość złożenia reklamacji.
 7. Konkurs nie jest sponsorowany, popierany ani administrowany przez Facebook. Przed startem zostaną opublikowane dane organizatora, terminy, zasady reklamacji, odbioru nagród i rozliczeń podatkowych.
 ''';
   static const privacy = '''
 INFORMACJA RODO — GENESIS DAILY CHALLENGE
-Administrator: dane i kontakt organizatora zostaną podane przed rozpoczęciem zapisów.
+Administrator: dane i kontakt organizatora muszą zostać opublikowane przed zbieraniem zgłoszeń konkursowych.
 Zakres: identyfikator konta, nick, e-mail, wynik, czas rozgrywki, dane techniczne służące bezpieczeństwu oraz informacja o spełnieniu warunku komentarza. Dane do wypłaty będą wymagane tylko od laureatów, w zakresie niezbędnym.
 Cele i podstawy: organizacja konkursu i wypłata nagrody (art. 6 ust. 1 lit. b RODO), obowiązki prawne i podatkowe (lit. c), zapobieganie nadużyciom i rozpatrywanie roszczeń (lit. f). Marketing wymaga odrębnej podstawy i nie jest warunkiem udziału.
 Odbiorcy: dostawcy infrastruktury i obsługi płatności oraz uprawnione organy. Facebook przetwarza dane komentarzy na zasadach własnej polityki prywatności. Publicznie prezentowany będzie nick i wynik, bez adresu e-mail i danych wypłaty.
 Retencja: dane konkursowe przez okres organizacji i reklamacji oraz odpowiedni okres dochodzenia roszczeń; dokumenty podatkowe zgodnie z prawem. Szczegółowe terminy, odbiorcy i informacje o transferach poza EOG zostaną ustalone i opublikowane przed zapisami.
 Prawa: dostęp, sprostowanie, usunięcie, ograniczenie, przenoszenie danych, sprzeciw w przypadkach przewidzianych przez RODO oraz skarga do Prezesa UODO. O przyznaniu nagrody nie decyduje wyłącznie automatyczny system.
-Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczestnictwa. Na tym etapie nie zbieramy zgłoszeń konkursowych.
+Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczestnictwa. Zgłoszenie następuje zgodnie z regulaminem konkursu.
 ''';
   @override
   Widget build(BuildContext context) => Center(
@@ -292,7 +292,7 @@ Podanie danych niezbędnych do udziału jest dobrowolne, lecz wymagane do uczest
         FilledButton.icon(onPressed: onRanking, icon: const Icon(Icons.leaderboard), label: const Text('ZOBACZ RANKING')),
         OutlinedButton.icon(onPressed: onGames, icon: const Icon(Icons.sports_esports), label: const Text('PRZEJDŹ DO GIER')),
         const Card(child: ListTile(leading: Icon(Icons.checklist), title: Text('Jak uczestniczyć?'), subtitle: Text('1. Zaloguj się.\n2. Skomentuj post konkursowy dotyczący dnia rozgrywki na Facebooku, podając nick. Post na kolejny dzień publikujemy o 20:00. Udostępnienie jest dobrowolne.\n3. Zaakceptuj regulamin i graj.\n4. Organizator ręcznie zatwierdza i ogłasza laureatów.\nRegulamin obejmuje wszystkie gry platformy.'))),
-        const Card(child: ListTile(leading: Icon(Icons.lock_outline), title: Text('Zapisy zamknięte'), subtitle: Text('Zapisy i wypłaty nieaktywne. Wyniki zwykłych gier nie kwalifikują się do nagrody.'))),
+        const Card(child: ListTile(leading: Icon(Icons.emoji_events_outlined), title: Text('Graj i walcz o nagrody'), subtitle: Text('Wyniki ze zwykłych gier również mogą zostać uwzględnione. Nagrody wymagają spełnienia regulaminu, weryfikacji wyników i zatwierdzenia przez organizatora.'))),
         OutlinedButton.icon(onPressed: () async { await launchUrl(Uri.parse('https://www.facebook.com/thegenesisera'), mode: LaunchMode.externalApplication); }, icon: const Icon(Icons.public), label: const Text('Oficjalny Facebook')),
         const ExpansionTile(title: Text('Regulamin konkursu'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(rules))]),
         const ExpansionTile(title: Text('RODO — klauzula informacyjna'), children: [Padding(padding: EdgeInsets.all(12), child: SelectableText(privacy))]),
