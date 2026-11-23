@@ -2156,3 +2156,38 @@ class _CrystalsCover extends CustomPainter {
  }
  @override bool shouldRepaint(covariant _CrystalsCover oldDelegate)=>false;
 }
+
+class _SolitaireCover extends StatelessWidget {
+  const _SolitaireCover();
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(gradient: LinearGradient(
+      begin: Alignment.topLeft, end: Alignment.bottomRight,
+      colors: [Color(0xFF0B3A32), Color(0xFF186451), Color(0xFF061D20)])),
+    child: Stack(children: [
+      const Positioned(top: 14, left: 18, child: Text('✦  ROYAL KLONDIKE',
+        style: TextStyle(color: Color(0xFFFFD995), letterSpacing: 2,
+          fontSize: 13, fontWeight: FontWeight.w800))),
+      Center(child: Transform.rotate(angle: -.10,
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          for (final card in [('A','♠',false),('K','♥',true),('Q','♣',false),('J','♦',true)])
+            Container(width: 52, height: 80,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(color: const Color(0xFFFFF9EC),
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(color: const Color(0xFFE3C68A), width: 2),
+                boxShadow: const [BoxShadow(color: Color(0x88000000), blurRadius: 12, offset: Offset(0, 6))]),
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text(card.$1, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900,
+                  color: card.$3 ? const Color(0xFFC52B40) : const Color(0xFF18252B))),
+                Text(card.$2, style: TextStyle(fontSize: 29,
+                  color: card.$3 ? const Color(0xFFC52B40) : const Color(0xFF18252B))),
+              ]),
+            ),
+        ]))),
+      const Positioned(bottom: 15, left: 0, right: 0, child: Text('GENESIS SOLITAIRE',
+        textAlign: TextAlign.center, style: TextStyle(color: Color(0xFFFFE2A4),
+          fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2))),
+    ]),
+  );
+}
