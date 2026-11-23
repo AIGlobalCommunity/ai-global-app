@@ -1731,7 +1731,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: freecell ? const _SolitaireCover() : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: freecell ? const _SolitaireCover(freecell: true) : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -2176,14 +2176,15 @@ class _CrystalsCover extends CustomPainter {
 }
 
 class _SolitaireCover extends StatelessWidget {
-  const _SolitaireCover();
+  const _SolitaireCover({this.freecell = false});
+  final bool freecell;
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: const BoxDecoration(gradient: LinearGradient(
       begin: Alignment.topLeft, end: Alignment.bottomRight,
       colors: [Color(0xFF0B3A32), Color(0xFF186451), Color(0xFF061D20)])),
     child: Stack(children: [
-      const Positioned(top: 14, left: 18, child: Text('✦  ROYAL KLONDIKE',
+      Positioned(top: 14, left: 18, child: Text(freecell ? '✦  ROYAL FREECELL' : '✦  ROYAL KLONDIKE',
         style: TextStyle(color: Color(0xFFFFD995), letterSpacing: 2,
           fontSize: 13, fontWeight: FontWeight.w800))),
       Center(child: Transform.rotate(angle: -.10,
@@ -2203,7 +2204,7 @@ class _SolitaireCover extends StatelessWidget {
               ]),
             ),
         ]))),
-      const Positioned(bottom: 15, left: 0, right: 0, child: Text('GENESIS SOLITAIRE',
+      Positioned(bottom: 15, left: 0, right: 0, child: Text(freecell ? 'GENESIS FREECELL' : 'GENESIS SOLITAIRE',
         textAlign: TextAlign.center, style: TextStyle(color: Color(0xFFFFE2A4),
           fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2))),
     ]),
