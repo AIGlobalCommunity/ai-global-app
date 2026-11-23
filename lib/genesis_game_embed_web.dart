@@ -2387,7 +2387,7 @@ class _GenesisCardCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final variant = compact ? 'kafelek' : (mobile ? 'mobile' : 'desktop');
-    final path = 'assets/${game}_$variant.webp';
+    final path = '/assets/${game}_$variant.webp';
     return Image.network(
       path,
       fit: BoxFit.cover,
