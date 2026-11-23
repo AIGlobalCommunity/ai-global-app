@@ -672,8 +672,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           throw StateError('Zaloguj się, aby używać GCO.');
         }
         if (decoded['action'] == 'balance') {
-          final balance = await AgcBackend.client.rpc('agc_coin_balance');
-          response = {'balance': balance};
+          final result = await AgcBackend.client.rpc('agc_crystals_shop_status');
+          if (result is! Map) throw StateError('Nieprawidłowy stan sklepu.');
+          response = Map<String, dynamic>.from(result);
         } else if (decoded['action'] == 'buy') {
           final booster = decoded['booster'];
           final purchase = decoded['purchase'];
@@ -1920,10 +1921,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: blackjack ? const _GenesisCardCover(game: 'blackjack') : hearts ? const _GenesisCardCover(game: 'kierki') : spider ? const _GenesisCardCover(game: 'spider') : freecell ? const _GenesisCardCover(game: 'freecell') : solitaire ? const _GenesisCardCover(game: 'solitaire') : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
-                ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
+              child: blackjack ? const _GenesisCardCover(game: 'blackjack') : hearts ? const _GenesisCardCover(game: 'kierki') : spider ? const _GenesisCardCover(game: 'spider') : freecell ? const _GenesisCardCover(game: 'freecell') : solitaire ? const _GenesisCardCover(game: 'solitaire') : crystals ? const _GenesisArcadeCover(game: 'crystals', fallback: CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand())) : sling ? const _GenesisArcadeCover(game: 'slingshot', fallback: CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand())) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+                ? _GenesisArcadeCover(game: 'skoki', fallback: Image.network('/assets/ski-cover.jpg', fit: BoxFit.cover))
                 : snake
-                ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
+                ? _GenesisArcadeCover(game: 'snake', fallback: Image.network('/assets/snake-cover.png', fit: BoxFit.cover))
                 : wolf
                 ? Image.network('wolfart/farm-scene.jpg', fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const Center(
@@ -2048,7 +2049,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             borderRadius: BorderRadius.circular(15)),
           child: listMode
             ? Row(children: [
-                if (index >= 9 && index <= 13) ClipRRect(borderRadius: BorderRadius.circular(9), child: SizedBox(width: 74, height: 56, child: _GenesisCardCover(game: _cardCoverKey(index), compact: true))) else Icon(icon, color: color, size: 34),
+                if (_arcadeCoverKey(index) != null) ClipRRect(borderRadius: BorderRadius.circular(9), child: SizedBox(width: 74, height: 56, child: _GenesisArcadeCover(game: _arcadeCoverKey(index)!, compact: true))) else Icon(icon, color: color, size: 34),
                 const SizedBox(width: 12),
                 Expanded(child: Text(title, maxLines: 2,
                   style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -2059,7 +2060,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
               ])
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                if (index >= 9 && index <= 13) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisCardCover(game: _cardCoverKey(index), compact: true))) else Icon(icon, color: color, size: 45),
+                if (_arcadeCoverKey(index) != null) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisArcadeCover(game: _arcadeCoverKey(index)!, compact: true))) else Icon(icon, color: color, size: 45),
                 const SizedBox(height: 9),
                 Text(title, maxLines: 2, textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
@@ -2371,6 +2372,12 @@ class _CrystalsCover extends CustomPainter {
  @override bool shouldRepaint(covariant _CrystalsCover oldDelegate)=>false;
 }
 
+String? _arcadeCoverKey(int index) => switch(index) {
+  3 => 'blocks', 4 => 'snake', 5 => 'skoki', 7 => 'slingshot', 8 => 'crystals',
+  9 => 'solitaire', 10 => 'freecell', 11 => 'spider',
+  12 => 'kierki', 13 => 'blackjack', _ => null,
+};
+
 String _cardCoverKey(int index) => switch (index) {
   9 => 'solitaire', 10 => 'freecell', 11 => 'spider',
   12 => 'kierki', 13 => 'blackjack', _ => 'solitaire',
@@ -2379,6 +2386,28 @@ String _cardCoverKey(int index) => switch (index) {
 /// Uses the WebP images uploaded to web/assets by the project owner.
 /// The tile image is the same on mobile/desktop; full cover chooses
 /// the portrait version for narrow screens and landscape otherwise.
+class _GenesisArcadeCover extends StatelessWidget {
+  const _GenesisArcadeCover({required this.game, this.compact = false, this.fallback});
+  final String game;
+  final bool compact;
+  final Widget? fallback;
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 600;
+    final variant = compact ? 'kafelek' : mobile ? 'mobile' : 'desktop';
+    return Image.network('/assets/${game}_$variant.webp',
+      fit: BoxFit.cover, width: double.infinity, height: double.infinity,
+      semanticLabel: 'Grafika gry $game',
+      errorBuilder: (_, __, ___) => fallback ?? DecoratedBox(
+        decoration: const BoxDecoration(gradient: LinearGradient(
+          colors: [Color(0xFF112B43), Color(0xFF133D5B)])),
+        child: Center(child: Text(game.toUpperCase(),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+      ),
+    );
+  }
+}
+
 class _GenesisCardCover extends StatelessWidget {
   const _GenesisCardCover({required this.game, this.compact = false});
   final String game;
