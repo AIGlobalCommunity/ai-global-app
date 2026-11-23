@@ -2378,11 +2378,6 @@ String? _arcadeCoverKey(int index) => switch(index) {
   12 => 'kierki', 13 => 'blackjack', _ => null,
 };
 
-String _cardCoverKey(int index) => switch (index) {
-  9 => 'solitaire', 10 => 'freecell', 11 => 'spider',
-  12 => 'kierki', 13 => 'blackjack', _ => 'solitaire',
-};
-
 /// Uses the WebP images uploaded to web/assets by the project owner.
 /// The tile image is the same on mobile/desktop; full cover chooses
 /// the portrait version for narrow screens and landscape otherwise.
@@ -2409,13 +2404,12 @@ class _GenesisArcadeCover extends StatelessWidget {
 }
 
 class _GenesisCardCover extends StatelessWidget {
-  const _GenesisCardCover({required this.game, this.compact = false});
+  const _GenesisCardCover({required this.game});
   final String game;
-  final bool compact;
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 600;
-    final variant = compact ? 'kafelek' : (mobile ? 'mobile' : 'desktop');
+    final variant = mobile ? 'mobile' : 'desktop';
     final path = '/assets/${game}_$variant.webp';
     return Image.network(
       path,
