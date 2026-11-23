@@ -18,7 +18,7 @@ main{width:min(1100px,100%);margin:auto;padding:12px clamp(7px,2vw,22px)}.stats{
 <main><section class="stats"><div class="stat"><small>PUNKTY</small><b id="score">0</b></div><div class="stat"><small>CZAS</small><b id="clock">00:00</b></div><div class="stat"><small>RUCHY</small><b id="moves">0</b></div><div class="stat"><small>UKOŃCZONE</small><b id="wins">0</b></div></section>
 <section class="board" aria-label="Plansza pasjansa"><div class="top"><div class="stock-area"><div class="slot" id="stock" data-zone="stock" title="Dobierz karty">✦</div><div class="slot" id="waste" data-zone="waste"></div></div><div class="foundations" id="foundations"></div></div><div class="tableau" id="tableau"></div></section><p class="hint" id="message">Układaj naprzemiennie kolory od króla do asa. Kliknij kartę, a następnie miejsce docelowe. Możesz też przeciągać.</p><details class="rules"><summary>📖 Krótka instrukcja — jak grać?</summary><p><b>Cel:</b> ułóż wszystkie karty na czterech polach u góry, osobno dla każdego koloru, od asa (A) do króla (K).</p><p><b>Na planszy:</b> układaj karty malejąco, naprzemiennie czerwone i czarne (np. czarna 9 na czerwoną 10). Na puste miejsce możesz położyć tylko króla.</p><p><b>Dobieranie:</b> kliknij zakryty stos po lewej. Wybierz tryb 1 lub 3 kart. Kliknij kartę i miejsce docelowe albo przeciągnij ją. „Podpowiedź” wskazuje możliwy ruch, a „Cofnij” przywraca poprzedni.</p></details><div class="foot"><span>♠ ♥ ♦ ♣</span><span>Automatyczny zapis partii na urządzeniu</span><span id="rank">Ranking online wymaga zalogowania</span></div></main>
 <div class="overlay" id="overlay"><div class="modal"><div style="font-size:55px">🏆</div><h1>ZWYCIĘSTWO!</h1><p id="wintext"></p><button id="again">ZAGRAJ PONOWNIE</button></div></div>
-<script>
+<script src="genesis-card-touch.js"></script><script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), suits=['♠','♥','♦','♣'], red=s=>s===1||s===2, key='genesis-solitaire-save-v1', winKey='genesis-solitaire-wins-v1';
 let deck=[],stock=[],waste=[],foundation=[[],[],[],[]],columns=[[],[],[],[],[],[],[]],selected=null,history=[],score=0,moves=0,elapsed=0,started=false,won=false,draw=1,sound=true,lastTick=Date.now(),wins=Number(localStorage.getItem(winKey)||0),audio=null,run=null,actions=[],pending=new Map();
@@ -48,5 +48,12 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 setInterval(()=>{const now=Date.now();if(started&&!won){elapsed+=Math.min(2,Math.max(0,Math.floor((now-lastTick)/1000)));$('clock').textContent=clock();if(elapsed%10===0)save()}lastTick=now},1000);
 try{const old=JSON.parse(localStorage.getItem(key));if(old&&old.state){restore(old.state);history=Array.isArray(old.history)?old.history.slice(-60):[];wins=Number(localStorage.getItem(winKey)||0);run=old.run||null;actions=Array.isArray(old.actions)?old.actions:[];render()}else begin()}catch(_){begin()}
 window.parent.postMessage(JSON.stringify({type:'genesis-auth-request'}),location.origin);
+window.installGenesisCardTouch({
+ isWon:()=>won,
+ isMovable:el=>el.dataset.zone!=='stock'&&!el.classList.contains('back'),
+ source:el=>({zone:el.dataset.zone,index:Number(el.dataset.i),j:Number(el.dataset.j)}),
+ slotDestination:el=>el.dataset.zone==='f'?{zone:'f',index:Number(el.dataset.i)}:null,
+ drop:(src,dst)=>{selected={zone:src.zone,i:src.index,j:src.j};target(dst.zone,dst.index);}
+});
 })();
 </script></body></html>
