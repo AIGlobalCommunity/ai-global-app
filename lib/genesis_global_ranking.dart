@@ -204,7 +204,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
                 ChoiceChip(label: Text(entry.value), selected: mode == entry.key, onSelected: (_) => setState(() { mode = entry.key; future = _load(); })),
             ]),
             if (mode == 'game') DropdownButton<String>(value: game, isExpanded: true, items: [for (final key in games) DropdownMenuItem(value: key, child: Text(_gameName(key)))], onChanged: (value) { if (value != null) setState(() { game = value; future = _load(); }); }),
-            if (mode == 'verified') Padding(padding: const EdgeInsets.all(8), child: Text(GenesisLanguage.copy('🏆 80 zł dziennie: 1. 50 zł • 2. 20 zł • 3. 10 zł • wyłącznie wyniki zweryfikowane. Zapisy zamknięte. Laureatów ogłasza organizator na Facebooku.','Daily prize pool: PLN 80 (1st: 50, 2nd: 20, 3rd: 10). Verified scores only. Entries closed. The organizer announces the winners on Facebook.'), textAlign: TextAlign.center)),
+            if (mode == 'verified') Padding(padding: const EdgeInsets.all(8), child: Text(GenesisLanguage.copy('🏆 80 zł dziennie: 1. 50 zł • 2. 20 zł • 3. 10 zł • wyniki wymagają weryfikacji. Zwykłe gry także mogą się kwalifikować. Laureatów ogłasza organizator na Facebooku.','Daily prize pool: PLN 80 (1st: 50, 2nd: 20, 3rd: 10). Regular game scores may also qualify after verification. The organizer announces the winners on Facebook.'), textAlign: TextAlign.center)),
             if (mode == 'daily' || mode == 'verified') Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
               IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => setState(() { day = DateTime(day.year,day.month,day.day-1); future = _load(); })),
               TextButton.icon(icon: const Icon(Icons.calendar_month), label: Text(dayKey), onPressed: () async { final picked = await showDatePicker(context: context, initialDate: day, firstDate: DateTime(2020), lastDate: DateTime.now()); if (picked != null && mounted) setState(() { day = picked; future = _load(); }); }),
@@ -271,9 +271,25 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
                     ),
                     title: Text(player.handle,
                       maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(GenesisLanguage.copy(
-                      '${player.scores.length} gier · kliknij po szczegóły',
-                      '${player.scores.length} games · tap for details')),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(GenesisLanguage.copy(
+                          '${player.scores.length} gier · kliknij po szczegóły',
+                          '${player.scores.length} games · tap for details')),
+                        if (mode == 'daily' && index < 3)
+                          Text(GenesisLanguage.copy(
+                            '🏆 Potencjalna nagroda: ${[50, 20, 10][index]} zł, jeśli spełniasz wymagania konkursu i wynik zostanie zatwierdzony.',
+                            '🏆 Potential prize: PLN ${[50, 20, 10][index]}, subject to contest eligibility and score verification.'),
+                            style: const TextStyle(color: Color(0xFFD8B66A), fontSize: 11)),
+                        if (mode == 'verified' && index < 3)
+                          Text(GenesisLanguage.copy(
+                            '🏆 Możesz wygrać ${[50, 20, 10][index]} zł, jeśli spełniasz wymagania konkursu i organizator zatwierdzi wynik.',
+                            '🏆 You could win PLN ${[50, 20, 10][index]} if you meet contest requirements and your result is approved.'),
+                            style: const TextStyle(color: Color(0xFFD8B66A), fontSize: 11)),
+                      ],
+                    ),
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
