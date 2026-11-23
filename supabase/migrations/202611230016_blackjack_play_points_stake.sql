@@ -1,0 +1,1 @@
+alter table public.agc_blackjack_rooms add column if not exists stake integer not null default 10 check (stake in (10,25,50,100));
