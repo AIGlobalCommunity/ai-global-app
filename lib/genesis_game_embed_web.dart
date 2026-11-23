@@ -54,9 +54,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const crystalsView = 'genesis-crystals-html5-iframe';
   static const solitaireView = 'genesis-solitaire-html5-iframe';
   static const freecellView = 'genesis-freecell-html5-iframe';
+  static const spiderView = 'genesis-spider-html5-iframe';
   OverlayEntry? crystalsOverlay;
   OverlayEntry? solitaireOverlay;
   OverlayEntry? freecellOverlay;
+  OverlayEntry? spiderOverlay;
   static const slingshotView = 'genesis-slingshot-html5-iframe';
   static const mazeView = 'genesis-maze-html5-iframe';
   static const skiView = 'genesis-ski-html5-iframe';
@@ -82,9 +84,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell'];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider'];
   static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView, spiderView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -247,6 +249,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(crystalsView, 'genesis-crystals.html?embed=1&version=$buildVersion', 'GENESIS CRYSTALS');
       _register(solitaireView, 'genesis-solitaire.html?embed=1&version=$buildVersion', 'GENESIS SOLITAIRE');
       _register(freecellView, 'genesis-freecell.html?embed=1&version=$buildVersion', 'GENESIS FREECELL');
+      _register(spiderView, 'genesis-spider.html?embed=1&version=$buildVersion', 'GENESIS SPIDER');
       _register(slingshotView, 'genesis-slingshot.html?embed=1&version=$buildVersion', 'GENESIS SLINGSHOT');
       _register(mazeView, 'genesis-maze.html?embed=1&version=$buildVersion', 'GENESIS MAZE');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
@@ -280,6 +283,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     solitaireOverlay?.dispose();
     freecellOverlay?.remove();
     freecellOverlay?.dispose();
+    spiderOverlay?.remove();
+    spiderOverlay?.dispose();
     slingshotOverlay?.remove();
     slingshotOverlay?.dispose();
     mazeOverlay?.remove();
@@ -339,6 +344,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         return frame;
       },
     );
+  }
+
+  void _showSpiderFullscreen() {
+    if (!mounted || spiderOverlay != null) return;
+    spiderOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: spiderView)));
+    Overlay.of(context, rootOverlay: true).insert(spiderOverlay!);
   }
 
   void _showFreecellFullscreen() {
@@ -704,6 +715,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         'nick': handle,
       });
       html.window.open(url.toString(), '_blank');
+      return;
+    }
+    if (decoded is Map && decoded['game'] == 'spider' && decoded['type'] == 'genesis-spider-exit-fullscreen') {
+      spiderOverlay?.remove(); spiderOverlay?.dispose(); spiderOverlay = null;
       return;
     }
     if (decoded is Map && decoded['game'] == 'freecell' && decoded['type'] == 'genesis-freecell-exit-fullscreen') {
@@ -1679,6 +1694,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final crystals = index == 8;
     final solitaire = index == 9;
     final freecell = index == 10;
+    final spider = index == 11;
     final sling = index == 7;
     final ski = index == 5;
     final snake = index == 4;
@@ -1686,6 +1702,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final title = titles[index];
     Future<void> openGame() async {
       if (!await _confirmPlayRules() || !mounted) return;
+      if (spider) { _showSpiderFullscreen(); return; }
       if (freecell) { _showFreecellFullscreen(); return; }
       if (solitaire) { _showSolitaireFullscreen(); return; }
       if (crystals) { _showCrystalsFullscreen(); return; }
@@ -1698,7 +1715,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.emoji_events_outlined, 'Ranking i rekordy')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.emoji_events_outlined, 'Ranking i rekordy')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
+    final features = spider ? <(IconData, String)>[(Icons.style_outlined, 'Pająk: 1, 2 lub 4 kolory'),(Icons.touch_app_outlined, '8 kompletnych sekwencji'),(Icons.save_outlined, 'Zapis i cofanie ruchów'),(Icons.emoji_events_outlined, 'Ranking serwerowy')] : freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.emoji_events_outlined, 'Ranking i rekordy')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.emoji_events_outlined, 'Ranking i rekordy')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1731,7 +1748,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: freecell ? const _SolitaireCover(freecell: true) : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: spider ? const _SolitaireCover(spider: true) : freecell ? const _SolitaireCover(freecell: true) : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1956,7 +1973,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'], ['cards','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
@@ -2176,15 +2193,16 @@ class _CrystalsCover extends CustomPainter {
 }
 
 class _SolitaireCover extends StatelessWidget {
-  const _SolitaireCover({this.freecell = false});
+  const _SolitaireCover({this.freecell = false, this.spider = false});
   final bool freecell;
+  final bool spider;
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: const BoxDecoration(gradient: LinearGradient(
       begin: Alignment.topLeft, end: Alignment.bottomRight,
       colors: [Color(0xFF0B3A32), Color(0xFF186451), Color(0xFF061D20)])),
     child: Stack(children: [
-      Positioned(top: 14, left: 18, child: Text(freecell ? '✦  ROYAL FREECELL' : '✦  ROYAL KLONDIKE',
+      Positioned(top: 14, left: 18, child: Text(spider ? '✦  ROYAL SPIDER' : freecell ? '✦  ROYAL FREECELL' : '✦  ROYAL KLONDIKE',
         style: TextStyle(color: Color(0xFFFFD995), letterSpacing: 2,
           fontSize: 13, fontWeight: FontWeight.w800))),
       Center(child: Transform.rotate(angle: -.10,
@@ -2204,7 +2222,7 @@ class _SolitaireCover extends StatelessWidget {
               ]),
             ),
         ]))),
-      Positioned(bottom: 15, left: 0, right: 0, child: Text(freecell ? 'GENESIS FREECELL' : 'GENESIS SOLITAIRE',
+      Positioned(bottom: 15, left: 0, right: 0, child: Text(spider ? 'GENESIS SPIDER' : freecell ? 'GENESIS FREECELL' : 'GENESIS SOLITAIRE',
         textAlign: TextAlign.center, style: TextStyle(color: Color(0xFFFFE2A4),
           fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2))),
     ]),
