@@ -90,6 +90,8 @@ Deno.serve(async(req)=>{
   const name=(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').toString().slice(0,32);
   if(action==='create'){
    const mode=body.mode;if(!['ai','multiplayer'].includes(mode))return bad('Invalid mode');
+   const {count:recent}=await admin.from('agc_hearts_rooms').select('id',{count:'exact',head:true}).eq('host_id',user.id).gte('created_at',new Date(Date.now()-600000).toISOString());
+   if((recent||0)>=8)return bad('Zbyt wiele nowych pokoi. Spróbuj później.',429);
    const seats=[{id:user.id,name,type:'human',ready:true},...Array.from({length:3},(_,i)=>({id:null,name:'AI '+(i+1),type:'ai',ready:true}))];
    const state=mode==='ai'?deal():null;if(state)advance(state,seats);
    const {data,error}=await admin.from('agc_hearts_rooms').insert({host_id:user.id,mode,seats,state,status:mode==='ai'?'playing':'lobby'}).select().single();if(error)throw error;
@@ -138,6 +140,7 @@ Deno.serve(async(req)=>{
    const state=deal();advance(state,seats);
    const {data:changed,error:ce}=await admin.from('agc_hearts_rooms').update({state,status:'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
    if(ce||!changed)return bad('Room changed; retry',409);
+   await admin.from('agc_hearts_invites').update({status:'declined'}).eq('room_id',roomId).eq('status','pending');
    return out({room:view(changed,user.id)});
   }
   if(action==='play'){
