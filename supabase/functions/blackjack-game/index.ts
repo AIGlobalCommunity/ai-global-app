@@ -4,13 +4,13 @@ const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status
 const fail=(message:string,status=400)=>reply({error:message},status);
 type Card={s:number,n:number};
 type Player={id:string|null,name:string,type:'human'|'ai'};
-type Round={hands:Card[][],dealer:Card[],shoe:Card[],turn:number,done:boolean[],round:number,scores:number[],last:any,finished:boolean,history:any[]};
+type Round={hands:Card[][],dealer:Card[],shoe:Card[],turn:number,done:boolean[],round:number,scores:number[],chips:number[],stake:number,last:any,finished:boolean,history:any[]};
 const total=(cards:Card[])=>{let sum=0,aces=0;for(const c of cards){sum+=c.n===1?11:Math.min(10,c.n);if(c.n===1)aces++}while(sum>21&&aces){sum-=10;aces--}return sum};
 const natural=(cards:Card[])=>cards.length===2&&total(cards)===21;
 const shuffle=()=>{const cards:Card[]=[];for(let d=0;d<6;d++)for(let s=0;s<4;s++)for(let n=1;n<=13;n++)cards.push({s,n});for(let i=cards.length-1;i>0;i--){const b=new Uint32Array(1);crypto.getRandomValues(b);const j=b[0]%(i+1);[cards[i],cards[j]]=[cards[j],cards[i]]}return cards};
 const take=(state:Round)=>{const c=state.shoe.pop();if(!c)throw Error('Brak kart w talii');return c};
-function newRound(seats:Player[],scores?:number[],number=1,history:any[]=[]):Round{
- const state:Round={hands:seats.map(()=>[]),dealer:[],shoe:shuffle(),turn:0,done:seats.map(()=>false),round:number,scores:scores??seats.map(()=>0),last:null,finished:false,history};
+function newRound(seats:Player[],scores?:number[],number=1,history:any[]=[],chips?:number[],stake=10):Round{
+ const state:Round={hands:seats.map(()=>[]),dealer:[],shoe:shuffle(),turn:0,done:seats.map(()=>false),round:number,scores:scores??seats.map(()=>0),chips:chips??seats.map(()=>500),stake,last:null,finished:false,history};
  for(let j=0;j<2;j++){for(const hand of state.hands)hand.push(take(state));state.dealer.push(take(state))}
  state.done=state.hands.map(natural);
  return state;
@@ -27,12 +27,15 @@ function settle(s:Round,seats:Player[]){
   else if(dealer>21||value>dealer){outcome='win';award=200}
   else if(value===dealer){outcome='push';award=100}
   s.scores[i]+=award;
-  return {seat:i,value,outcome,award};
+  const stake=s.chips[i]>=s.stake?s.stake:0;
+  const delta=outcome==='blackjack'?Math.floor(stake*1.5):outcome==='win'?stake:outcome==='push'?0:-stake;
+  s.chips[i]+=delta;
+  return {seat:i,value,outcome,award,stake,delta};
  });
  s.last={round:s.round,dealer:s.dealer,results};
  s.history.push(s.last);
  if(s.round>=5){s.finished=true;s.turn=-1;return}
- const next=newRound(seats,s.scores,s.round+1,s.history);Object.assign(s,next);
+ const next=newRound(seats,s.scores,s.round+1,s.history,s.chips,s.stake);Object.assign(s,next);
 }
 function advance(s:Round,seats:Player[]){
  let count=0;
@@ -53,7 +56,7 @@ function view(room:any,user:string){
  const s=room.state as Round|null;
  return {id:room.id,mode:room.mode,status:room.status,version:room.version,seat,
  seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,ready:true})),
- state:s?{round:s.round,turn:s.turn,hand:s.hands[seat],myTotal:total(s.hands[seat]),dealerUp:s.dealer[0],dealerCards:s.finished?s.dealer:null,counts:s.hands.map(h=>h.length),values:s.hands.map((h,i)=>i===seat||s.done[i]||s.finished?total(h):null),done:s.done,scores:s.scores,last:s.last,finished:s.finished,canAct:!s.finished&&s.turn===seat&&!s.done[seat],history:s.finished?s.history:undefined}:null};
+ state:s?{round:s.round,turn:s.turn,hand:s.hands[seat],myTotal:total(s.hands[seat]),dealerUp:s.dealer[0],dealerCards:s.finished?s.dealer:null,counts:s.hands.map(h=>h.length),values:s.hands.map((h,i)=>i===seat||s.done[i]||s.finished?total(h):null),done:s.done,scores:s.scores,chips:s.chips,stake:s.stake,last:s.last,finished:s.finished,canAct:!s.finished&&s.turn===seat&&!s.done[seat],history:s.finished?s.history:undefined}:null};
 }
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
@@ -70,13 +73,15 @@ Deno.serve(async req=>{
   const displayName=String(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').slice(0,32);
   if(action==='create'){
    if(!['ai','multiplayer'].includes(body.mode))return fail('Nieprawidłowy tryb');
-   const {count}=await admin.from('agc_blackjack_rooms').select('id',{count:'exact',head:true}).eq('host_id',user.id).gte('created_at',new Date(Date.now()-600000).toISOString());
-   if((count||0)>=8)return fail('Zbyt wiele pokoi. Spróbuj później.',429);
+   const {count:recentRooms}=await admin.from('agc_blackjack_rooms').select('id',{count:'exact',head:true}).eq('host_id',user.id).gte('created_at',new Date(Date.now()-600000).toISOString());
+   if((recentRooms||0)>=8)return fail('Zbyt wiele pokoi. Spróbuj później.',429);
    const count=Number(body.players);
+   const stake=Number(body.stake);
+   if(![10,25,50,100].includes(stake))return fail('Wybierz stawkę punktową: 10, 25, 50 lub 100');
    if(!Number.isInteger(count)||count<1||count>10)return fail('Wybierz od 1 do 10 uczestników');
    const seats:Player[]=[{id:user.id,name:displayName,type:'human'},...Array.from({length:count},(_,i)=>body.mode==='ai'?({id:null,name:'AI '+(i+1),type:'ai' as const}):({id:null,name:'Oczekiwanie '+(i+1),type:'human' as const}))];
-   const state=body.mode==='ai'?newRound(seats):null;if(state)advance(state,seats);
-   const {data,error}=await admin.from('agc_blackjack_rooms').insert({host_id:user.id,mode:body.mode,seats,state,status:state?'playing':'lobby'}).select().single();
+   const state=body.mode==='ai'?newRound(seats,undefined,1,[],undefined,stake):null;if(state)advance(state,seats);
+   const {data,error}=await admin.from('agc_blackjack_rooms').insert({host_id:user.id,mode:body.mode,seats,state,status:state?'playing':'lobby',stake}).select().single();
    if(error)throw error;return reply({room:view(data,user.id)});
   }
   if(action==='inbox'){
@@ -121,7 +126,7 @@ Deno.serve(async req=>{
   if(action==='start'){
    if(room.host_id!==user.id||room.status!=='lobby')return fail('Tylko gospodarz może rozpocząć grę');
    if(seats.slice(1).some(p=>!p.id))return fail('Poczekaj, aż wszyscy zaproszeni gracze dołączą.');
-   const state=newRound(seats);advance(state,seats);
+   const state=newRound(seats,undefined,1,[],undefined,Number(room.stake)||10);advance(state,seats);
    const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({state,status:'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
    if(ce||!changed)return fail('Pokój został zmieniony, odśwież',409);
    await admin.from('agc_blackjack_invites').update({status:'declined'}).eq('room_id',roomId).eq('status','pending');
