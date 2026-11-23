@@ -153,6 +153,25 @@ jobs:
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
           test -s build/web/assets/assets/agc_genesis_ai_vector.svg
           echo "AGC cosmic HD background and vector Genesis logo are present in the release bundle"
+      - name: Verify game cover images and WebP signatures
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('build/web/assets')
+          for game in ('solitaire', 'freecell', 'spider', 'kierki', 'blackjack'):
+              for variant in ('desktop', 'mobile', 'kafelek'):
+                  path = root / f'{game}_{variant}.webp'
+                  if not path.is_file():
+                      raise SystemExit(f'Missing game cover: {path}')
+                  data = path.read_bytes()
+                  if len(data) < 100 or data[:4] != b'RIFF' or data[8:12] != b'WEBP':
+                      raise SystemExit(f'Invalid WebP cover: {path}')
+                  print(f'OK {path} ({len(data)} bytes)')
+          for name in ('snake-cover.png', 'ski-cover.jpg'):
+              path = root / name
+              if not path.is_file() or path.stat().st_size < 100:
+                  raise SystemExit(f'Missing fallback cover: {path}')
+          PY
       - name: Configure GitHub Pages custom domain
         run: echo 'thegenesisera.com' > build/web/CNAME
       - name: Stop Jekyll processing
