@@ -662,7 +662,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final source = event.source;
       final request = decoded['request'];
       if (source is! html.WindowBase || request is! String || request.length > 90 ||
-          !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-blackjack.html') ?? false))) return;
+          !purchaseFrames.entries.any((entry) => entry.value == blackjackView && entry.key.contentWindow == source)) return;
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
@@ -688,7 +688,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final source = event.source;
       final request = decoded['request'];
       if (source is! html.WindowBase || request is! String || request.length > 90 ||
-          !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-hearts.html') ?? false))) return;
+          !purchaseFrames.entries.any((entry) => entry.value == heartsView && entry.key.contentWindow == source)) return;
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
