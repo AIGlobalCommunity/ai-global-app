@@ -860,6 +860,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         decoded['level'] is! int) {
       return;
     }
+    // Card games are accepted only by the authenticated server replay verifier.
+    if (const ['solitaire', 'freecell', 'spider'].contains(decoded['game'])) return;
     final points = decoded['score'] as int;
     final stage = decoded['level'] as int;
     receivedScoreEvents++;
@@ -931,6 +933,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   void _recoverPendingScores() {
     if (!mounted || AgcBackend.user == null) return;
     for (final key in gameKeys) {
+      if (const ['solitaire', 'freecell', 'spider'].contains(key)) continue;
       try {
         final raw = html.window.localStorage['$scoreStoragePrefix$key'];
         if (raw == null) continue;
