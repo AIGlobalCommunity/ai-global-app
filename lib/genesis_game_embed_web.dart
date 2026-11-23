@@ -2399,10 +2399,20 @@ class _GenesisArcadeCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final variant = compact ? 'kafelek' : mobile ? 'mobile' : 'desktop';
-    return Image.network('/assets/${game}_$variant.webp',
+    final imagePath = '/assets/${game}_$variant.webp';
+    final backup = switch (game) {
+      'snake' => '/assets/snake-cover.png',
+      'skoki' => '/assets/ski-cover.jpg',
+      _ => null,
+    };
+    return Image.network(imagePath,
       fit: BoxFit.cover, width: double.infinity, height: double.infinity,
       semanticLabel: 'Grafika gry $game',
-      errorBuilder: (_, __, ___) => fallback ?? DecoratedBox(
+      errorBuilder: (_, __, ___) => backup != null
+        ? Image.network(backup, fit: BoxFit.cover, width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => fallback ?? const Center(child: Icon(Icons.image_not_supported_outlined)))
+        : fallback ?? DecoratedBox(
         decoration: const BoxDecoration(gradient: LinearGradient(
           colors: [Color(0xFF112B43), Color(0xFF133D5B)])),
         child: Center(child: Text(game.toUpperCase(),
@@ -2421,13 +2431,22 @@ class _GenesisCardCover extends StatelessWidget {
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final variant = compact ? 'kafelek' : mobile ? 'mobile' : 'desktop';
     final path = '/assets/${game}_$variant.webp';
+    final backup = '/assets/${game}_desktop.webp';
     return Image.network(
       path,
       fit: BoxFit.cover,
       alignment: Alignment.center,
       filterQuality: FilterQuality.medium,
       semanticLabel: 'Grafika gry ${game.toUpperCase()}',
-      errorBuilder: (_, __, ___) => DecoratedBox(
+      errorBuilder: (_, __, ___) => variant != 'desktop'
+        ? Image.network(backup, fit: BoxFit.cover, width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => _missingCover())
+        : _missingCover(),
+    );
+  }
+
+  Widget _missingCover() => DecoratedBox(
         decoration: const BoxDecoration(gradient: LinearGradient(
           colors: [Color(0xFF0C3B38), Color(0xFF092438)])),
         child: Center(child: Text(game.toUpperCase(),
@@ -2436,5 +2455,4 @@ class _GenesisCardCover extends StatelessWidget {
             fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: 2))),
       ),
     );
-  }
 }
