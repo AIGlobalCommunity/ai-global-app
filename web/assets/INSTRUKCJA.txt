@@ -1,0 +1,22 @@
+THE GENESIS ERA — GRAFIKI KART (WWW / TELEFON)
+
+Wszystkie grafiki są zoptymalizowane do formatu WebP.
+
+Dla każdej gry:
+  *_desktop.webp — 1200 × 675 px, proporcje 16:9 (szeroki ekran)
+  *_mobile.webp — 720 × 900 px, proporcje 4:5 (telefon)
+  *_kafelek.webp — 800 × 500 px, proporcje 8:5 (kafelek gry)
+
+Gry: solitaire, freecell, spider, kierki, blackjack.
+
+Sugerowany katalog w repozytorium: web/assets/card-games/
+
+Przykład użycia w HTML/CSS:
+<picture>
+  <source media="(max-width: 600px)" srcset="assets/card-games/blackjack_mobile.webp">
+  <img src="assets/card-games/blackjack_desktop.webp" alt="Blackjack 21" style="width:100%;height:auto">
+</picture>
+
+Kafelek: assets/card-games/blackjack_kafelek.webp
+
+Grafiki zachowują proporcje, nie są rozciągane.
