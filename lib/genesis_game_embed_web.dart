@@ -53,8 +53,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const blocksView = 'genesis-blocks-html5-iframe';
   static const crystalsView = 'genesis-crystals-html5-iframe';
   static const solitaireView = 'genesis-solitaire-html5-iframe';
+  static const freecellView = 'genesis-freecell-html5-iframe';
   OverlayEntry? crystalsOverlay;
   OverlayEntry? solitaireOverlay;
+  OverlayEntry? freecellOverlay;
   static const slingshotView = 'genesis-slingshot-html5-iframe';
   static const mazeView = 'genesis-maze-html5-iframe';
   static const skiView = 'genesis-ski-html5-iframe';
@@ -80,9 +82,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -244,6 +246,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(blocksView, 'genesis-blocks.html?embed=1&version=$buildVersion', 'GENESIS BLOCKS');
       _register(crystalsView, 'genesis-crystals.html?embed=1&version=$buildVersion', 'GENESIS CRYSTALS');
       _register(solitaireView, 'genesis-solitaire.html?embed=1&version=$buildVersion', 'GENESIS SOLITAIRE');
+      _register(freecellView, 'genesis-freecell.html?embed=1&version=$buildVersion', 'GENESIS FREECELL');
       _register(slingshotView, 'genesis-slingshot.html?embed=1&version=$buildVersion', 'GENESIS SLINGSHOT');
       _register(mazeView, 'genesis-maze.html?embed=1&version=$buildVersion', 'GENESIS MAZE');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
@@ -275,6 +278,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     crystalsOverlay?.dispose();
     solitaireOverlay?.remove();
     solitaireOverlay?.dispose();
+    freecellOverlay?.remove();
+    freecellOverlay?.dispose();
     slingshotOverlay?.remove();
     slingshotOverlay?.dispose();
     mazeOverlay?.remove();
@@ -334,6 +339,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         return frame;
       },
     );
+  }
+
+  void _showFreecellFullscreen() {
+    if (!mounted || freecellOverlay != null) return;
+    freecellOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: freecellView)));
+    Overlay.of(context, rootOverlay: true).insert(freecellOverlay!);
   }
 
   void _showSolitaireFullscreen() {
@@ -693,6 +704,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         'nick': handle,
       });
       html.window.open(url.toString(), '_blank');
+      return;
+    }
+    if (decoded is Map && decoded['game'] == 'freecell' && decoded['type'] == 'genesis-freecell-exit-fullscreen') {
+      freecellOverlay?.remove(); freecellOverlay?.dispose(); freecellOverlay = null;
       return;
     }
     if (decoded is Map && decoded['game'] == 'solitaire' && decoded['type'] == 'genesis-solitaire-exit-fullscreen') {
@@ -1663,6 +1678,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final maze = index == 6;
     final crystals = index == 8;
     final solitaire = index == 9;
+    final freecell = index == 10;
     final sling = index == 7;
     final ski = index == 5;
     final snake = index == 4;
@@ -1670,6 +1686,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final title = titles[index];
     Future<void> openGame() async {
       if (!await _confirmPlayRules() || !mounted) return;
+      if (freecell) { _showFreecellFullscreen(); return; }
       if (solitaire) { _showSolitaireFullscreen(); return; }
       if (crystals) { _showCrystalsFullscreen(); return; }
       if (sling) { _showSlingshotFullscreen(); return; }
@@ -1681,7 +1698,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.emoji_events_outlined, 'Ranking i rekordy')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
+    final features = freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.emoji_events_outlined, 'Ranking i rekordy')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.emoji_events_outlined, 'Ranking i rekordy')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1714,7 +1731,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: freecell ? const _SolitaireCover() : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1905,6 +1922,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ('shooter', GenesisLanguage.copy('Strzelanki', 'Shooters')),
               ('arcade', GenesisLanguage.copy('Zręcznościowe', 'Arcade')),
               ('sport', GenesisLanguage.copy('Sportowe', 'Sports')),
+              ('cards', GenesisLanguage.copy('Karciane', 'Card games')),
               ('offline', 'Offline'),
             ])
               ChoiceChip(
@@ -1938,7 +1956,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['puzzle','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['cards','offline'], ['cards','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
