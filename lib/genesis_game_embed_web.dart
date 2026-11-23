@@ -55,10 +55,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const solitaireView = 'genesis-solitaire-html5-iframe';
   static const freecellView = 'genesis-freecell-html5-iframe';
   static const spiderView = 'genesis-spider-html5-iframe';
+  static const heartsView = 'genesis-hearts-html5-iframe';
   OverlayEntry? crystalsOverlay;
   OverlayEntry? solitaireOverlay;
   OverlayEntry? freecellOverlay;
   OverlayEntry? spiderOverlay;
+  OverlayEntry? heartsOverlay;
   static const slingshotView = 'genesis-slingshot-html5-iframe';
   static const mazeView = 'genesis-maze-html5-iframe';
   static const skiView = 'genesis-ski-html5-iframe';
@@ -84,9 +86,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView, spiderView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider', 'hearts'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL','GENESIS SPIDER','GENESIS KIERKI'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView, spiderView, heartsView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -250,6 +252,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(solitaireView, 'genesis-solitaire.html?embed=1&version=$buildVersion', 'GENESIS SOLITAIRE');
       _register(freecellView, 'genesis-freecell.html?embed=1&version=$buildVersion', 'GENESIS FREECELL');
       _register(spiderView, 'genesis-spider.html?embed=1&version=$buildVersion', 'GENESIS SPIDER');
+      _register(heartsView, 'genesis-hearts.html?embed=1&version=$buildVersion', 'GENESIS KIERKI');
       _register(slingshotView, 'genesis-slingshot.html?embed=1&version=$buildVersion', 'GENESIS SLINGSHOT');
       _register(mazeView, 'genesis-maze.html?embed=1&version=$buildVersion', 'GENESIS MAZE');
       _register(skiView, 'skoki-narciarskie.html?embed=1&version=$buildVersion', 'Skoki narciarskie');
@@ -285,6 +288,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     freecellOverlay?.dispose();
     spiderOverlay?.remove();
     spiderOverlay?.dispose();
+    heartsOverlay?.remove();
+    heartsOverlay?.dispose();
     slingshotOverlay?.remove();
     slingshotOverlay?.dispose();
     mazeOverlay?.remove();
@@ -344,6 +349,12 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         return frame;
       },
     );
+  }
+
+  void _showHeartsFullscreen() {
+    if (!mounted || heartsOverlay != null) return;
+    heartsOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: heartsView)));
+    Overlay.of(context, rootOverlay: true).insert(heartsOverlay!);
   }
 
   void _showSpiderFullscreen() {
@@ -636,6 +647,32 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'blocks-server-result','request':request,'state':result}), html.window.location.origin);
       return;
     }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-hearts-request') {
+      final source = event.source;
+      final request = decoded['request'];
+      if (source is! html.WindowBase || request is! String || request.length > 90 ||
+          !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-hearts.html') ?? false))) return;
+      Map<String, dynamic> response;
+      try {
+        if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
+        final result = await AgcBackend.client.functions.invoke('hearts-game', body: {
+          'action': decoded['action'],
+          if (decoded.containsKey('mode')) 'mode': decoded['mode'],
+          if (decoded.containsKey('room')) 'room': decoded['room'],
+          if (decoded.containsKey('identity')) 'identity': decoded['identity'],
+          if (decoded.containsKey('version')) 'version': decoded['version'],
+          if (decoded.containsKey('card')) 'card': decoded['card'],
+        });
+        if (result.data is! Map) throw StateError('Nieprawidłowa odpowiedź serwera.');
+        response = Map<String, dynamic>.from(result.data as Map);
+        if (response['error'] != null) throw StateError(response['error'].toString());
+        if (response['room'] is Map && (response['room'] as Map)['status'] == 'finished') {
+          GenesisGlobalRanking.scoreRevision.value++;
+        }
+      } catch (error) { response = {'error': error.toString()}; }
+      source.postMessage(jsonEncode({'type':'genesis-hearts-result','request':request,...response}), html.window.location.origin);
+      return;
+    }
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-card-verify-request') {
       final source = event.source;
       final key = decoded['game'];
@@ -758,6 +795,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         'nick': handle,
       });
       html.window.open(url.toString(), '_blank');
+      return;
+    }
+    if (decoded is Map && decoded['game'] == 'hearts' && decoded['type'] == 'genesis-hearts-exit-fullscreen') {
+      heartsOverlay?.remove(); heartsOverlay?.dispose(); heartsOverlay = null;
       return;
     }
     if (decoded is Map && decoded['game'] == 'spider' && decoded['type'] == 'genesis-spider-exit-fullscreen') {
@@ -1741,6 +1782,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final solitaire = index == 9;
     final freecell = index == 10;
     final spider = index == 11;
+    final hearts = index == 12;
     final sling = index == 7;
     final ski = index == 5;
     final snake = index == 4;
@@ -1748,6 +1790,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final title = titles[index];
     Future<void> openGame() async {
       if (!await _confirmPlayRules() || !mounted) return;
+      if (hearts) { _showHeartsFullscreen(); return; }
       if (spider) { _showSpiderFullscreen(); return; }
       if (freecell) { _showFreecellFullscreen(); return; }
       if (solitaire) { _showSolitaireFullscreen(); return; }
@@ -1761,7 +1804,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = spider ? <(IconData, String)>[(Icons.style_outlined, 'Pająk: 1, 2 lub 4 kolory'),(Icons.touch_app_outlined, '8 kompletnych sekwencji'),(Icons.save_outlined, 'Zapis i cofanie ruchów'),(Icons.verified_user_outlined, 'Serwer sprawdza ruchy i wynik')] : freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
+    final features = hearts ? <(IconData, String)>[(Icons.favorite_outline, 'Klasyczne Kierki na 4 graczy'),(Icons.smart_toy_outlined, 'Graj przeciwko AI'),(Icons.group_add_outlined, 'Zaproś po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwer kontroluje rozdania i ruchy')] : spider ? <(IconData, String)>[(Icons.style_outlined, 'Pająk: 1, 2 lub 4 kolory'),(Icons.touch_app_outlined, '8 kompletnych sekwencji'),(Icons.save_outlined, 'Zapis i cofanie ruchów'),(Icons.verified_user_outlined, 'Serwer sprawdza ruchy i wynik')] : freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1794,7 +1837,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: spider ? const _SolitaireCover(spider: true) : freecell ? const _SolitaireCover(freecell: true) : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: hearts ? const _HeartsCover() : spider ? const _SolitaireCover(spider: true) : freecell ? const _SolitaireCover(freecell: true) : solitaire ? const _SolitaireCover() : crystals ? const CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand()) : sling ? const CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand()) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
                 ? Image.network('assets/ski-cover.jpg', fit: BoxFit.cover)
                 : snake
                 ? Image.network('assets/snake-cover.png', fit: BoxFit.cover)
@@ -1986,6 +2029,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ('arcade', GenesisLanguage.copy('Zręcznościowe', 'Arcade')),
               ('sport', GenesisLanguage.copy('Sportowe', 'Sports')),
               ('cards', GenesisLanguage.copy('Karciane', 'Card games')),
+              ('multiplayer', 'Multiplayer'),
               ('offline', 'Offline'),
             ])
               ChoiceChip(
@@ -2019,7 +2063,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'], ['cards','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'], ['cards','offline'], ['cards','multiplayer'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
@@ -2271,6 +2315,20 @@ class _SolitaireCover extends StatelessWidget {
       Positioned(bottom: 15, left: 0, right: 0, child: Text(spider ? 'GENESIS SPIDER' : freecell ? 'GENESIS FREECELL' : 'GENESIS SOLITAIRE',
         textAlign: TextAlign.center, style: TextStyle(color: Color(0xFFFFE2A4),
           fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2))),
+    ]),
+  );
+}
+
+class _HeartsCover extends StatelessWidget {
+  const _HeartsCover();
+  @override Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(gradient: LinearGradient(colors:[Color(0xFF0B3A32),Color(0xFF186451),Color(0xFF061D20)])),
+    child: Stack(children:[
+      const Positioned(top:14,left:18,child:Text('✦ ROYAL HEARTS',style:TextStyle(color:Color(0xFFFFD995),letterSpacing:2,fontSize:13,fontWeight:FontWeight.w800))),
+      Center(child:Transform.rotate(angle:-.08,child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[
+        for(final suit in ['♥','♠','♦','♣']) Container(width:54,height:85,margin:const EdgeInsets.symmetric(horizontal:3),decoration:BoxDecoration(color:const Color(0xFFFFF8EA),borderRadius:BorderRadius.circular(8),border:Border.all(color:const Color(0xFFE5C588),width:2),boxShadow:const [BoxShadow(color:Colors.black45,blurRadius:8,offset:Offset(2,5))]),alignment:Alignment.center,child:Text(suit,style:TextStyle(fontSize:42,color:suit=='♥'||suit=='♦'?const Color(0xFFC52B40):const Color(0xFF18252B))))
+      ]))),
+      const Positioned(bottom:15,left:0,right:0,child:Text('GENESIS KIERKI',textAlign:TextAlign.center,style:TextStyle(color:Color(0xFFFFE2A4),fontSize:20,fontWeight:FontWeight.w900,letterSpacing:2)))
     ]),
   );
 }
