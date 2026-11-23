@@ -2049,7 +2049,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             borderRadius: BorderRadius.circular(15)),
           child: listMode
             ? Row(children: [
-                if (_arcadeCoverKey(index) != null) ClipRRect(borderRadius: BorderRadius.circular(9), child: SizedBox(width: 74, height: 56, child: _GenesisArcadeCover(game: _arcadeCoverKey(index)!, compact: true))) else Icon(icon, color: color, size: 34),
+                if (_cardCoverForIndex(index) != null) ClipRRect(borderRadius: BorderRadius.circular(9), child: SizedBox(width: 74, height: 56, child: _GenesisCardCover(game: _cardCoverForIndex(index)!, compact: true))) else if (_arcadeCoverKey(index) != null) ClipRRect(borderRadius: BorderRadius.circular(9), child: SizedBox(width: 74, height: 56, child: _GenesisArcadeCover(game: _arcadeCoverKey(index)!, compact: true))) else Icon(icon, color: color, size: 34),
                 const SizedBox(width: 12),
                 Expanded(child: Text(title, maxLines: 2,
                   style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -2060,7 +2060,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
               ])
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                if (_arcadeCoverKey(index) != null) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisArcadeCover(game: _arcadeCoverKey(index)!, compact: true))) else Icon(icon, color: color, size: 45),
+                if (_cardCoverForIndex(index) != null) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisCardCover(game: _cardCoverForIndex(index)!, compact: true))) else if (_arcadeCoverKey(index) != null) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisArcadeCover(game: _arcadeCoverKey(index)!, compact: true))) else Icon(icon, color: color, size: 45),
                 const SizedBox(height: 9),
                 Text(title, maxLines: 2, textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
@@ -2381,6 +2381,15 @@ String? _arcadeCoverKey(int index) => switch(index) {
 /// Uses the WebP images uploaded to web/assets by the project owner.
 /// The tile image is the same on mobile/desktop; full cover chooses
 /// the portrait version for narrow screens and landscape otherwise.
+String? _cardCoverForIndex(int index) => switch (index) {
+  9 => 'solitaire',
+  10 => 'freecell',
+  11 => 'spider',
+  12 => 'kierki',
+  13 => 'blackjack',
+  _ => null,
+};
+
 class _GenesisArcadeCover extends StatelessWidget {
   const _GenesisArcadeCover({required this.game, this.compact = false, this.fallback});
   final String game;
@@ -2404,12 +2413,13 @@ class _GenesisArcadeCover extends StatelessWidget {
 }
 
 class _GenesisCardCover extends StatelessWidget {
-  const _GenesisCardCover({required this.game});
+  const _GenesisCardCover({required this.game, this.compact = false});
   final String game;
+  final bool compact;
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 600;
-    final variant = mobile ? 'mobile' : 'desktop';
+    final variant = compact ? 'kafelek' : mobile ? 'mobile' : 'desktop';
     final path = '/assets/${game}_$variant.webp';
     return Image.network(
       path,
