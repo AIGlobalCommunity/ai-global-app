@@ -2453,6 +2453,5 @@ class _GenesisCardCover extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(color: Color(0xFFFFDB95),
             fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: 2))),
-      ),
-    );
+      );
 }
