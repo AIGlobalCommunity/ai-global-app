@@ -1926,12 +1926,17 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
       : index == 4 ? Icons.gamepad_outlined
+      : index == 12 ? Icons.favorite_outlined : index >= 9 ? Icons.style_outlined
       : index == 8 ? Icons.diamond_outlined : index == 7 ? Icons.track_changes : index == 6 ? Icons.route_outlined : Icons.downhill_skiing_outlined;
     final color = index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     Future<void> open() async {
       if (!await _confirmPlayRules() || !mounted) return;
+      if (index == 12) { _showHeartsFullscreen(); return; }
+      if (index == 11) { _showSpiderFullscreen(); return; }
+      if (index == 10) { _showFreecellFullscreen(); return; }
+      if (index == 9) { _showSolitaireFullscreen(); return; }
       if (index == 8) { _showCrystalsFullscreen(); return; }
       if (index == 7) { _showSlingshotFullscreen(); return; }
       if (index == 6) { _showMazeFullscreen(); return; }
