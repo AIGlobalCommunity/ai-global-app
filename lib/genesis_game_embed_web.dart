@@ -637,6 +637,49 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'blocks-server-result','request':request,'state':result}), html.window.location.origin);
       return;
     }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-card-verify-request') {
+      final source = event.source;
+      final key = decoded['game'];
+      final action = decoded['action'];
+      final request = decoded['request'];
+      if (source is! html.WindowBase ||
+          !const ['solitaire', 'freecell', 'spider'].contains(key) ||
+          !const ['begin', 'finish'].contains(action) ||
+          request is! String || request.length > 90) return;
+      Map<String, dynamic> response;
+      try {
+        if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) {
+          throw StateError('Zaloguj się na konto, aby grać o zweryfikowany wynik.');
+        }
+        final result = await AgcBackend.client.functions.invoke(
+          'card-game-verify',
+          body: {
+            'game': key, 'action': action,
+            if (action == 'begin') 'mode': decoded['mode'],
+            if (action == 'finish') 'run': decoded['run'],
+            if (action == 'finish') 'actions': decoded['actions'],
+          },
+        );
+        final data = result.data;
+        if (result.status != 200 || data is! Map) {
+          throw StateError('Serwer odrzucił weryfikację: ${result.status}');
+        }
+        response = Map<String, dynamic>.from(data);
+        if (response.containsKey('error')) throw StateError(response['error'].toString());
+        if (action == 'finish' && response['verified'] == true) {
+          GenesisGlobalRanking.scoreRevision.value++;
+          if (mounted) setState(() => scoreNotice = 'Serwer zweryfikował wynik ${response['score']} pkt.');
+        }
+      } catch (error) {
+        response = {'error': error.toString()};
+      }
+      source.postMessage(jsonEncode({
+        'type': 'genesis-card-verify-result',
+        'game': key, 'request': request, 'action': action,
+        ...response,
+      }), html.window.location.origin);
+      return;
+    }
     if (decoded is Map<String, dynamic> && decoded['type'] == 'defender-shop-buy') {
       final source = event.source;
       final request = decoded['request'];
