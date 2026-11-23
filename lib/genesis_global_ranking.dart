@@ -269,6 +269,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
                         ? ['🥇', '🥈', '🥉'][index]
                         : '${index + 1}'),
                     ),
+                    isThreeLine: (mode == 'daily' || mode == 'verified') && index < 3,
                     title: Text(player.handle,
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                     subtitle: Column(
