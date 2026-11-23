@@ -1,0 +1,7 @@
+THE GENESIS ERA — 5 GIER — 15 PLIKÓW WEBP
+
+Rozpakuj ZIP i wgraj wszystkie pliki .webp do: web/assets/ (bez podfolderu).
+
+Gry: crystals, slingshot, skoki, snake, blocks.
+Każda gra ma _desktop (1200x675), _mobile (720x900), _kafelek (800x500).
+Po wgraniu plików do gałęzi main, nowy kod kafelków automatycznie je wyświetli.
