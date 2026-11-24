@@ -58,6 +58,37 @@ class AgcBackend {
 
   static User? get user => configured ? client.auth.currentUser : null;
 
+  static Future<void>? _gameRefresh;
+  static Future<void> ensureGameSession() async {
+    final session = client.auth.currentSession;
+    if (session == null) throw StateError('Zaloguj się ponownie do The Genesis Era.');
+    if (!session.isExpired) return;
+    final pending = _gameRefresh;
+    if (pending != null) { await pending; return; }
+    final task = _refreshGameSession();
+    _gameRefresh = task;
+    try { await task; } finally { _gameRefresh = null; }
+  }
+
+  static Future<void> _refreshGameSession() async {
+    await client.auth.refreshSession();
+  }
+
+  static String gameConnectionMessage(Object error) {
+    final raw = error.toString();
+    final lower = raw.toLowerCase();
+    if (lower.contains('failed to fetch') || lower.contains('authretryable') ||
+        lower.contains('status: 0') || lower.contains('timeout') ||
+        lower.contains('clientexception')) {
+      return 'Utracono połączenie z serwerem. Sprawdź internet. Gra spróbuje zsynchronizować stan.';
+    }
+    if (lower.contains('refresh_token') || lower.contains('jwt expired') ||
+        lower.contains('401')) {
+      return 'Sesja wygasła. Zaloguj się ponownie.';
+    }
+    return raw;
+  }
+
   static Future<void> signUp(String email, String password, String nick, bool showNickPublicly) async {
     if (!configured) throw StateError('Backend is not configured.');
     final validatedEmail = email.trim();
