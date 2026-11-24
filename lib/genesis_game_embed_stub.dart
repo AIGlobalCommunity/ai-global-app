@@ -1,12 +1,42 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'agc_backend.dart';
 
 /// Native fallback: game cards open the HTML5 games in the browser.
-class GenesisGameTab extends StatelessWidget {
+class GenesisGameTab extends StatefulWidget {
   const GenesisGameTab({super.key});
 
+  @override
+  State<GenesisGameTab> createState() => _GenesisGameTabState();
+}
+class _GenesisGameTabState extends State<GenesisGameTab> {
+  static const games = [
+    ('signal','GENESIS SIGNAL','genesis-game.html'),('defender','GENESIS DEFENDER','genesis-defender.html'),('wolf','WILK I JAJKA','genesis-wolf-eggs.html'),('blocks','GENESIS BLOCKS','genesis-blocks.html'),('snake','GENESIS SNAKE','genesis-snake.html'),('ski','SKOKI NARCIARSKIE','skoki-narciarskie.html'),('maze','GENESIS MAZE','genesis-maze.html'),('slingshot','GENESIS SLINGSHOT','genesis-slingshot.html'),('crystals','GENESIS CRYSTALS','genesis-crystals.html'),('solitaire','GENESIS SOLITAIRE','genesis-solitaire.html'),('freecell','GENESIS FREECELL','genesis-freecell.html'),('spider','GENESIS SPIDER','genesis-spider.html'),('hearts','GENESIS KIERKI','genesis-hearts.html'),('blackjack','GENESIS BLACKJACK 21','genesis-blackjack.html'),('duck','GENESIS DUCK HUNT','genesis-duck.html')
+  ];
+  Set<String> favorites = {};
+  String? owner;
+  bool onlyFavorites=false, busy=false;
+  int columns=4, revision=0;
+  StreamSubscription<AuthState>? auth;
+  @override
+  void initState(){super.initState();if(AgcBackend.configured){_load();auth=AgcBackend.client.auth.onAuthStateChange.listen((_)=>_load());}}
+  @override
+  void dispose(){auth?.cancel();super.dispose();}
+  Future<void> _load() async {
+    final u=AgcBackend.user;final next=u==null||u.isAnonymous?null:u.id;final req=++revision;
+    if(owner!=next)setState((){owner=next;favorites={};onlyFavorites=false;});
+    if(next==null)return;
+    try{final rows=await AgcBackend.client.from('agc_game_favorites').select('game_key').eq('user_id',next);
+    if(mounted&&req==revision)setState(()=>favorites={for(final row in rows) row['game_key'] as String});}catch(_){if(mounted&&req==revision)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Nie udało się pobrać ulubionych.')));}
+  }
+  Future<void> _toggle(String key) async {
+    final uid=owner;if(uid==null||busy||AgcBackend.user?.id!=uid)return;
+    setState(()=>busy=true);
+    try{if(favorites.contains(key)){await AgcBackend.client.from('agc_game_favorites').delete().eq('user_id',uid).eq('game_key',key);}else{await AgcBackend.client.from('agc_game_favorites').insert({'user_id':uid,'game_key':key});}if(mounted)await _load();}catch(_){if(mounted)ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Nie udało się zapisać ulubionych.')));}finally{if(mounted)setState(()=>busy=false);}
+  }
   static const gold = Color(0xFFD8B66A);
   static const buildVersion = String.fromEnvironment(
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
@@ -39,140 +69,12 @@ class GenesisGameTab extends StatelessWidget {
             style: const TextStyle(fontSize: 10, color: Color(0xFF90B2C8)),
             textAlign: TextAlign.center)),
           const SizedBox(height: 20),
-          _card(
-            context: context,
-            icon: Icons.hub_outlined,
-            title: 'GENESIS SIGNAL',
-            description: 'Łamigłówka: połącz źródło sygnału z celem.',
-            file: 'genesis-game.html',
-            artwork: 'assets/genesis_signal_cinematic.jpg',
-          ),
-          const SizedBox(height: 12),
-          _card(
-            context: context,
-            icon: Icons.rocket_launch_outlined,
-            title: 'GENESIS DEFENDER',
-            description: 'Strzelanka: broń stacji przed falami dronów.',
-            file: 'genesis-defender.html',
-            artwork: 'assets/genesis_defender_cinematic.jpg',
-          ),
+          Wrap(spacing:6,children:[for(final n in [1,2,3,4])ChoiceChip(label:Text('$n'),selected:columns==n,onSelected:(_)=>setState(()=>columns=n)),if(owner!=null)FilterChip(label:const Text('⭐ Ulubione'),selected:onlyFavorites,onSelected:(v)=>setState(()=>onlyFavorites=v))]),
+          LayoutBuilder(builder:(context,box){
+            final visible=games.where((g)=>!onlyFavorites||favorites.contains(g.$1)).toList()..sort((a,b)=>(favorites.contains(b.$1)?1:0).compareTo(favorites.contains(a.$1)?1:0));
+            return Wrap(spacing:6,runSpacing:6,children:[for(final g in visible)SizedBox(width:(box.maxWidth-6*(columns-1))/columns,height:130,child:Card(child:InkWell(onTap:()=>_open(g.$3),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[GestureDetector(onTap:()=>_showRanking(context,g.$3),child:const Icon(Icons.emoji_events_outlined,color:gold)),Flexible(child:Text(g.$2,textAlign:TextAlign.center,maxLines:3,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11))),if(owner!=null)IconButton(tooltip:'Ulubione',visualDensity:VisualDensity.compact,onPressed:busy?null:()=>_toggle(g.$1),icon:Icon(favorites.contains(g.$1)?Icons.star:Icons.star_border,color:gold))]))))]);
+          }),
         ],
-      ),
-    ),
-  );
-
-  Widget _card({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String description,
-    required String file,
-    required String artwork,
-  }) {
-    final signal = file == 'genesis-game.html';
-    final accent = signal
-      ? const Color(0xFF39CBFF) : const Color(0xFFFFB05A);
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF071525),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent, width: 1.2),
-        boxShadow: [
-          BoxShadow(color: accent.withValues(alpha: .22),
-            blurRadius: 18),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          InkWell(
-            onTap: () => _open(file),
-            child: SizedBox(
-              width: double.infinity, height: 215,
-              child: Image.asset(artwork, fit: BoxFit.cover,
-                filterQuality: FilterQuality.high, semanticLabel: title),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(children: [
-              Row(children: [
-                Icon(icon, color: accent, size: 21),
-                const SizedBox(width: 9),
-                Expanded(child: Text(description,
-                  style: const TextStyle(
-                    color: Color(0xFFDFEAF2)))),
-              ]),
-              const SizedBox(height: 18),
-              Row(children: [
-                Expanded(child: _button(
-                  label: 'ZAGRAJ',
-                  icon: Icons.play_arrow_rounded,
-                  accent: accent,
-                  primary: true,
-                  onTap: () => _open(file),
-                )),
-                const SizedBox(width: 10),
-                Expanded(child: _button(
-                  label: 'RANKING',
-                  icon: Icons.emoji_events_outlined,
-                  accent: accent,
-                  primary: false,
-                  onTap: () => _showRanking(context, file),
-                )),
-              ]),
-            ]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _button({
-    required String label,
-    required IconData icon,
-    required Color accent,
-    required bool primary,
-    required VoidCallback onTap,
-  }) => DecoratedBox(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(14),
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: primary
-          ? (accent == const Color(0xFF39CBFF)
-            ? [const Color(0xFF21D9FF), const Color(0xFF0076D8)]
-            : [const Color(0xFFFFD677), const Color(0xFFDA6A10)])
-          : [const Color(0xFF173047), const Color(0xFF071626)],
-      ),
-      border: Border.all(
-        color: primary ? accent : const Color(0xFF547998)),
-      boxShadow: primary
-        ? [BoxShadow(color: accent.withValues(alpha: .38),
-            blurRadius: 14)]
-        : null,
-    ),
-    child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 55),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 20),
-              const SizedBox(width: 5),
-              Flexible(child: Text(label,
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold))),
-            ],
-          ),
-        ),
       ),
     ),
   );
@@ -180,8 +82,8 @@ class GenesisGameTab extends StatelessWidget {
   Future<void> _showRanking(
     BuildContext context, String file,
   ) async {
-    final key = file == 'genesis-game.html' ? 'signal' : 'defender';
-    final title = key == 'signal' ? 'GENESIS SIGNAL' : 'GENESIS DEFENDER';
+    final key = games.firstWhere((g)=>g.$3==file).$1;
+    final title = games.firstWhere((g)=>g.$3==file).$2;
     Future<List<Map<String, dynamic>>> load() async {
       final raw = await AgcBackend.client
         .from('agc_game_scores')
