@@ -2,7 +2,7 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, x-client-info, content-type','Content-Type':'application/json'};
 const out=(x:unknown,status=200)=>new Response(JSON.stringify(x),{status,headers:cors});
 const bad=(s:string,status=400)=>out({error:s},status);
-type C={s:number,n:number};type S={hands:C[][],trick:{seat:number,card:C}[],turn:number,lead:number,broken:boolean,round:number,points:number[],total:number[],history:any[],first:boolean,finished:boolean,winner:number|null};
+type C={s:number,n:number};type S={hands:C[][],trick:{seat:number,card:C}[],turn:number,lead:number,broken:boolean,round:number,points:number[],total:number[],history:any[],first:boolean,finished:boolean,winner:number|null;archive?:any[]};
 const rank=(c:C)=>c.n===1?14:c.n;
 const id=(c:C)=>c.s*13+c.n;
 const hearts=(c:C)=>c.s===1;
@@ -44,9 +44,7 @@ function play(s:S,seat:number,card:C){
   const shooter=s.points.findIndex(p=>p===26);
   if(shooter>=0)s.points=s.points.map((_,i)=>i===shooter?0:26);
   s.total=s.total.map((t,i)=>t+s.points[i]);
-  if(s.total.some(t=>t>=100)){
-   s.finished=true;const best=Math.min(...s.total);s.winner=s.total.indexOf(best);
-  }else{const next=deal(s.total,s.round+1);Object.assign(s,next)}
+  s.turn=-1;
  }
 }
 function aiCard(s:S,seat:number):C{
@@ -63,7 +61,7 @@ function aiCard(s:S,seat:number):C{
  return [...opts].sort((a,b)=>penalty(a)-penalty(b)||rank(a)-rank(b))[0];
 }
 function advance(s:S,seats:any[]){
- let n=0;while(!s.finished&&seats[s.turn].type==='ai'&&n<400){
+ let n=0;while(!s.finished&&s.turn>=0&&seats[s.turn].type==='ai'&&n<400){
   const c=aiCard(s,s.turn);play(s,s.turn,c);n++;
  }
  if(n>=400)throw Error('AI turn limit');
@@ -73,7 +71,7 @@ function view(room:any,user:string){
  if(seat<0)throw Error('Not a player');
  const s=room.state as S|null;
  return {id:room.id,mode:room.mode,status:room.status,version:room.version,seats:seats.map((x,i)=>({seat:i,name:x.name,type:x.type,ready:x.ready})),seat,
- state:s?{hand:s.hands[seat],counts:s.hands.map(x=>x.length),trick:s.trick,turn:s.turn,lead:s.lead,broken:s.broken,round:s.round,points:s.points,total:s.total,lastTrick:s.history.at(-1)||null,tricks:s.history.length,legal:legal(s,seat),finished:s.finished,winner:s.winner}:null};
+ state:s?{hand:s.hands[seat],counts:s.hands.map(x=>x.length),trick:s.trick,turn:s.turn,lead:s.lead,broken:s.broken,round:s.round,points:s.points,total:s.total,lastTrick:s.history.at(-1)||null,tricks:s.history.length,legal:legal(s,seat),finished:s.finished,winner:s.winner,roundComplete:s.turn===-1,canNext:s.turn===-1&&!s.finished&&seat===0,history:s.history,archive:s.archive||[]}:null};
 }
 Deno.serve(async(req)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
@@ -86,7 +84,7 @@ Deno.serve(async(req)=>{
   const {data:{user},error:ae}=await auth.auth.getUser(token);
   if(ae||!user||user.is_anonymous)return bad('Zaloguj się na konto portalu',401);
   const body=await req.json(),action=body.action;
-  if(!['create','invite','inbox','accept','decline','start','state','play'].includes(action))return bad('Invalid action');
+  if(!['create','invite','inbox','accept','decline','start','state','play','next','finish'].includes(action))return bad('Invalid action');
   const name=(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').toString().slice(0,32);
   if(action==='create'){
    const mode=body.mode;if(!['ai','multiplayer'].includes(mode))return bad('Invalid mode');
@@ -142,6 +140,12 @@ Deno.serve(async(req)=>{
    if(ce||!changed)return bad('Room changed; retry',409);
    await admin.from('agc_hearts_invites').update({status:'declined'}).eq('room_id',roomId).eq('status','pending');
    return out({room:view(changed,user.id)});
+  }
+  if(action==='next'||action==='finish'){
+   if(room.status!=='playing'||!room.state||seat!==0||room.version!==body.version)return bad('Nieaktualny stan lub brak uprawnień',409);
+   let state=room.state as S;if(state.turn!==-1||state.finished)return bad('Najpierw zakończ rozdanie',409);
+   if(action==='finish'){state.finished=true;state.winner=state.total.indexOf(Math.min(...state.total));}else{const archive=[...(state.archive||[]),{round:state.round,points:state.points,total:state.total,history:state.history}];state=deal(state.total,state.round+1);state.archive=archive;advance(state,seats);}
+   const {data:changed,error:ce}=await admin.from('agc_hearts_rooms').update({state,status:state.finished?'finished':'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();if(ce||!changed)return bad('Pokój zmieniony',409);return out({room:view(changed,user.id)});
   }
   if(action==='play'){
    if(room.status!=='playing'||!room.state)return bad('Game not started');
