@@ -3,7 +3,7 @@ const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'au
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:cors});
 const fail=(message:string,status=400)=>reply({error:message},status);
 type Card={s:number,n:number};
-type Player={guest_id?:string,id:string|null,name:string,type:'human'|'ai'};
+type Player={departed?:boolean,guest_id?:string,id:string|null,name:string,type:'human'|'ai'};
 type Round={hands:Card[][],dealer:Card[],shoe:Card[],turn:number,done:boolean[],round:number,scores:number[],chips:number[],stake:number,last:any,finished:boolean,history:any[]};
 const total=(cards:Card[])=>{let sum=0,aces=0;for(const c of cards){sum+=c.n===1?11:Math.min(10,c.n);if(c.n===1)aces++}while(sum>21&&aces){sum-=10;aces--}return sum};
 const natural=(cards:Card[])=>cards.length===2&&total(cards)===21;
@@ -12,7 +12,7 @@ const take=(state:Round)=>{const c=state.shoe.pop();if(!c)throw Error('Brak kart
 function newRound(seats:Player[],scores?:number[],number=1,history:any[]=[],chips?:number[],stake=10):Round{
  const state:Round={hands:seats.map(()=>[]),dealer:[],shoe:shuffle(),turn:0,done:seats.map(()=>false),round:number,scores:scores??seats.map(()=>0),chips:chips??seats.map(()=>500),stake,last:null,finished:false,history};
  for(let j=0;j<2;j++){for(const hand of state.hands)hand.push(take(state));state.dealer.push(take(state))}
- state.done=state.hands.map((h,i)=>natural(h)||state.chips[i]<state.stake);
+ state.done=state.hands.map((h,i)=>!!seats[i].departed||natural(h)||state.chips[i]<state.stake);
  return state;
 }
 function settle(s:Round,seats:Player[]){
@@ -22,7 +22,7 @@ function settle(s:Round,seats:Player[]){
  const results=s.hands.map((hand,i)=>{
   const value=total(hand),pNatural=natural(hand);
   let outcome='loss',award=0;
-  if(s.chips[i]<s.stake)return {seat:i,value,outcome:'skip',award:0,stake:0,delta:0};
+  if(seats[i].departed||s.chips[i]<s.stake)return {seat:i,value,outcome:'skip',award:0,stake:0,delta:0};
   if(value>21)outcome='bust';
   else if(pNatural&&!dNatural){outcome='blackjack';award=300}
   else if(dNatural&&!pNatural)outcome='loss';
@@ -56,7 +56,7 @@ function view(room:any,user:string){
  if(seat<0)throw Error('Brak dostępu do pokoju');
  const s=room.state as Round|null;
  return {id:room.id,mode:room.mode,status:room.status,version:room.version,seat,
- seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,ready:!!(p.id||p.guest_id||p.type==='ai')})),
+ seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,departed:!!p.departed,ready:!!(p.id||p.guest_id||p.type==='ai')})),
  state:s?{round:s.round,turn:s.turn,hand:s.hands[seat],myTotal:total(s.hands[seat]),dealerUp:s.dealer[0],dealerCards:s.finished||s.turn===-1?s.dealer:null,counts:s.hands.map(h=>h.length),values:s.hands.map((h,i)=>i===seat||s.done[i]||s.finished?total(h):null),done:s.done,scores:s.scores,chips:s.chips,stake:s.stake,last:s.last,finished:s.finished,canAct:!s.finished&&s.turn===seat&&!s.done[seat],canNext:!s.finished&&s.turn===-1&&seat===0,history:s.finished?s.history:undefined}:null};
 }
 Deno.serve(async req=>{
@@ -70,7 +70,7 @@ Deno.serve(async req=>{
   const body=await req.json(),action=body.action;
   let user:any=jwt?(await auth.auth.getUser(jwt)).data.user:null;
   if(!user||user.is_anonymous){
-   if(!['state','hit','stand'].includes(action)||typeof body.session!=='string'||!/^[a-f0-9]{64}$/.test(body.session))return fail('Wymagane konto lub sesja gościa',401);
+   if(!['state','hit','stand','leave'].includes(action)||typeof body.session!=='string'||!/^[a-f0-9]{64}$/.test(body.session))return fail('Wymagane konto lub sesja gościa',401);
    const h=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.session))),x=>x.toString(16).padStart(2,'0')).join('');
    const {data:g}=await admin.from('agc_game_guest_sessions').select('id,nickname,invite_id').eq('session_hash',h).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
    if(!g)return fail('Sesja wygasła',401);
@@ -78,7 +78,7 @@ Deno.serve(async req=>{
    if(i?.game!=='blackjack'||i.room_id!==body.room)return fail('Brak dostępu',403);
    user={id:g.id,user_metadata:{handle:g.nickname}};
   }
-  if(!['create','inbox','invite','accept','decline','start','state','hit','stand','next','finish'].includes(action))return fail('Nieznana operacja');
+  if(!['create','inbox','invite','accept','decline','start','state','hit','stand','next','finish','leave','close'].includes(action))return fail('Nieznana operacja');
   const displayName=String(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').slice(0,32);
   if(action==='create'){
    if(!['ai','multiplayer'].includes(body.mode))return fail('Nieprawidłowy tryb');
@@ -105,7 +105,7 @@ Deno.serve(async req=>{
    const {data:inv}=await admin.from('agc_blackjack_invites').select('*').eq('room_id',roomId).eq('recipient_id',user.id).eq('status','pending').maybeSingle();
    if(!inv||room.status!=='lobby')return fail('Zaproszenie jest już nieaktualne');
    if(action==='decline'){await admin.from('agc_blackjack_invites').update({status:'declined'}).eq('id',inv.id).eq('status','pending');return reply({declined:true})}
-   if(seats[inv.seat]?.guest_id)return fail('Miejsce zajęte');
+   if(seats[inv.seat]?.departed||seats[inv.seat]?.guest_id)return fail('Miejsce zajęte');
    if(seats[inv.seat]?.id&&seats[inv.seat].id!==user.id)return fail('Miejsce zajęte');
    seats[inv.seat]={id:user.id,name:displayName,type:'human'};
    const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({seats,version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
@@ -115,6 +115,24 @@ Deno.serve(async req=>{
   }
   if(seat<0)return fail('Nie jesteś uczestnikiem tego pokoju',403);
   if(action==='state')return reply({room:view(room,user.id)});
+  if(action==='close'){
+   if(room.host_id!==user.id)return fail('Tylko gospodarz może zamknąć pokój',403);
+   const {data:removed,error}=await admin.from('agc_blackjack_rooms').delete().eq('id',roomId).eq('version',room.version).select('id').maybeSingle();
+   if(error||!removed)return fail('Pokój zmieniony, spróbuj ponownie',409);
+   await admin.from('agc_game_invite_links').update({revoked:true}).eq('game','blackjack').eq('room_id',roomId);
+   return reply({closed:true});
+  }
+  if(action==='leave'){
+   if(seat===0)return fail('Gospodarz musi zamknąć pokój',403);
+   const departed=seats[seat];const guestId=departed.guest_id;
+   seats[seat]={id:null,name:departed.name,type:'human',departed:true};
+   const state=room.state as Round|null;
+   if(state&&room.status==='playing'){state.done[seat]=true;if(state.turn===seat)advance(state,seats);}
+   const {data:changed,error}=await admin.from('agc_blackjack_rooms').update({seats,state,status:state?.finished?'finished':room.status,version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select('id').maybeSingle();
+   if(error||!changed)return fail('Pokój zmieniony, spróbuj ponownie',409);
+   if(guestId)await admin.from('agc_game_guest_sessions').update({revoked:true}).eq('id',guestId);
+   return reply({left:true});
+  }
   if(action==='invite'){
    if(room.host_id!==user.id||room.mode!=='multiplayer'||room.status!=='lobby')return fail('Tylko gospodarz może zapraszać przed rozpoczęciem');
    const identity=String(body.identity||'').trim();
@@ -127,7 +145,7 @@ Deno.serve(async req=>{
    if(existing)return fail('Zaproszenie zostało już wysłane');
    const {data:pending}=await admin.from('agc_blackjack_invites').select('seat').eq('room_id',roomId).in('status',['pending','accepted']);
    const taken=new Set((pending||[]).map(p=>p.seat));
-   const target=Array.from({length:seats.length-1},(_,i)=>i+1).find(i=>!seats[i].id&&!seats[i].guest_id&&!taken.has(i));
+   const target=Array.from({length:seats.length-1},(_,i)=>i+1).find(i=>!seats[i].departed&&!seats[i].id&&!seats[i].guest_id&&!taken.has(i));
    if(target===undefined)return fail('Wszystkie wybrane miejsca są zajęte lub zaproszone');
    const {error:insertError}=await admin.from('agc_blackjack_invites').insert({room_id:roomId,sender_id:user.id,recipient_id:recipient,seat:target});
    if(insertError)throw insertError;
