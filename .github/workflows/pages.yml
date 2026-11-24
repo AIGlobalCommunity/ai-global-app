@@ -153,12 +153,19 @@ jobs:
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
           test -s build/web/assets/assets/agc_genesis_ai_vector.svg
           echo "AGC cosmic HD background and vector Genesis logo are present in the release bundle"
+      - name: Publish uploaded arcade cover artwork
+        run: |
+          for game in blocks snake skoki slingshot crystals; do
+            for variant in desktop mobile kafelek; do
+              cp "assets/${game}_${variant}.webp" "build/web/assets/${game}_${variant}.webp"
+            done
+          done
       - name: Verify game cover images and WebP signatures
         run: |
           python3 - <<'PY'
           from pathlib import Path
           root = Path('build/web/assets')
-          for game in ('solitaire', 'freecell', 'spider', 'kierki', 'blackjack'):
+          for game in ('solitaire', 'freecell', 'spider', 'kierki', 'blackjack', 'blocks', 'snake', 'skoki', 'slingshot', 'crystals'):
               for variant in ('desktop', 'mobile', 'kafelek'):
                   path = root / f'{game}_{variant}.webp'
                   if not path.is_file():
