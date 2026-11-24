@@ -2402,16 +2402,6 @@ class _GenesisArcadeCover extends StatelessWidget {
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final variant = compact ? 'kafelek' : mobile ? 'mobile' : 'desktop';
     final imagePath = '/assets/${game}_$variant.webp';
-    // These arcade covers have no uploaded WebP variants yet. Use existing art
-    // directly instead of requesting missing URLs and showing empty tiles.
-    if (game == 'snake') return Image.network('/assets/snake-cover.png',
-      fit: BoxFit.cover, width: double.infinity, height: double.infinity,
-      errorBuilder: (_, __, ___) => fallback ?? const Center(child: Icon(Icons.pets)));
-    if (game == 'skoki') return Image.network('/assets/ski-cover.jpg',
-      fit: BoxFit.cover, width: double.infinity, height: double.infinity,
-      errorBuilder: (_, __, ___) => fallback ?? const Center(child: Icon(Icons.downhill_skiing)));
-    if (game == 'slingshot') return fallback ?? CustomPaint(painter: _SlingshotCover(), child: const SizedBox.expand());
-    if (game == 'crystals') return fallback ?? CustomPaint(painter: _CrystalsCover(), child: const SizedBox.expand());
     final backup = switch (game) {
       'snake' => '/assets/snake-cover.png',
       'skoki' => '/assets/ski-cover.jpg',
