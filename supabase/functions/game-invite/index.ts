@@ -16,7 +16,7 @@ Deno.serve(async req=>{
  const user=jwt?(await auth.auth.getUser(jwt)).data.user:null;
  if(a==='renew'||a==='revoke'){
  if(!user||user.is_anonymous)return out({error:'Zaloguj się'},401);
- const table=tables[b.game];if(!table||typeof b.room!=='string')return out({error:'Nieprawidłowa gra'},400);
+ const table=Object.hasOwn(tables,b.game)?tables[b.game]:null;if(!table||typeof b.room!=='string')return out({error:'Nieprawidłowa gra'},400);
  const {data:r}=await db.from(table).select('id,host_id,status').eq('id',b.room).maybeSingle();
  if(!r||r.host_id!==user.id||r.status!=='lobby')return out({error:'Brak dostępu do lobby'},403);
  if(a==='revoke'){const {error}=await db.from('agc_game_invite_links').update({revoked:true}).eq('game',b.game).eq('room_id',r.id);if(error)throw error;return out({ok:true})}
@@ -42,8 +42,8 @@ Deno.serve(async req=>{
  const {data:r}=await db.from(tables[i.game]).select('status').eq('id',i.room_id).maybeSingle();
  if(r?.status!=='lobby')return out({error:'Pokój nie przyjmuje graczy'},409);
  // Until a game adapter reserves a seat atomically, do not issue playable credentials.
- if(i.game!=='blackjack')return out({error:'Ta gra nie obsługuje jeszcze gości'},409);
- const session=token();const {data:joined,error}=await db.rpc('agc_join_blackjack_guest',{p_hash:await hash(b.invite),p_nick:nickname,p_session_hash:await hash(session)});
+ if(!['blackjack','hearts'].includes(i.game))return out({error:'Ta gra nie obsługuje jeszcze gości'},409);
+ const session=token();const {data:joined,error}=await db.rpc(i.game==='hearts'?'agc_join_hearts_guest':'agc_join_blackjack_guest',{p_hash:await hash(b.invite),p_nick:nickname,p_session_hash:await hash(session)});
  if(error)return out({error:'Nie można dołączyć: '+error.message},409);
  return out({...joined,session});
  }
