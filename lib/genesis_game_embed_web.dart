@@ -99,6 +99,43 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   bool ratingsReady = false;
   bool ratingsFailed = false;
 
+  Set<String> favorites = {};
+  final favoriteBusy = <String>{};
+  String? favoriteOwner;
+  int favoriteRequest = 0;
+  Future<void> _loadFavorites() async {
+    final user = AgcBackend.user;
+    final owner = user == null || user.isAnonymous ? null : user.id;
+    final request = ++favoriteRequest;
+    if (favoriteOwner != owner) {
+      setState(() { favoriteOwner = owner; favorites = {}; if(categoryFilter == 'favorites') categoryFilter = 'all'; });
+    }
+    if (owner == null) return;
+    try {
+      final rows = await AgcBackend.client.from('agc_game_favorites').select('game_key').eq('user_id', owner);
+      if (mounted && request == favoriteRequest && AgcBackend.user?.id == owner) setState(() => favorites = {for(final row in rows) row['game_key'] as String});
+    } catch (_) { if(mounted && request == favoriteRequest) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nie udało się pobrać ulubionych.'))); }
+  }
+  Future<void> _toggleFavorite(int index) async {
+    final owner = favoriteOwner;
+    final key = gameKeys[index];
+    if(owner == null || AgcBackend.user?.id != owner || !favoriteBusy.add(key)) return;
+    setState(() {});
+    try {
+      if(favorites.contains(key)) {
+        await AgcBackend.client.from('agc_game_favorites').delete().eq('user_id',owner).eq('game_key',key);
+      } else {
+        await AgcBackend.client.from('agc_game_favorites').insert({'user_id':owner,'game_key':key});
+      }
+      if(mounted && favoriteOwner == owner) await _loadFavorites();
+    } catch (_) { if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nie udało się zapisać ulubionej gry.'))); }
+    finally { if(mounted) setState(() => favoriteBusy.remove(key)); }
+  }
+  Widget _favoriteButton(int index) => favoriteOwner == null ? const SizedBox.shrink() : IconButton(
+    visualDensity: VisualDensity.compact, padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 28,minHeight: 28),
+    tooltip: favorites.contains(gameKeys[index]) ? 'Usuń z ulubionych' : 'Dodaj do ulubionych',
+    icon: Icon(favorites.contains(gameKeys[index]) ? Icons.star : Icons.star_border, color: gold, size: 20),
+    onPressed: favoriteBusy.contains(gameKeys[index]) ? null : () => _toggleFavorite(index));
   Future<void> _loadRatings() async {
     final request = ++ratingRequest;
     final owner = AgcBackend.user?.id;
@@ -208,7 +245,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   }
 
   String categoryFilter = 'all';
-  int gamesPerRow = 2; // 0 = compact list
+  int gamesPerRow = 4; // 0 = compact list
   bool diagnosticsOpen = false;
   String lastBridgeStatus = 'Brak zdarzeń z gry';
   String lastDatabaseStatus = 'Nie sprawdzono';
@@ -268,9 +305,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     messages = html.window.onMessage.listen(_onMessage);
     if (AgcBackend.configured) {
       _loadRatings();
+      _loadFavorites();
       authChanges = AgcBackend.client.auth.onAuthStateChange.listen((_) {
         if (!mounted) return;
         _loadRatings();
+        _loadFavorites();
         setState(() {});
         for (final frame in frames.values) {
           sendGameAuthStatus(frame);
@@ -1870,6 +1909,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Column(children: [
+              _favoriteButton(index),
               _ratingBar(index),
               _shareScoreButton(index),
             ]),
@@ -2077,6 +2117,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                 const SizedBox(width: 12),
                 Expanded(child: Text(title, maxLines: 2,
                   style: const TextStyle(fontWeight: FontWeight.bold))),
+                _favoriteButton(index),
                 IconButton(tooltip: 'Ranking', icon: const Icon(Icons.emoji_events_outlined),
                   onPressed: () => _showRanking(index)),
                 IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_arrow_rounded),
@@ -2090,13 +2131,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                 const SizedBox(height: 9),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                FittedBox(fit: BoxFit.scaleDown, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  _favoriteButton(index),
                   IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_circle_fill),
                     onPressed: open),
                 IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
                   IconButton(tooltip: 'Ranking', icon: const Icon(Icons.emoji_events_outlined),
                     onPressed: () => _showRanking(index)),
-                ]),
+                ])),
               ]),
         ),
       ),
@@ -2138,6 +2180,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           Wrap(spacing: 8, runSpacing: 8, children: [
             for (final entry in [
               ('all', GenesisLanguage.copy('Wszystkie', 'All')),
+              if(favoriteOwner != null) ('favorites', '⭐ Ulubione'),
               ('puzzle', GenesisLanguage.copy('Łamigłówki', 'Puzzles')),
               ('shooter', GenesisLanguage.copy('Strzelanki', 'Shooters')),
               ('arcade', GenesisLanguage.copy('Zręcznościowe', 'Arcade')),
@@ -2181,12 +2224,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
-                if (categoryFilter == 'all' || categories[i].contains(categoryFilter)) i,
-            ]..sort(_compareRatings);
+                if (categoryFilter == 'all' || (categoryFilter == 'favorites' && favorites.contains(gameKeys[i])) || categories[i].contains(categoryFilter)) i,
+            ]..sort((a,b) { final order = (favorites.contains(gameKeys[b]) ? 1 : 0).compareTo(favorites.contains(gameKeys[a]) ? 1 : 0); return order != 0 ? order : _compareRatings(a,b); });
             final visible = [
               for (final i in indices)
                 i < 2 ? cards[i] : _arcadeExtraCard(index: i),
             ];
+            if(indices.isEmpty) return const Center(child: Text('Brak gier w tej kategorii.'));
             final count = gamesPerRow;
             if (count == 0) {
               return Column(children: [
@@ -2199,7 +2243,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               final tileWidth = (constraints.maxWidth - 12 * (count - 1)) / count;
               return Wrap(spacing: 12, runSpacing: 12, children: [
                 for (final i in indices)
-                  SizedBox(width: tileWidth, height: 178,
+                  SizedBox(width: tileWidth, height: 205,
                     child: _compactGameCard(i, listMode: false)),
               ]);
             }
