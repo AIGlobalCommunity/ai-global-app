@@ -1984,7 +1984,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: index == 14 ? const Center(child: Icon(Icons.track_changes, size: 100, color: Color(0xFF71F7C4))) : blackjack ? const _GenesisCardCover(game: 'blackjack') : hearts ? const _GenesisCardCover(game: 'kierki') : spider ? const _GenesisCardCover(game: 'spider') : freecell ? const _GenesisCardCover(game: 'freecell') : solitaire ? const _GenesisCardCover(game: 'solitaire') : crystals ? const _GenesisArcadeCover(game: 'crystals', fallback: CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand())) : sling ? const _GenesisArcadeCover(game: 'slingshot', fallback: CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand())) : maze ? const CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand()) : ski
+              child: index == 14 ? const _GenesisArcadeCover(game: 'duck', fallback: Center(child: Icon(Icons.track_changes, size: 100, color: Color(0xFF71F7C4)))) : blackjack ? const _GenesisCardCover(game: 'blackjack') : hearts ? const _GenesisCardCover(game: 'kierki') : spider ? const _GenesisCardCover(game: 'spider') : freecell ? const _GenesisCardCover(game: 'freecell') : solitaire ? const _GenesisCardCover(game: 'solitaire') : crystals ? const _GenesisArcadeCover(game: 'crystals', fallback: CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand())) : sling ? const _GenesisArcadeCover(game: 'slingshot', fallback: CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand())) : maze ? const _GenesisArcadeCover(game: 'maze', fallback: CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand())) : ski
                 ? _GenesisArcadeCover(game: 'skoki', fallback: Image.network('/assets/ski-cover.jpg', fit: BoxFit.cover))
                 : snake
                 ? _GenesisArcadeCover(game: 'snake', fallback: Image.network('/assets/snake-cover.png', fit: BoxFit.cover))
@@ -2441,9 +2441,9 @@ class _CrystalsCover extends CustomPainter {
 }
 
 String? _arcadeCoverKey(int index) => switch(index) {
-  3 => 'blocks', 4 => 'snake', 5 => 'skoki', 7 => 'slingshot', 8 => 'crystals',
+  3 => 'blocks', 4 => 'snake', 5 => 'skoki', 6 => 'maze', 7 => 'slingshot', 8 => 'crystals',
   9 => 'solitaire', 10 => 'freecell', 11 => 'spider',
-  12 => 'kierki', 13 => 'blackjack', _ => null,
+  12 => 'kierki', 13 => 'blackjack', 14 => 'duck', _ => null,
 };
 
 /// Uses the WebP images uploaded to web/assets by the project owner.
