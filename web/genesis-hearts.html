@@ -6,7 +6,7 @@
 <div class="status" id="status">Zaloguj się na platformie, aby rozpocząć rozgrywkę.</div>
 <section class="panel" id="menu"><h2>Wybierz rozgrywkę</h2><div class="controls"><button class="primary" id="ai">🤖 Graj z AI</button><button id="multi">👥 Zaproś graczy</button><button id="refresh">🔄 Moje zaproszenia</button></div><p class="note">Kierki dla 4 graczy. Możesz zaprosić do 3 osób z portalu po nicku lub adresie e-mail. Wolne miejsca zajmie AI. Wszystkie ruchy i rozdania kontroluje serwer. Gra wymaga zalogowania.</p><h2>Zaproszenia do gry</h2><div id="inbox">Wczytywanie…</div></section>
 <section class="panel hidden" id="lobby"><h2>Pokój multiplayer</h2><p class="roomid" id="roomid"></p><div class="seats" id="lobbyseats"></div><p class="note">Wpisz dokładny nick lub adres e-mail zarejestrowanej osoby. Zaproszony gracz zobaczy zaproszenie w grze Kierki.</p><div class="row"><input id="identity" placeholder="Nick lub e-mail gracza" maxlength="254" autocomplete="off"><button id="invite" class="primary">Zaproś</button></div><p class="note" id="invitemsg"></p><div class="controls"><button class="primary" id="start">▶ Rozpocznij z obecnymi graczami</button><button id="back">← Menu</button></div></section>
-<section class="panel hidden" id="game"><div class="row" style="justify-content:space-between"><b id="round">Rozdanie 1</b><span id="turn">Oczekiwanie…</span><button id="leave">☰ Menu</button></div><div class="board"><div class="seats" id="seats"></div><div class="trick" id="trick"></div><div><p class="note" style="text-align:center" id="instruction">Wybierz kartę, aby zagrać.</p><div class="hand" id="hand"></div></div></div><h2>Wyniki</h2><div class="scoreboard" id="scores"></div><p class="note">♥ = 1 punkt karny, dama ♠ = 13 punktów karnych. Unikaj punktów. Przy 100 punktach kończy się gra — wygrywa najniższy wynik. Zasady wariantu: bez przekazywania kart między graczami.</p></section>
+<section class="panel hidden" id="game"><div class="row" style="justify-content:space-between"><b id="round">Rozdanie 1</b><span id="turn">Oczekiwanie…</span><button id="leave">☰ Menu</button></div><div class="board"><div class="seats" id="seats"></div><div class="trick" id="trick"></div><div><p class="note" style="text-align:center" id="instruction">Wybierz kartę, aby zagrać.</p><div class="hand" id="hand"></div></div></div><h2>Wyniki</h2><div class="scoreboard" id="scores"></div><div id="round-controls" class="controls hidden"><button id="next-round" class="primary">Kolejne rozdanie</button><button id="finish-game">Zakończ partię</button></div><div id="history"></div><p class="note">♥ = 1 punkt karny, dama ♠ = 13 punktów karnych. Unikaj punktów. Nie ma limitu rozdań. Gospodarz kończy partię po rozdaniu — wygrywa najniższy wynik. Zasady wariantu: bez przekazywania kart między graczami.</p></section>
 </main><p class="foot">The Genesis Era · Kierki · Gra na telefonie, tablecie i komputerze</p><div id="toast" class="toast hidden"></div>
 <script>
 (()=>{'use strict';const $=x=>document.getElementById(x),suits=['♠','♥','♦','♣'];let room=null,waiting=new Map(),loading=false,toastTimer=null,polling=false;
@@ -20,14 +20,15 @@ function seatsHTML(seats,turn=-1){return seats.map((x,i)=>'<div class="seat '+(t
 function render(){if(!room)return;const r=room;
  if(r.status==='lobby'){show('lobby');$('roomid').textContent='Pokój: '+r.id;$('lobbyseats').innerHTML=seatsHTML(r.seats);return}
  show('game');const s=r.state;if(!s)return;
- $('round').textContent='Rozdanie '+s.round+' · Lewa '+(s.tricks+1)+'/13';
- $('turn').textContent=s.finished?'🏆 Koniec gry':s.turn===r.seat?'🟢 Twoja kolej':'⏳ Ruch: '+r.seats[s.turn].name;
+ $('round').textContent='Rozdanie '+s.round+' · Lewa '+Math.min(13,s.tricks+1)+'/13';
+ $('turn').textContent=s.finished?'🏆 Koniec gry':s.roundComplete?'Rozdanie zakończone':s.turn===r.seat?'🟢 Twoja kolej':'⏳ Ruch: '+r.seats[s.turn].name;
  $('seats').innerHTML=seatsHTML(r.seats,s.finished?-1:s.turn);
  $('trick').innerHTML=s.trick.length?s.trick.map(x=>'<div class="trickcard">'+cardHTML(x.card)+'<small>'+escape(r.seats[x.seat].name)+'</small></div>').join(''):'<span class="note">Stół do gry · ♥ Kierki</span>';
  const allowed=new Set(s.legal.map(c=>c.s+':'+c.n));
  $('hand').innerHTML=s.hand.map(c=>cardHTML(c,allowed.has(c.s+':'+c.n))).join('');
- $('instruction').textContent=s.finished?'🏆 Zwycięzca: '+r.seats[s.winner].name:s.turn===r.seat?'Dotknij podświetlonej karty, aby wykonać ruch.':'Czekamy na '+r.seats[s.turn].name;
+ $('instruction').textContent=s.finished?'🏆 Zwycięzca: '+r.seats[s.winner].name:s.roundComplete?'Rozdanie zakończone. Sprawdź historię kart.':s.turn===r.seat?'Dotknij podświetlonej karty, aby wykonać ruch.':'Czekamy na '+r.seats[s.turn].name;
  $('scores').innerHTML=r.seats.map((x,i)=>'<div><small>'+escape(x.name)+'</small><strong>'+s.total[i]+'</strong><small>W rozdaniu: '+s.points[i]+'</small></div>').join('');
+ $('round-controls').classList.toggle('hidden',!s.canNext);const rounds=[...(s.archive||[]),{round:s.round,history:s.history||[]}];$('history').innerHTML=rounds.slice().reverse().map(h=>'<details '+(h.round===s.round&&s.roundComplete?'open':'')+'><summary>Historia rozdania '+h.round+'</summary>'+h.history.map((t,i)=>'<div class="panel"><b>Lewa '+(i+1)+' · '+escape(r.seats[t.winner].name)+' · '+t.points+' pkt karnych</b><div class="row">'+t.cards.map(x=>'<div class="trickcard">'+cardHTML(x.card)+'<small>'+escape(r.seats[x.seat].name)+'</small></div>').join('')+'</div></div>').join('')+'</details>').join('');
  for(const el of $('hand').querySelectorAll('.card.legal'))el.onclick=()=>move({s:Number(el.dataset.s),n:Number(el.dataset.n)});
 }
 async function move(card){if(loading||!room)return;loading=true;try{const x=await request('play',{room:room.id,version:room.version,card});room=x.room;render()}catch(e){notify('Ruch odrzucony: '+e.message);await refreshRoom()}finally{loading=false}}
@@ -44,6 +45,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')$('exit').click()});
 async function restore(){const saved=localStorage.getItem('genesis-hearts-room');if(saved){try{const x=await request('state',{room:saved});room=x.room;render();return}catch{localStorage.removeItem('genesis-hearts-room')}}show('menu');await inbox()}
 setInterval(async()=>{if(polling)return;polling=true;try{if(room)await refreshRoom();else if(!$('menu').classList.contains('hidden'))await inbox()}finally{polling=false}},3500);
 window.parent.postMessage(JSON.stringify({type:'genesis-auth-request'}),location.origin);
-setTimeout(restore,250);
+async function roundAction(action){if(loading||!room)return;loading=true;try{const x=await request(action,{room:room.id,version:room.version});room=x.room;render()}catch(e){notify(e.message)}finally{loading=false}}$('next-round').onclick=()=>roundAction('next');$('finish-game').onclick=()=>roundAction('finish');setTimeout(restore,250);
 })();
 </script></body></html>
