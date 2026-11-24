@@ -16,35 +16,11 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Initialize platforms if missing
-        run: flutter create --platforms=android,ios,web .
+      - name: Initialize web platform
+        run: flutter create --platforms=web .
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
       - run: flutter test
-      - name: Configure Gradle dependency repositories
-        run: |
-          mkdir -p "$HOME/.gradle/init.d"
-          cat > "$HOME/.gradle/init.d/flutter-repositories.gradle" <<'GRADLE'
-          gradle.beforeSettings { settings ->
-              settings.pluginManagement.repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          gradle.beforeProject { project ->
-              project.buildscript.repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          GRADLE
-      - run: flutter build apk --debug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: agc-android-debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
       - name: Build production web
         run: flutter build web --release --base-href / --pwa-strategy=none
       - name: Upload web build
@@ -52,3 +28,23 @@ jobs:
         with:
           name: agc-web-release
           path: build/web
+  android-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.38.9'
+      - name: Initialize Android platform
+        run: flutter create --platforms=android .
+      - run: flutter pub get
+      - run: flutter build apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agc-android-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
