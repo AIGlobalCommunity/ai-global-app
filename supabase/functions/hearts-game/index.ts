@@ -2,7 +2,7 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, x-client-info, content-type','Content-Type':'application/json'};
 const out=(x:unknown,status=200)=>new Response(JSON.stringify(x),{status,headers:cors});
 const bad=(s:string,status=400)=>out({error:s},status);
-type C={s:number,n:number};type S={hands:C[][],trick:{seat:number,card:C}[],turn:number,lead:number,broken:boolean,round:number,points:number[],total:number[],history:any[],first:boolean,finished:boolean,winner:number|null;archive?:any[];deadline?:number};
+type C={s:number,n:number};type S={hands:C[][],trick:{seat:number,card:C}[],turn:number,lead:number,broken:boolean,round:number,points:number[],total:number[],history:any[],first:boolean,finished:boolean,winner:number|null;archive?:any[];deadline?:number;passing?:boolean;passes?: (number[]|null)[]};
 const rank=(c:C)=>c.n===1?14:c.n;
 const id=(c:C)=>c.s*13+c.n;
 const hearts=(c:C)=>c.s===1;
@@ -16,7 +16,7 @@ function deal(total=[0,0,0,0],round=1):S{
  return {hands,trick:[],turn:first,lead:first,broken:false,round,points:[0,0,0,0],total,history:[],first:true,finished:false,winner:null};
 }
 function legal(s:S,seat:number):C[]{
- if(seat!==s.turn||s.finished)return [];
+ if(s.passing||seat!==s.turn||s.finished)return [];
  const hand=s.hands[seat];if(!hand.length)return [];
  if(s.first&&s.trick.length===0)return hand.filter(c=>c.s===3&&c.n===2);
  if(s.trick.length){
@@ -60,7 +60,16 @@ function aiCard(s:S,seat:number):C{
  }
  return [...opts].sort((a,b)=>penalty(a)-penalty(b)||rank(a)-rank(b))[0];
 }
-function advance(s:S,seats:any[]){
+function prepare(s:S,seats:any[]){
+ s.passing=s.round%4!==0;s.passes=seats.map((p,i)=>p.type==='ai'?autoPass(s,i):null);s.deadline=Date.now()+(s.passing?20000:30000);if(!s.passing)advance(s,seats);
+}
+function autoPass(s:S,i:number){return [...s.hands[i]].sort((a,b)=>penalty(b)-penalty(a)||rank(b)-rank(a)).slice(0,3).map(id)}
+function resolvePass(s:S,seats:any[]){
+ const shift=[0,1,3,2][s.round%4];const cards=s.hands.map((h,i)=>h.filter(c=>s.passes![i]!.includes(id(c))));
+ s.hands=s.hands.map((h,i)=>sort(h.filter(c=>!s.passes![i]!.includes(id(c))).concat(cards[(i+4-shift)%4])));
+ s.passing=false;s.passes=undefined;s.turn=s.hands.findIndex(h=>h.some(c=>c.s===3&&c.n===2));s.lead=s.turn;advance(s,seats);s.deadline=Date.now()+30000;
+}
+function advance(s:S,seats:any[]){if(s.passing)return;
  let n=0;while(!s.finished&&s.turn>=0&&seats[s.turn].type==='ai'&&n<400){
   const c=aiCard(s,s.turn);play(s,s.turn,c);n++;
  }
@@ -71,7 +80,7 @@ function view(room:any,user:string){
  if(seat<0)throw Error('Not a player');
  const s=room.state as S|null;
  return {id:room.id,mode:room.mode,status:room.status,version:room.version,seats:seats.map((x,i)=>({seat:i,name:x.name,type:x.type,ready:x.ready,departed:x.departed})),seat,
- state:s?{deadline:s.deadline,serverNow:Date.now(),hand:s.hands[seat],counts:s.hands.map(x=>x.length),trick:s.trick,turn:s.turn,lead:s.lead,broken:s.broken,round:s.round,points:s.points,total:s.total,lastTrick:s.history.at(-1)||null,tricks:s.history.length,legal:legal(s,seat),finished:s.finished,winner:s.winner,roundComplete:s.turn===-1,canNext:s.turn===-1&&!s.finished&&seat===0,history:s.history,archive:s.archive||[]}:null};
+ state:s?{passing:!!s.passing,passed:!!s.passes?.[seat],passDirection:[0,1,3,2][s.round%4],deadline:s.deadline,serverNow:Date.now(),hand:s.hands[seat],counts:s.hands.map(x=>x.length),trick:s.trick,turn:s.turn,lead:s.lead,broken:s.broken,round:s.round,points:s.points,total:s.total,lastTrick:s.history.at(-1)||null,tricks:s.history.length,legal:legal(s,seat),finished:s.finished,winner:s.winner,roundComplete:s.turn===-1,canNext:s.turn===-1&&!s.finished&&seat===0,history:s.history,archive:s.archive||[]}:null};
 }
 Deno.serve(async(req)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
@@ -84,7 +93,7 @@ Deno.serve(async(req)=>{
   const body=await req.json(),action=body.action;
   let user:any=token?(await auth.auth.getUser(token)).data.user:null;
   if(!user||user.is_anonymous){
-   if(!['state','play','leave'].includes(action)||typeof body.session!=='string'||!/^[a-f0-9]{64}$/.test(body.session))return bad('Zaloguj się',401);
+   if(!['state','play','leave','pass'].includes(action)||typeof body.session!=='string'||!/^[a-f0-9]{64}$/.test(body.session))return bad('Zaloguj się',401);
    const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.session))),b=>b.toString(16).padStart(2,'0')).join('');
    const {data:g}=await admin.from('agc_game_guest_sessions').select('id,nickname,invite_id').eq('session_hash',hash).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
    if(!g)return bad('Sesja wygasła',401);
@@ -92,7 +101,7 @@ Deno.serve(async(req)=>{
    if(i?.game!=='hearts'||i.room_id!==body.room)return bad('Brak dostępu',403);
    user={id:g.id,user_metadata:{handle:g.nickname}};
   }
-  if(!['create','invite','inbox','accept','decline','start','state','play','next','finish','close','leave'].includes(action))return bad('Invalid action');
+  if(!['create','invite','inbox','accept','decline','start','state','play','next','finish','close','leave','pass'].includes(action))return bad('Invalid action');
   const name=(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').toString().slice(0,32);
   if(action==='create'){
    const mode=body.mode;if(!['ai','multiplayer'].includes(mode))return bad('Invalid mode');
@@ -133,9 +142,17 @@ Deno.serve(async(req)=>{
   if(action==='leave'){
    if(seat===0)return bad('Gospodarz zamyka grę');
    const g=seats[seat].guest_id;seats[seat]={id:null,name:seats[seat].name+' (AI)',type:'ai',ready:true,departed:true};
-   const state=room.state as S|null;if(state&&room.status==='playing'){advance(state,seats);state.deadline=Date.now()+30000;}
+   const state=room.state as S|null;if(state&&room.status==='playing'){if(state.passing){state.passes![seat]=autoPass(state,seat);if(state.passes!.every(Boolean))resolvePass(state,seats)}else{advance(state,seats);state.deadline=Date.now()+30000;}}
    const {data:x,error}=await admin.from('agc_hearts_rooms').update({seats,state,version:room.version+1}).eq('id',roomId).eq('version',room.version).select('id').maybeSingle();if(error||!x)return bad('Pokój zmieniony',409);
    if(g)await admin.from('agc_game_guest_sessions').update({revoked:true}).eq('id',g);return out({left:true});
+  }
+  if(room.status==='playing'&&room.state?.passing&&['state','pass','play'].includes(action)){
+   const s=room.state as S;let changed=false;
+   if(Date.now()>=s.deadline!){s.passes=s.passes!.map((p,i)=>p??autoPass(s,i));changed=true}
+   else if(action==='pass'){const cards=body.cards;if(!Array.isArray(cards)||cards.length!==3||new Set(cards).size!==3||!cards.every((n:any)=>s.hands[seat].some(c=>id(c)===n))||s.passes![seat])return bad('Wybierz trzy własne karty');s.passes![seat]=cards;changed=true}
+   else if(action==='play')return bad('Najpierw przekaż karty');
+   if(changed){if(s.passes!.every(Boolean))resolvePass(s,seats);const {data:x,error}=await admin.from('agc_hearts_rooms').update({state:s,version:room.version+1}).eq('id',roomId).eq('version',room.version).select().maybeSingle();if(error||!x)return bad('Pokój zmieniony',409);return out({room:view(x,user.id)});}
+   return out({room:view(room,user.id)});
   }
   if(room.mode==='multiplayer'&&room.status==='playing'&&room.state?.turn>=0&&['state','play'].includes(action)){
    const s=room.state as S;if(!s.deadline||Date.now()>=s.deadline){if(s.deadline){play(s,s.turn,aiCard(s,s.turn));advance(s,seats);}s.deadline=Date.now()+30000;
@@ -160,7 +177,7 @@ Deno.serve(async(req)=>{
   }
   if(action==='start'){
    if(room.host_id!==user.id||room.status!=='lobby')return bad('Only host can start');
-   const state=deal();advance(state,seats);state.deadline=Date.now()+30000;
+   const state=deal();prepare(state,seats);
    const {data:changed,error:ce}=await admin.from('agc_hearts_rooms').update({state,status:'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
    if(ce||!changed)return bad('Room changed; retry',409);
    await admin.from('agc_hearts_invites').update({status:'declined'}).eq('room_id',roomId).eq('status','pending');
@@ -169,7 +186,7 @@ Deno.serve(async(req)=>{
   if(action==='next'||action==='finish'){
    if(room.status!=='playing'||!room.state||seat!==0||room.version!==body.version)return bad('Nieaktualny stan lub brak uprawnień',409);
    let state=room.state as S;if(state.turn!==-1||state.finished)return bad('Najpierw zakończ rozdanie',409);
-   if(action==='finish'){state.finished=true;state.winner=state.total.indexOf(Math.min(...state.total));}else{const archive=[...(state.archive||[]),{round:state.round,points:state.points,total:state.total,history:state.history}];state=deal(state.total,state.round+1);state.archive=archive;advance(state,seats);state.deadline=Date.now()+30000;}
+   if(action==='finish'){state.finished=true;state.winner=state.total.indexOf(Math.min(...state.total));}else{const archive=[...(state.archive||[]),{round:state.round,points:state.points,total:state.total,history:state.history}];state=deal(state.total,state.round+1);state.archive=archive;if(room.mode==='multiplayer')prepare(state,seats);else advance(state,seats);}
    const {data:changed,error:ce}=await admin.from('agc_hearts_rooms').update({state,status:state.finished?'finished':'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();if(ce||!changed)return bad('Pokój zmieniony',409);return out({room:view(changed,user.id)});
   }
   if(action==='play'){
