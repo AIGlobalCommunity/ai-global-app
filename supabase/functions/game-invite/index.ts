@@ -24,6 +24,26 @@ Deno.serve(async req=>{
  const {error}=await db.from('agc_game_invite_links').upsert({game:b.game,room_id:r.id,host_id:user.id,token_hash:await hash(key),expires_at:expires,revoked:false},{onConflict:'game,room_id'});if(error)throw error;
  return out({invite:key,expires});
  }
+ if(a==='session'){
+ if(!valid(b.session))return out({error:'Nieprawidłowa sesja'},401);
+ const {data:s,error}=await db.from('agc_game_guest_sessions').select('id,nickname,expires_at,invite_id').eq('session_hash',await hash(b.session)).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
+ if(error||!s)return out({error:'Sesja wygasła'},401);
+ const {data:i}=await db.from('agc_game_invite_links').select('game,room_id').eq('id',s.invite_id).single();
+ if(!i)return out({error:'Pokój niedostępny'},404);
+ const {data:r}=await db.from(tables[i.game]).select('status').eq('id',i.room_id).maybeSingle();
+ if(!r||r.status==='finished')return out({error:'Gra zakończona'},409);
+ return out({guest:s.id,nickname:s.nickname,game:i.game,room:i.room_id,expires:s.expires_at});
+ }
+ if(a==='join'){
+ if(!valid(b.invite)||b.rules!==true||typeof b.nickname!=='string')return out({error:'Podaj nick i zaakceptuj zasady'},400);
+ const nickname=b.nickname.trim();if(nickname.length<2||nickname.length>32||/[\u0000-\u001f\u007f]/.test(nickname))return out({error:'Nick musi mieć 2–32 znaki'},400);
+ const {data:i}=await db.from('agc_game_invite_links').select('id,game,room_id').eq('token_hash',await hash(b.invite)).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
+ if(!i)return out({error:'Zaproszenie nieważne'},404);
+ const {data:r}=await db.from(tables[i.game]).select('status').eq('id',i.room_id).maybeSingle();
+ if(r?.status!=='lobby')return out({error:'Pokój nie przyjmuje graczy'},409);
+ // Until a game adapter reserves a seat atomically, do not issue playable credentials.
+ return out({error:'Ta gra nie obsługuje jeszcze dołączania gości'},409);
+ }
  if(a==='inspect'){
  if(!valid(b.invite))return out({error:'Nieprawidłowe zaproszenie'},400);
  const {data:i}=await db.from('agc_game_invite_links').select('game,room_id,expires_at').eq('token_hash',await hash(b.invite)).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
