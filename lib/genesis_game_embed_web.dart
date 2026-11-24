@@ -709,6 +709,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
         final result = await AgcBackend.client.functions.invoke('blackjack-game', body: {
           'action': decoded['action'],
+          if (decoded.containsKey('players')) 'players': decoded['players'],
+          if (decoded.containsKey('stake')) 'stake': decoded['stake'],
           if (decoded.containsKey('mode')) 'mode': decoded['mode'],
           if (decoded.containsKey('room')) 'room': decoded['room'],
           if (decoded.containsKey('identity')) 'identity': decoded['identity'],
