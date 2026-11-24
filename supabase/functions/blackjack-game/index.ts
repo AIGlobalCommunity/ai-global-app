@@ -12,15 +12,17 @@ const take=(state:Round)=>{const c=state.shoe.pop();if(!c)throw Error('Brak kart
 function newRound(seats:Player[],scores?:number[],number=1,history:any[]=[],chips?:number[],stake=10):Round{
  const state:Round={hands:seats.map(()=>[]),dealer:[],shoe:shuffle(),turn:0,done:seats.map(()=>false),round:number,scores:scores??seats.map(()=>0),chips:chips??seats.map(()=>500),stake,last:null,finished:false,history};
  for(let j=0;j<2;j++){for(const hand of state.hands)hand.push(take(state));state.dealer.push(take(state))}
- state.done=state.hands.map(natural);
+ state.done=state.hands.map((h,i)=>natural(h)||state.chips[i]<state.stake);
  return state;
 }
 function settle(s:Round,seats:Player[]){
  while(total(s.dealer)<17)s.dealer.push(take(s));
  const dealer=total(s.dealer),dNatural=natural(s.dealer);
+ s.chips??=seats.map(()=>500);s.stake??=10;
  const results=s.hands.map((hand,i)=>{
   const value=total(hand),pNatural=natural(hand);
   let outcome='loss',award=0;
+  if(s.chips[i]<s.stake)return {seat:i,value,outcome:'skip',award:0,stake:0,delta:0};
   if(value>21)outcome='bust';
   else if(pNatural&&!dNatural){outcome='blackjack';award=300}
   else if(dNatural&&!pNatural)outcome='loss';
@@ -32,16 +34,15 @@ function settle(s:Round,seats:Player[]){
   s.chips[i]+=delta;
   return {seat:i,value,outcome,award,stake,delta};
  });
- s.last={round:s.round,dealer:s.dealer,results};
+ s.last={round:s.round,dealer:s.dealer,hands:s.hands,results};
  s.history.push(s.last);
- if(s.round>=5){s.finished=true;s.turn=-1;return}
- const next=newRound(seats,s.scores,s.round+1,s.history,s.chips,s.stake);Object.assign(s,next);
+ s.history=s.history.slice(-20);s.turn=-1;if(s.chips[0]<10)s.finished=true;
 }
 function advance(s:Round,seats:Player[]){
  let count=0;
  while(!s.finished&&count++<250){
   while(s.turn<seats.length&&s.done[s.turn])s.turn++;
-  if(s.turn>=seats.length){settle(s,seats);continue}
+  if(s.turn>=seats.length){settle(s,seats);return}
   const seat=s.turn;if(seats[seat].type==='human')return;
   const hand=s.hands[seat],value=total(hand),dealerUp=Math.min(10,s.dealer[0].n);
   const shouldHit=value<12||(value<17&&dealerUp>=7)||(value<17&&value<dealerUp+10);
@@ -56,7 +57,7 @@ function view(room:any,user:string){
  const s=room.state as Round|null;
  return {id:room.id,mode:room.mode,status:room.status,version:room.version,seat,
  seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,ready:true})),
- state:s?{round:s.round,turn:s.turn,hand:s.hands[seat],myTotal:total(s.hands[seat]),dealerUp:s.dealer[0],dealerCards:s.finished?s.dealer:null,counts:s.hands.map(h=>h.length),values:s.hands.map((h,i)=>i===seat||s.done[i]||s.finished?total(h):null),done:s.done,scores:s.scores,chips:s.chips,stake:s.stake,last:s.last,finished:s.finished,canAct:!s.finished&&s.turn===seat&&!s.done[seat],history:s.finished?s.history:undefined}:null};
+ state:s?{round:s.round,turn:s.turn,hand:s.hands[seat],myTotal:total(s.hands[seat]),dealerUp:s.dealer[0],dealerCards:s.finished||s.turn===-1?s.dealer:null,counts:s.hands.map(h=>h.length),values:s.hands.map((h,i)=>i===seat||s.done[i]||s.finished?total(h):null),done:s.done,scores:s.scores,chips:s.chips,stake:s.stake,last:s.last,finished:s.finished,canAct:!s.finished&&s.turn===seat&&!s.done[seat],canNext:!s.finished&&s.turn===-1&&seat===0,history:s.finished?s.history:undefined}:null};
 }
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
@@ -69,7 +70,7 @@ Deno.serve(async req=>{
   const {data:{user},error:authError}=await auth.auth.getUser(jwt);
   if(authError||!user||user.is_anonymous)return fail('Wymagane zalogowane konto portalu',401);
   const body=await req.json(),action=body.action;
-  if(!['create','inbox','invite','accept','decline','start','state','hit','stand'].includes(action))return fail('Nieznana operacja');
+  if(!['create','inbox','invite','accept','decline','start','state','hit','stand','next','finish'].includes(action))return fail('Nieznana operacja');
   const displayName=String(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').slice(0,32);
   if(action==='create'){
    if(!['ai','multiplayer'].includes(body.mode))return fail('Nieprawidłowy tryb');
@@ -132,16 +133,21 @@ Deno.serve(async req=>{
    await admin.from('agc_blackjack_invites').update({status:'declined'}).eq('room_id',roomId).eq('status','pending');
    return reply({room:view(changed,user.id)});
   }
-  if(action==='hit'||action==='stand'){
+  if(action==='hit'||action==='stand'||action==='next'||action==='finish'){
    if(room.status!=='playing'||!room.state)return fail('Gra nie jest aktywna');
    if(body.version!==room.version)return fail('Stan gry jest nieaktualny, odśwież',409);
-   const state=room.state as Round;
+   let state=room.state as Round;
+   if(action==='next'||action==='finish'){
+    if(seat!==0||state.turn!==-1||state.finished)return fail('Najpierw zakończ rozdanie',409);
+    if(action==='finish'){state.finished=true;}else{const stake=Number(body.stake);if(![10,25,50,100].includes(stake)||stake>(state.chips?.[0]??500))return fail('Wybierz stawkę dostępną w saldzie');state=newRound(seats,state.scores,state.round+1,state.history,state.chips,stake);advance(state,seats);}
+   }else{
    if(state.turn!==seat||state.done[seat])return fail('Nie Twoja kolej',409);
    if(action==='hit'){
     state.hands[seat].push(take(state));
     if(total(state.hands[seat])>=21)state.done[seat]=true;
    }else state.done[seat]=true;
    advance(state,seats);
+   }
    const status=state.finished?'finished':'playing';
    const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({state,status,version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
    if(ce||!changed)return fail('Równoczesny ruch. Odśwież i spróbuj ponownie',409);
