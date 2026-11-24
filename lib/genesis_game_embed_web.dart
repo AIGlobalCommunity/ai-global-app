@@ -760,7 +760,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final request = decoded['request'];
       if (source is! html.WindowBase ||
           !const ['solitaire', 'freecell', 'spider'].contains(key) ||
-          !const ['begin', 'finish'].contains(action) ||
+          !const ['begin', 'finish', 'checkpoint'].contains(action) ||
           request is! String || request.length > 90) { return; }
       Map<String, dynamic> response;
       try {
@@ -772,8 +772,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           body: {
             'game': key, 'action': action,
             if (action == 'begin') 'mode': decoded['mode'],
-            if (action == 'finish') 'run': decoded['run'],
-            if (action == 'finish') 'actions': decoded['actions'],
+            if (action != 'begin') 'run': decoded['run'],
+            if (action != 'begin') 'actions': decoded['actions'],
           },
         );
         final data = result.data;
@@ -782,7 +782,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         }
         response = Map<String, dynamic>.from(data);
         if (response.containsKey('error')) throw StateError(response['error'].toString());
-        if (action == 'finish' && response['verified'] == true) {
+        if (action != 'begin' && response['verified'] == true) {
           GenesisGlobalRanking.scoreRevision.value++;
           if (mounted) setState(() => scoreNotice = 'Serwer zweryfikował wynik ${response['score']} pkt.');
         }
