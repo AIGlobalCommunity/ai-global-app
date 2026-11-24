@@ -160,6 +160,14 @@ jobs:
               cp "assets/${game}_${variant}.webp" "build/web/assets/${game}_${variant}.webp"
             done
           done
+      - name: Render original Cyber Siege cover variants
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq librsvg2-bin webp
+          for variant in desktop mobile kafelek; do
+            rsvg-convert -w 800 -h 500 web/assets/slingshot-cyber.svg -o /tmp/slingshot-cyber.png
+            cwebp -quiet -q 90 /tmp/slingshot-cyber.png -o "build/web/assets/slingshot_${variant}.webp"
+          done
       - name: Verify game cover images and WebP signatures
         run: |
           python3 - <<'PY'
