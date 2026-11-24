@@ -720,7 +720,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (result.data is! Map) throw StateError('Nieprawidłowa odpowiedź serwera.');
         response = Map<String, dynamic>.from(result.data as Map);
         if (response['error'] != null) throw StateError(response['error'].toString());
-        if (response['room'] is Map && (response['room'] as Map)['status'] == 'finished') {
+        if (response['room'] is Map) {
           GenesisGlobalRanking.scoreRevision.value++;
         }
       } catch (error) { response = {'error': error.toString()}; }
@@ -746,7 +746,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (result.data is! Map) throw StateError('Nieprawidłowa odpowiedź serwera.');
         response = Map<String, dynamic>.from(result.data as Map);
         if (response['error'] != null) throw StateError(response['error'].toString());
-        if (response['room'] is Map && (response['room'] as Map)['status'] == 'finished') {
+        if (response['room'] is Map) {
           GenesisGlobalRanking.scoreRevision.value++;
         }
       } catch (error) { response = {'error': error.toString()}; }
