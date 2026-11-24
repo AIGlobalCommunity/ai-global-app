@@ -10,7 +10,7 @@ function initial(game:string,mode:number,deck:Card[]){
  if(game==='solitaire'){const p=Array.from({length:7},()=>[] as Card[]);let k=0;for(let i=0;i<7;i++)for(let j=0;j<=i;j++){const c={...deck[k++],up:j===i};p[i].push(c)}return {p,stock:deck.slice(k).map(c=>({...c,up:false})),waste:[] as Card[],homes:Array.from({length:4},()=>[] as Card[])}}
  const p=Array.from({length:10},()=>[] as Card[]);let k=0;for(let i=0;i<10;i++)for(let j=0;j<(i<4?6:5);j++)p[i].push({...deck[k++],up:j===(i<4?5:4)});return {p,stock:deck.slice(k).map(c=>({...c,up:false})),done:[] as number[]};
 }
-function replay(game:string,mode:number,deck:Card[],actions:any[]){
+function replay(game:string,mode:number,deck:Card[],actions:any[],partial=false){
  let st:any=initial(game,mode,deck), history:any[]=[], moves=0;
  if(!Array.isArray(actions)||actions.length>12000||actions.length<1)throw Error('Invalid action log');
  const zone=(z:string,i:number)=>z==='t'?st.p[i]:z==='c'?[st.cells[i]].filter(Boolean):z==='f'?st.homes[i]:z==='w'?st.waste:null;
@@ -62,8 +62,8 @@ function replay(game:string,mode:number,deck:Card[],actions:any[]){
   }
  }
  const win=game==='spider'?st.done.length===8:st.homes.every((p:Card[])=>p.length===13);
- if(!win)throw Error('Game not completed');
- return moves;
+ if(!win&&!partial)throw Error('Game not completed');
+ return {moves,progress:game==='spider'?st.done.length*13:st.homes.reduce((n:number,p:Card[])=>n+p.length,0)};
 }
 Deno.serve(async(req)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
@@ -88,14 +88,21 @@ Deno.serve(async(req)=>{
   const {data,error}=await admin.from('agc_card_runs').insert({member_id:user.id,game_key:game,mode,deck}).select('id').single();if(error)throw error;
   return ok({run:data.id,deck,mode});
  }
- if(action==='finish'){
+ if(action==='finish'||action==='checkpoint'){
   const run=body.run,actions=body.actions;
   if(typeof run!=='string'||run.length!==36||!Array.isArray(actions))return fail('Invalid run');
   const {data,error}=await admin.from('agc_card_runs').select('*').eq('id',run).eq('member_id',user.id).eq('game_key',game).eq('status','active').single();
   if(error||!data){const {data:prior}=await admin.from('agc_card_runs').select('status,verified_score,move_count,elapsed_seconds').eq('id',run).eq('member_id',user.id).eq('game_key',game).maybeSingle();if(prior?.status==='verified')return ok({verified:true,score:prior.verified_score,moves:prior.move_count,seconds:prior.elapsed_seconds,run,alreadySaved:true});return fail('Rozgrywka nie jest aktywna lub została już zakończona');}
   const elapsed=Math.floor((Date.now()-new Date(data.started_at).getTime())/1000);
   if(elapsed<20||elapsed>14400)return fail('Rozgrywka musi trwać co najmniej 20 sekund i nie dłużej niż 4 godziny');
-  let moves:number;try{moves=replay(game,data.mode,data.deck,actions)}catch(e){await admin.from('agc_card_runs').update({status:'rejected',finished_at:new Date().toISOString()}).eq('id',run);return fail('Replay rejected: '+String(e)) }
+  let moves:number,progress:number;try{({moves,progress}=replay(game,data.mode,data.deck,actions,action==='checkpoint'))}catch(e){if(action==='finish')await admin.from('agc_card_runs').update({status:'rejected',finished_at:new Date().toISOString()}).eq('id',run);return fail('Replay rejected: '+String(e)) }
+  if(action==='checkpoint'){
+   const score=progress*100;
+   if(score<10)return ok({verified:true,score:0,run});
+   const {error}=await admin.rpc('agc_card_checkpoint',{p_run:run,p_member:user.id,p_score:score});
+   if(error)throw error;
+   return ok({verified:true,score,run});
+  }
   const score=Math.max(10,10000+(game==='spider'?data.mode*2000:0)-moves*3-elapsed);
   const {data:finalized,error:finalizeError}=await admin.rpc('agc_finalize_verified_card_run',{
     p_run:run,p_member:user.id,p_game:game,p_actions:actions,
