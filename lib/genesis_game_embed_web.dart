@@ -707,6 +707,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
+        await AgcBackend.ensureGameSession();
         final result = await AgcBackend.client.functions.invoke('blackjack-game', body: {
           'action': decoded['action'],
           if (decoded.containsKey('players')) 'players': decoded['players'],
@@ -723,7 +724,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (response['room'] is Map) {
           GenesisGlobalRanking.scoreRevision.value++;
         }
-      } catch (error) { response = {'error': error.toString()}; }
+      } catch (error) { response = {'error': AgcBackend.gameConnectionMessage(error)}; }
       source.postMessage(jsonEncode({'type':'genesis-blackjack-result','request':request,...response}), html.window.location.origin);
       return;
     }
