@@ -135,9 +135,10 @@ Deno.serve(async req=>{
   }
   if(action==='start'){
    if(room.host_id!==user.id||room.status!=='lobby')return fail('Tylko gospodarz może rozpocząć grę');
-   if(seats.slice(1).some(p=>!p.id&&!p.guest_id))return fail('Poczekaj, aż wszyscy zaproszeni gracze dołączą.');
-   const state=newRound(seats,undefined,1,[],undefined,Number(room.stake)||10);advance(state,seats);
-   const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({state,status:'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
+   const activeSeats=seats.filter(p=>p.id||p.guest_id||p.type==='ai');
+   if(activeSeats.length<2)return fail('Poczekaj na przynajmniej jednego gracza.');
+   const state=newRound(activeSeats,undefined,1,[],undefined,Number(room.stake)||10);advance(state,activeSeats);
+   const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({seats:activeSeats,state,status:'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
    if(ce||!changed)return fail('Pokój został zmieniony, odśwież',409);
    await admin.from('agc_blackjack_invites').update({status:'declined'}).eq('room_id',roomId).eq('status','pending');
    return reply({room:view(changed,user.id)});
