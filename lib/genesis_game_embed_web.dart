@@ -748,8 +748,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
-        final result = await AgcBackend.client.functions.invoke('hearts-game', body: {
-          'action': decoded['action'],
+        final qrAction = decoded['action'] == 'qr_renew' || decoded['action'] == 'qr_revoke';
+        final result = await AgcBackend.client.functions.invoke(qrAction ? 'game-invite' : 'hearts-game', body: {
+          'action': qrAction ? (decoded['action'] == 'qr_renew' ? 'renew' : 'revoke') : decoded['action'],
+          if (qrAction) 'game': 'hearts',
           if (decoded.containsKey('mode')) 'mode': decoded['mode'],
           if (decoded.containsKey('room')) 'room': decoded['room'],
           if (decoded.containsKey('identity')) 'identity': decoded['identity'],
