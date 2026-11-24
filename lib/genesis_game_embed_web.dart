@@ -757,6 +757,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
           if (decoded.containsKey('identity')) 'identity': decoded['identity'],
           if (decoded.containsKey('version')) 'version': decoded['version'],
           if (decoded.containsKey('card')) 'card': decoded['card'],
+                  if (decoded.containsKey('cards')) 'cards': decoded['cards'],
         });
         if (result.data is! Map) throw StateError('Nieprawidłowa odpowiedź serwera.');
         response = Map<String, dynamic>.from(result.data as Map);
