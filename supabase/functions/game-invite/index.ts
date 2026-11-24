@@ -42,7 +42,10 @@ Deno.serve(async req=>{
  const {data:r}=await db.from(tables[i.game]).select('status').eq('id',i.room_id).maybeSingle();
  if(r?.status!=='lobby')return out({error:'Pokój nie przyjmuje graczy'},409);
  // Until a game adapter reserves a seat atomically, do not issue playable credentials.
- return out({error:'Ta gra nie obsługuje jeszcze dołączania gości'},409);
+ if(i.game!=='blackjack')return out({error:'Ta gra nie obsługuje jeszcze gości'},409);
+ const session=token();const {data:joined,error}=await db.rpc('agc_join_blackjack_guest',{p_hash:await hash(b.invite),p_nick:nickname,p_session_hash:await hash(session)});
+ if(error)return out({error:'Nie można dołączyć: '+error.message},409);
+ return out({...joined,session});
  }
  if(a==='inspect'){
  if(!valid(b.invite))return out({error:'Nieprawidłowe zaproszenie'},400);
