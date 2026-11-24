@@ -3,7 +3,7 @@ const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'au
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:cors});
 const fail=(message:string,status=400)=>reply({error:message},status);
 type Card={s:number,n:number};
-type Player={id:string|null,name:string,type:'human'|'ai'};
+type Player={guest_id?:string,id:string|null,name:string,type:'human'|'ai'};
 type Round={hands:Card[][],dealer:Card[],shoe:Card[],turn:number,done:boolean[],round:number,scores:number[],chips:number[],stake:number,last:any,finished:boolean,history:any[]};
 const total=(cards:Card[])=>{let sum=0,aces=0;for(const c of cards){sum+=c.n===1?11:Math.min(10,c.n);if(c.n===1)aces++}while(sum>21&&aces){sum-=10;aces--}return sum};
 const natural=(cards:Card[])=>cards.length===2&&total(cards)===21;
@@ -52,11 +52,11 @@ function advance(s:Round,seats:Player[]){
  if(count>=250)throw Error('AI turn limit');
 }
 function view(room:any,user:string){
- const seats=room.seats as Player[],seat=seats.findIndex(p=>p.id===user);
+ const seats=room.seats as Player[],seat=seats.findIndex(p=>p.id===user||p.guest_id===user);
  if(seat<0)throw Error('Brak dostępu do pokoju');
  const s=room.state as Round|null;
  return {id:room.id,mode:room.mode,status:room.status,version:room.version,seat,
- seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,ready:true})),
+ seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,ready:!!(p.id||p.guest_id||p.type==='ai')})),
  state:s?{round:s.round,turn:s.turn,hand:s.hands[seat],myTotal:total(s.hands[seat]),dealerUp:s.dealer[0],dealerCards:s.finished||s.turn===-1?s.dealer:null,counts:s.hands.map(h=>h.length),values:s.hands.map((h,i)=>i===seat||s.done[i]||s.finished?total(h):null),done:s.done,scores:s.scores,chips:s.chips,stake:s.stake,last:s.last,finished:s.finished,canAct:!s.finished&&s.turn===seat&&!s.done[seat],canNext:!s.finished&&s.turn===-1&&seat===0,history:s.finished?s.history:undefined}:null};
 }
 Deno.serve(async req=>{
@@ -64,12 +64,20 @@ Deno.serve(async req=>{
  if(req.method!=='POST')return fail('POST required',405);
  try{
   const jwt=(req.headers.get('authorization')||'').replace(/^Bearer /i,'');
-  if(!jwt)return fail('Zaloguj się na portalu',401);
+
   const url=Deno.env.get('SUPABASE_URL')!,service=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,anon=Deno.env.get('SUPABASE_ANON_KEY')!;
   const admin=createClient(url,service,{auth:{persistSession:false}}),auth=createClient(url,anon,{auth:{persistSession:false}});
-  const {data:{user},error:authError}=await auth.auth.getUser(jwt);
-  if(authError||!user||user.is_anonymous)return fail('Wymagane zalogowane konto portalu',401);
   const body=await req.json(),action=body.action;
+  let user:any=jwt?(await auth.auth.getUser(jwt)).data.user:null;
+  if(!user||user.is_anonymous){
+   if(!['state','hit','stand'].includes(action)||typeof body.session!=='string'||!/^[a-f0-9]{64}$/.test(body.session))return fail('Wymagane konto lub sesja gościa',401);
+   const h=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.session))),x=>x.toString(16).padStart(2,'0')).join('');
+   const {data:g}=await admin.from('agc_game_guest_sessions').select('id,nickname,invite_id').eq('session_hash',h).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
+   if(!g)return fail('Sesja wygasła',401);
+   const {data:i}=await admin.from('agc_game_invite_links').select('game,room_id').eq('id',g.invite_id).single();
+   if(i?.game!=='blackjack'||i.room_id!==body.room)return fail('Brak dostępu',403);
+   user={id:g.id,user_metadata:{handle:g.nickname}};
+  }
   if(!['create','inbox','invite','accept','decline','start','state','hit','stand','next','finish'].includes(action))return fail('Nieznana operacja');
   const displayName=String(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').slice(0,32);
   if(action==='create'){
@@ -92,11 +100,12 @@ Deno.serve(async req=>{
   const roomId=body.room;if(typeof roomId!=='string'||!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(roomId))return fail('Nieprawidłowy identyfikator pokoju');
   const {data:room,error:roomError}=await admin.from('agc_blackjack_rooms').select('*').eq('id',roomId).single();
   if(roomError||!room)return fail('Pokój niedostępny',404);
-  const seats=room.seats as Player[],seat=seats.findIndex(p=>p.id===user.id);
+  const seats=room.seats as Player[],seat=seats.findIndex(p=>p.id===user.id||p.guest_id===user.id);
   if(action==='accept'||action==='decline'){
    const {data:inv}=await admin.from('agc_blackjack_invites').select('*').eq('room_id',roomId).eq('recipient_id',user.id).eq('status','pending').maybeSingle();
    if(!inv||room.status!=='lobby')return fail('Zaproszenie jest już nieaktualne');
    if(action==='decline'){await admin.from('agc_blackjack_invites').update({status:'declined'}).eq('id',inv.id).eq('status','pending');return reply({declined:true})}
+   if(seats[inv.seat]?.guest_id)return fail('Miejsce zajęte');
    if(seats[inv.seat]?.id&&seats[inv.seat].id!==user.id)return fail('Miejsce zajęte');
    seats[inv.seat]={id:user.id,name:displayName,type:'human'};
    const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({seats,version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
@@ -118,7 +127,7 @@ Deno.serve(async req=>{
    if(existing)return fail('Zaproszenie zostało już wysłane');
    const {data:pending}=await admin.from('agc_blackjack_invites').select('seat').eq('room_id',roomId).in('status',['pending','accepted']);
    const taken=new Set((pending||[]).map(p=>p.seat));
-   const target=Array.from({length:seats.length-1},(_,i)=>i+1).find(i=>!seats[i].id&&!taken.has(i));
+   const target=Array.from({length:seats.length-1},(_,i)=>i+1).find(i=>!seats[i].id&&!seats[i].guest_id&&!taken.has(i));
    if(target===undefined)return fail('Wszystkie wybrane miejsca są zajęte lub zaproszone');
    const {error:insertError}=await admin.from('agc_blackjack_invites').insert({room_id:roomId,sender_id:user.id,recipient_id:recipient,seat:target});
    if(insertError)throw insertError;
@@ -126,7 +135,7 @@ Deno.serve(async req=>{
   }
   if(action==='start'){
    if(room.host_id!==user.id||room.status!=='lobby')return fail('Tylko gospodarz może rozpocząć grę');
-   if(seats.slice(1).some(p=>!p.id))return fail('Poczekaj, aż wszyscy zaproszeni gracze dołączą.');
+   if(seats.slice(1).some(p=>!p.id&&!p.guest_id))return fail('Poczekaj, aż wszyscy zaproszeni gracze dołączą.');
    const state=newRound(seats,undefined,1,[],undefined,Number(room.stake)||10);advance(state,seats);
    const {data:changed,error:ce}=await admin.from('agc_blackjack_rooms').update({state,status:'playing',version:room.version+1,updated_at:new Date().toISOString()}).eq('id',roomId).eq('version',room.version).select().maybeSingle();
    if(ce||!changed)return fail('Pokój został zmieniony, odśwież',409);
