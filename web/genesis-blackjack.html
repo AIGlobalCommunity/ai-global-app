@@ -10,7 +10,7 @@ function notify(msg){$('status').textContent=msg;$('toast').textContent=msg;$('t
 function request(action,data={}){
  if(guest?.host)return GenesisInvites.gameRequest('blackjack',action,{...data,room:data.room||room?.id||guest.room},{host:true});
  if(guest)return GenesisInvites.gameRequest('blackjack',action,data,{session:guest.session,account:guest.account});
- if(action==='qr_renew'||action==='qr_revoke')return GenesisInvites.gameRequest('blackjack',action,data,{account:true});
+ if(parent===window&&(action==='qr_renew'||action==='qr_revoke'))return GenesisInvites.gameRequest('blackjack',action,data,{account:true});
  if(parent===window)return GenesisInvites.gameRequest('blackjack',action,data,{account:true});
  return new Promise((resolve,reject)=>{
   const request=crypto.randomUUID();waiting.set(request,{resolve,reject});
