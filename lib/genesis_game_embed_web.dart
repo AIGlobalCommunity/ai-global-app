@@ -1825,7 +1825,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               Stack(children: [
                 SizedBox(
                   height: 235, width: double.infinity,
-                  child: Image.asset(image, fit: BoxFit.cover, filterQuality: FilterQuality.high, semanticLabel: title),
+                  child: _GenesisArcadeCover(game: signal ? 'signal' : 'defender', fallback: Image.asset(image, fit: BoxFit.cover, filterQuality: FilterQuality.high, semanticLabel: title)),
                 ),
                 Positioned.fill(child: IgnorePointer(
                   child: DecoratedBox(decoration: BoxDecoration(
@@ -2460,7 +2460,7 @@ class _CrystalsCover extends CustomPainter {
 }
 
 String? _arcadeCoverKey(int index) => switch(index) {
-  3 => 'blocks', 4 => 'snake', 5 => 'skoki', 6 => 'maze', 7 => 'slingshot', 8 => 'crystals',
+  0 => 'signal', 1 => 'defender', 3 => 'blocks', 4 => 'snake', 5 => 'skoki', 6 => 'maze', 7 => 'slingshot', 8 => 'crystals',
   9 => 'solitaire', 10 => 'freecell', 11 => 'spider',
   12 => 'kierki', 13 => 'blackjack', 14 => 'duck', _ => null,
 };
@@ -2486,7 +2486,8 @@ class _GenesisArcadeCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final variant = compact ? 'kafelek' : mobile ? 'mobile' : 'desktop';
-    final imagePath = '/assets/${game}_$variant.webp';
+    final refreshed = const ['signal', 'defender', 'maze', 'slingshot', 'duck', 'snake'].contains(game);
+    final imagePath = '/assets/${game}_$variant.webp${refreshed ? '?v=20261125-2' : ''}';
     final backup = switch (game) {
       'snake' => '/assets/snake-cover.png',
       'skoki' => '/assets/ski-cover.jpg',
