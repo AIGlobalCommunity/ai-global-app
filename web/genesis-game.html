@@ -266,7 +266,7 @@ function full(on){document.body.classList.toggle("signal-full",on);document.getE
 document.getElementById("fullToggle").onclick=function(){full(!document.body.classList.contains("signal-full"))};
 document.getElementById("exitSignal").onclick=function(){save();full(false);try{window.parent.postMessage(JSON.stringify({type:"genesis-signal-exit-fullscreen",game:"signal"}),location.origin)}catch(_){}};
 document.addEventListener("keydown",function(e){if(e.key==="Escape")full(false)});
-if(restore()){overlay.hidden=false;modalSymbol.textContent="◈";modalTitle.textContent="ZAPISANA KAMPANIA";modalText.textContent="Poziom "+level+" · "+score+" pkt. "+(completed?"Misja ukończona.":"Kontynuuj od zapisanej planszy.");modalButton.textContent="Kontynuuj →";modalButton.onclick=function(){overlay.hidden=true;full(true);if(completed){level++;buildLevel()}else{locked=false;startedAt=Date.now()-elapsed*1000;clearInterval(tick);tick=setInterval(clockTick,1000);draw();updateStats()}}}else showStart();
+try{localStorage.removeItem('genesis-signal-progress-v2')}catch(_){}if(restore()){overlay.hidden=false;modalSymbol.textContent="◈";modalTitle.textContent="ZAPISANA KAMPANIA";modalText.textContent="Poziom "+level+" · "+score+" pkt. "+(completed?"Misja ukończona.":"Kontynuuj od zapisanej planszy.");modalButton.textContent="Kontynuuj →";modalButton.onclick=function(){overlay.hidden=true;full(true);if(completed){level++;buildLevel()}else{locked=false;startedAt=Date.now()-elapsed*1000;clearInterval(tick);tick=setInterval(clockTick,1000);draw();updateStats()}}}else showStart();
 })();
 
 if (window.parent !== window && new URLSearchParams(location.search).has('embed')) {
