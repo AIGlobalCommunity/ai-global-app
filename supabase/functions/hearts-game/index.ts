@@ -79,7 +79,7 @@ function view(room:any,user:string){
  const seats=room.seats as any[],seat=seats.findIndex(x=>x.id===user||x.guest_id===user);
  if(seat<0)throw Error('Not a player');
  const s=room.state as S|null;
- return {id:room.id,mode:room.mode,status:room.status,version:room.version,seats:seats.map((x,i)=>({seat:i,name:x.name,type:x.type,ready:x.ready,departed:x.departed})),seat,
+ return {id:room.id,mode:room.mode,status:room.status,version:room.version,seats:seats.map((x,i)=>({seat:i,name:x.name,type:x.type,ready:x.ready,departed:x.departed,guest:!!x.guest_id||(room.guest_host&&i===0)})),seat,
  state:s?{passing:!!s.passing,passed:!!s.passes?.[seat],passDirection:[0,1,3,2][s.round%4],deadline:s.deadline,serverNow:Date.now(),hand:s.hands[seat],counts:s.hands.map(x=>x.length),trick:s.trick,turn:s.turn,lead:s.lead,broken:s.broken,round:s.round,points:s.points,total:s.total,lastTrick:s.history.at(-1)||null,tricks:s.history.length,legal:legal(s,seat),finished:s.finished,winner:s.winner,roundComplete:s.turn===-1,canNext:s.turn===-1&&!s.finished&&seat===0,history:s.history,archive:s.archive||[]}:null};
 }
 Deno.serve(async(req)=>{
