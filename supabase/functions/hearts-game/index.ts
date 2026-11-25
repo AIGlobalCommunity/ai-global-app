@@ -137,6 +137,9 @@ Deno.serve(async(req)=>{
    return out({room:view(changed,user.id)});
   }
   if(seat<0)return bad('Not a player',403);
+  if(room.guest_host&&room.status!=='finished'&&Date.now()-Date.parse(room.updated_at||room.created_at)>60000){
+   await admin.from('agc_hearts_rooms').update({updated_at:new Date().toISOString()}).eq('id',room.id);
+  }
   if(action==='close'){
    if(room.host_id!==user.id)return bad('Tylko gospodarz może zamknąć grę',403);
    const {data:x,error}=await admin.from('agc_hearts_rooms').delete().eq('id',roomId).eq('version',room.version).select('id').maybeSingle();if(error||!x)return bad('Pokój zmieniony',409);
