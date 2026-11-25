@@ -70,7 +70,7 @@ function view(room:any,user:string){
  if(seat<0)throw Error('Brak dostępu do pokoju');
  const s=room.state as Round|null;
  return {id:room.id,mode:room.mode,status:room.status,version:room.version,seat,
- seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,departed:!!p.departed,ready:!!(p.id||p.guest_id||p.type==='ai')})),
+ seats:seats.map((p,i)=>({seat:i,name:p.name,type:p.type,departed:!!p.departed,ready:!!(p.id||p.guest_id||p.type==='ai'),guest:!!p.guest_id||(room.guest_host&&i===0)})),
  state:s?{phase:s.phase,deadline:s.deadline,serverNow:Date.now(),bets:s.bets,round:s.round,turn:s.turn,hand:s.phase==='bet'?[]:s.hands[seat],myTotal:s.phase==='bet'?0:total(s.hands[seat]),dealerUp:s.phase==='bet'?null:s.dealer[0],dealerCards:s.finished||s.turn===-1?s.dealer:null,counts:s.hands.map(h=>h.length),values:s.hands.map((h,i)=>i===seat||s.done[i]||s.finished?total(h):null),done:s.done,scores:s.scores,chips:s.chips,stake:s.stake,last:s.last,finished:s.finished,canAct:s.phase!=='bet'&&!s.finished&&s.turn===seat&&!s.done[seat],canNext:!s.finished&&s.turn===-1&&seat===0,history:s.finished?s.history:undefined}:null};
 }
 Deno.serve(async req=>{
