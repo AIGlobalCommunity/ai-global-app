@@ -1,14 +1,12 @@
 name: Guest Multiplayer CI
 on:
-  push:
-    branches: [feature/guest-multiplayer-no-registration-20261125]
-    paths: ['.github/workflows/guest-multiplayer.yml', 'test/guest_multiplayer_live.test.ts']
   pull_request:
     paths:
       - 'web/**'
       - 'supabase/functions/**'
       - 'supabase/migrations/**'
       - 'test/guest_multiplayer_contract.test.mjs'
+      - 'test/guest_multiplayer_live.test.ts'
       - '.github/workflows/guest-multiplayer.yml'
   workflow_dispatch:
 
