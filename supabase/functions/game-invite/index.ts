@@ -39,6 +39,9 @@ Deno.serve(async req=>{
   if(!user?.is_anonymous)return out({error:'Utworzenie pokoju gościa wymaga sesji anonimowej Supabase.'},401);
   if(!Object.hasOwn(tables,b.game)||!validNick(b.nickname))return out({error:'Wybierz grę i podaj nick (2–32 znaki).'},400);
   const game=String(b.game),name=String(b.nickname).trim(),table=tables[game];
+  const {data:reserved,error:nickError}=await db.rpc('agc_multiplayer_reserved_nick',{p_nick:name});
+  if(nickError)throw nickError;
+  if(reserved)return out({error:'Ten nick należy do zarejestrowanego gracza. Wybierz inny nick gościa.'},409);
   if(game==='blackjack'&&(!Number.isInteger(Number(b.players))||Number(b.players)<1||Number(b.players)>10
       ||![10,25,50,100].includes(Number(b.stake))))return out({error:'Wybierz 1–10 przeciwników i stawkę punktową.'},400);
   const {data:current,error:lookupError}=await db.from(table).select('id,status,updated_at,created_at')
@@ -97,6 +100,9 @@ Deno.serve(async req=>{
  if(a==='join'){
  if(!valid(b.invite)||b.rules!==true||typeof b.nickname!=='string')return out({error:'Podaj nick i zaakceptuj zasady'},400);
  const nickname=b.nickname.trim();if(nickname.length<2||nickname.length>32||/[\u0000-\u001f\u007f]/.test(nickname))return out({error:'Nick musi mieć 2–32 znaki'},400);
+ const {data:reserved,error:nickError}=await db.rpc('agc_multiplayer_reserved_nick',{p_nick:nickname});
+ if(nickError)throw nickError;
+ if(reserved)return out({error:'Nick należy do zarejestrowanego gracza. Wybierz inny.'},409);
  if(!await throttle(db,req,user?.id||null,'join',20,130))return out({error:'Za dużo prób dołączania.'},429);
  const {data:i}=await db.from('agc_game_invite_links').select('id,game,room_id').eq('token_hash',await hash(b.invite)).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
  if(!i)return out({error:'Zaproszenie nieważne'},404);
