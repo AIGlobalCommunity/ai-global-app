@@ -20,25 +20,13 @@ begin
       or (status=''playing'' and updated_at<now()-interval ''2 hours'')
      )
      returning id
-    )
-    update public.agc_game_invite_links l
-    set revoked=true
-    from ended where l.game=$1 and l.room_id=ended.id',
+    ), revoked as (
+     update public.agc_game_invite_links l
+     set revoked=true from ended where l.game=$1 and l.room_id=ended.id
+     returning l.id
+    ) select count(*) from ended',
     v_table
-  ) using v_game;
-  execute format(
-   'with ended as (
-     update public.%I
-     set status=''finished'',updated_at=now()
-     where guest_host and (
-      (status=''lobby'' and updated_at<now()-interval ''45 minutes'')
-      or (status=''playing'' and updated_at<now()-interval ''2 hours'')
-     )
-     returning id
-    )
-    select count(*) from ended',
-    v_table
-  ) into v_n;
+  ) into v_n using v_game;
   v_total:=v_total+coalesce(v_n,0);
  end loop;
  delete from public.agc_multiplayer_rate_events where created_at<now()-interval '2 days';
