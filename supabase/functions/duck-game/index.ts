@@ -12,11 +12,12 @@ Deno.serve(async req=>{
  const auth=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{auth:{persistSession:false}});
  const jwt=(req.headers.get('authorization')||'').replace(/^Bearer /i,'');
  const user=jwt?(await auth.auth.getUser(jwt)).data.user:null;
- const uid=user&&!user.is_anonymous?user.id:null;
+ const uid=user?user.id:null;
+ const registered=Boolean(user&&!user.is_anonymous);
  const now=Date.now();
  const clean=(r:any,p:any)=>({id:r.id,status:r.status,start:r.started_at,serverTime:now,players:r.players.map((x:any)=>({id:x.id,name:x.name,score:x.score,guest:!x.uid})),me:p?.id,host:p?.id===r.players[0].id,targets:r.targets});
  if(a==='create'){
- if(!uid)return out({error:'Zaloguj się'},401);
+ if(!registered)return out({error:'Użyj opcji Utwórz pokój jako gość'},401);
  const key=token(),p={id:crypto.randomUUID(),uid,name:String(user?.user_metadata?.handle||'Gospodarz').slice(0,32),score:0};
  const {data:r,error}=await db.from('agc_duck_rooms').insert({host_id:uid,players:[p],invite_hash:await hash(key),expires_at:new Date(now+1800000).toISOString()}).select().single();
  if(error)throw error;return out({room:clean(r,p)});
@@ -26,6 +27,7 @@ Deno.serve(async req=>{
  const {data,error}=await db.from('agc_duck_invites').select('room_id,created_at').eq('recipient_id',uid).limit(30);if(error)throw error;return out({invites:data});
  }
  const {data:r,error}=await db.from('agc_duck_rooms').select('*').eq('id',b.room).maybeSingle();if(error||!r)return out({error:'Pokój niedostępny'},404);
+ if(r.guest_host&&r.status==='lobby'&&now-Date.parse(r.updated_at||r.created_at)>45*60000){await db.from('agc_duck_rooms').update({status:'finished'}).eq('id',r.id).eq('status','lobby');return out({error:'Nieaktywny pokój wygasł'},410)}
  let p=r.players.find((x:any)=>uid&&x.uid===uid);
  if(!p&&typeof b.session==='string'&&/^[a-f0-9]{64}$/.test(b.session)){const {data:s}=await db.from('agc_game_guest_sessions').select('id,invite_id').eq('session_hash',await hash(b.session)).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();if(s){const {data:i}=await db.from('agc_game_invite_links').select('game,room_id').eq('id',s.invite_id).maybeSingle();if(i?.game==='duck'&&i.room_id===r.id)p=r.players.find((x:any)=>x.guest_id===s.id)}}
  const save=async(patch:any)=>{const {data,error}=await db.from('agc_duck_rooms').update({...patch,version:r.version+1}).eq('id',r.id).eq('version',r.version).select().maybeSingle();if(error||!data)throw Error('Stan zmieniony, ponów próbę');return data};
@@ -40,10 +42,12 @@ Deno.serve(async req=>{
  const changed=await save({players:[...r.players,p]});return out({room:clean(changed,p),session});
  }
  if(!p)return out({error:'Brak dostępu'},403);
+ if(r.guest_host&&r.status!=='finished')await db.from('agc_duck_rooms').update({updated_at:new Date().toISOString()}).eq('id',r.id);
  if(a==='state'&&r.status==='playing'&&now-r.started_at>92000){const changed=await save({status:'finished'});return out({room:clean(changed,p)})}if(a==='state')return out({room:clean(r,p)});
- const host=uid===r.host_id;if(a==='close'&&host){await save({status:'finished'});return out({ok:true})}
+ const host=uid===r.host_id&&Boolean(user?.is_anonymous)===Boolean(r.guest_host);if(a==='close'&&host){await save({status:'finished'});await db.from('agc_game_invite_links').update({revoked:true}).eq('game','duck').eq('room_id',r.id);return out({ok:true})}
  if(a==='invite'){
  if(!host||r.status!=='lobby')return out({error:'Tylko gospodarz'},403);
+ if(a==='invite'&&!registered)return out({error:'Zaproszenia po nicku i e-mailu wymagają konta; użyj QR.'},403);
  if(a==='invite'){const {data:id,error}=await db.rpc('agc_hearts_resolve_invitee',{p_identity:String(b.identity||'').trim()});if(error||!id||id===uid)return out({error:'Nie znaleziono gracza'});const {error:e}=await db.from('agc_duck_invites').upsert({room_id:r.id,recipient_id:id});if(e)throw e;return out({ok:true})}
  const key=token();await save({invite_hash:a==='renew'?await hash(key):null,expires_at:new Date(now+1800000).toISOString()});return out({invite:a==='renew'?key:null});
  }
