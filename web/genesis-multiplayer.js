@@ -103,9 +103,9 @@ function mountGuestUI(game,container,{createData=()=>({}),onCreated}={}){
    const data=typeof createData==='function'?createData():createData;
    const created=await call('create_room',{game,...data,nickname},await guestToken());
    if(!created.room)throw Error('Serwer nie zwrócił pokoju');
+   rememberHost(game,created.room,nickname);
    const result=await gameRequest(game,'state',{room:created.room},{host:true});
    if(!result.room?.id)throw Error('Nie można odczytać nowego pokoju');
-   rememberHost(game,result.room.id,nickname);
    onCreated?.(result,nickname);
    status.textContent='Pokój gotowy. Udostępnij kod QR znajomym!';
   }catch(e){status.textContent=String(e.message||e)}finally{create.disabled=false}
