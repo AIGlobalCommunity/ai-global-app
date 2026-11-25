@@ -48,7 +48,7 @@ c.addEventListener('pointerdown',async e=>{if(!active||pending)return;const b=c.
 GenesisInvites.mountGuestUI('duck',$('multi'),{onCreated:({room:created},nickname)=>{
  guest={room:created.id,host:true};
  selected=created.id;qrRoom='';
- render(created);
+ act('state');
 }});
 $('share').onclick=async()=>{try{const url=$('link').value;if(!url)return; if(navigator.share)await navigator.share({title:'Duck Hunt – zaproszenie',url});else{await navigator.clipboard.writeText(url);status('Link skopiowany')}}catch(e){if(e.name!=='AbortError')status(e.message)}};
 if(selected)$('mp').click();
