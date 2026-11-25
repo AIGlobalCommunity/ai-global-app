@@ -31,6 +31,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const freecellView = 'genesis-freecell-html5-iframe';
   static const spiderView = 'genesis-spider-html5-iframe';
   static const heartsView = 'genesis-hearts-html5-iframe';
+  static const tetraView = 'genesis-tetra-html5-iframe';
+  OverlayEntry? tetraOverlay;
   static const duckView = 'genesis-duck-html5-iframe';
   OverlayEntry? duckOverlay;
   static const blackjackView = 'genesis-blackjack-html5-iframe';
@@ -65,9 +67,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider', 'hearts', 'blackjack', 'duck'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL','GENESIS SPIDER','GENESIS KIERKI','GENESIS BLACKJACK 21','GENESIS DUCK HUNT'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView, spiderView, heartsView, blackjackView, duckView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider', 'hearts', 'blackjack', 'duck', 'tetra'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL','GENESIS SPIDER','GENESIS KIERKI','GENESIS BLACKJACK 21','GENESIS DUCK HUNT','GENESIS TETRA'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView, spiderView, heartsView, blackjackView, duckView, tetraView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -269,6 +271,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(freecellView, 'genesis-freecell.html?embed=1&version=$buildVersion', 'GENESIS FREECELL');
       _register(spiderView, 'genesis-spider.html?embed=1&version=$buildVersion', 'GENESIS SPIDER');
       _register(heartsView, 'genesis-hearts.html?embed=1&version=$buildVersion', 'GENESIS KIERKI');
+      _register(tetraView, 'genesis-tetra.html?embed=1&version=$buildVersion', 'GENESIS TETRA');
       _register(duckView, 'genesis-duck.html?embed=1&version=$buildVersion', 'GENESIS DUCK HUNT');
       _register(blackjackView, 'genesis-blackjack.html?embed=1&version=$buildVersion', 'GENESIS BLACKJACK 21');
       _register(slingshotView, 'genesis-slingshot.html?embed=1&version=$buildVersion', 'GENESIS SLINGSHOT');
@@ -310,6 +313,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     spiderOverlay?.dispose();
     heartsOverlay?.remove();
     heartsOverlay?.dispose();
+    tetraOverlay?.remove();
+    tetraOverlay?.dispose();
     duckOverlay?.remove();
     duckOverlay?.dispose();
     blackjackOverlay?.remove();
@@ -375,6 +380,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
+  void _showTetraFullscreen() {
+    if (!mounted || tetraOverlay != null) return;
+    tetraOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: tetraView)));
+    Overlay.of(context, rootOverlay: true).insert(tetraOverlay!);
+  }
   void _showDuckFullscreen() {
     if (!mounted || duckOverlay != null) return;
     duckOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: duckView)));
@@ -927,6 +937,10 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         'nick': handle,
       });
       html.window.open(url.toString(), '_blank');
+      return;
+    }
+    if (decoded is Map && decoded['game'] == 'tetra' && decoded['type'] == 'genesis-tetra-exit-fullscreen') {
+      tetraOverlay?.remove(); tetraOverlay?.dispose(); tetraOverlay = null;
       return;
     }
     if (decoded is Map && decoded['game'] == 'duck' && decoded['type'] == 'genesis-duck-exit-fullscreen') {
@@ -1929,6 +1943,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
     Future<void> openGame() async {
+      if (index == 15) { _showTetraFullscreen(); return; }
       if (index == 14) { _showDuckFullscreen(); return; }
       if (blackjack) { _showBlackjackFullscreen(); return; }
       if (hearts) { _showHeartsFullscreen(); return; }
@@ -1945,7 +1960,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = index == 14 ? <(IconData, String)>[(Icons.track_changes, 'Strzelanie do kaczek'), (Icons.touch_app_outlined, 'Mysz lub dotyk'), (Icons.speed_outlined, 'Rosnąca trudność'), (Icons.emoji_events_outlined, 'Rekord lokalny')] : blackjack ? <(IconData, String)>[(Icons.casino_outlined, 'Blackjack 21: pięć rozdań'),(Icons.smart_toy_outlined, 'Krupier i przeciwnicy AI'),(Icons.group_add_outlined, 'Zaproś do 10 osób po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwerowe rozdania, ruchy i ranking')] : hearts ? <(IconData, String)>[(Icons.favorite_outline, 'Klasyczne Kierki na 4 graczy'),(Icons.smart_toy_outlined, 'Graj przeciwko AI'),(Icons.group_add_outlined, 'Zaproś po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwer kontroluje rozdania i ruchy')] : spider ? <(IconData, String)>[(Icons.style_outlined, 'Pająk: 1, 2 lub 4 kolory'),(Icons.touch_app_outlined, '8 kompletnych sekwencji'),(Icons.save_outlined, 'Zapis i cofanie ruchów'),(Icons.verified_user_outlined, 'Serwer sprawdza ruchy i wynik')] : freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
+    final features = index == 15 ? <(IconData, String)>[(Icons.grid_view_rounded, 'Spadające klocki i pełne linie'), (Icons.touch_app_outlined, 'Klawiatura i dotyk'), (Icons.speed_outlined, 'Rosnąca szybkość'), (Icons.emoji_events_outlined, 'Rekord lokalny')] : index == 14 ? <(IconData, String)>[(Icons.track_changes, 'Strzelanie do kaczek'), (Icons.touch_app_outlined, 'Mysz lub dotyk'), (Icons.speed_outlined, 'Rosnąca trudność'), (Icons.emoji_events_outlined, 'Rekord lokalny')] : blackjack ? <(IconData, String)>[(Icons.casino_outlined, 'Blackjack 21: pięć rozdań'),(Icons.smart_toy_outlined, 'Krupier i przeciwnicy AI'),(Icons.group_add_outlined, 'Zaproś do 10 osób po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwerowe rozdania, ruchy i ranking')] : hearts ? <(IconData, String)>[(Icons.favorite_outline, 'Klasyczne Kierki na 4 graczy'),(Icons.smart_toy_outlined, 'Graj przeciwko AI'),(Icons.group_add_outlined, 'Zaproś po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwer kontroluje rozdania i ruchy')] : spider ? <(IconData, String)>[(Icons.style_outlined, 'Pająk: 1, 2 lub 4 kolory'),(Icons.touch_app_outlined, '8 kompletnych sekwencji'),(Icons.save_outlined, 'Zapis i cofanie ruchów'),(Icons.verified_user_outlined, 'Serwer sprawdza ruchy i wynik')] : freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -1978,7 +1993,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         children: [
           InkWell(onTap: openGame, child: Stack(children: [
             SizedBox(height: 235, width: double.infinity,
-              child: index == 14 ? const _GenesisArcadeCover(game: 'duck', fallback: Center(child: Icon(Icons.track_changes, size: 100, color: Color(0xFF71F7C4)))) : blackjack ? const _GenesisCardCover(game: 'blackjack') : hearts ? const _GenesisCardCover(game: 'kierki') : spider ? const _GenesisCardCover(game: 'spider') : freecell ? const _GenesisCardCover(game: 'freecell') : solitaire ? const _GenesisCardCover(game: 'solitaire') : crystals ? const _GenesisArcadeCover(game: 'crystals', fallback: CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand())) : sling ? const _GenesisArcadeCover(game: 'slingshot', fallback: CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand())) : maze ? const _GenesisArcadeCover(game: 'maze', fallback: CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand())) : ski
+              child: index == 15 ? const Center(child: Icon(Icons.grid_view_rounded, size: 110, color: Color(0xFF71F7C4))) : index == 14 ? const _GenesisArcadeCover(game: 'duck', fallback: Center(child: Icon(Icons.track_changes, size: 100, color: Color(0xFF71F7C4)))) : blackjack ? const _GenesisCardCover(game: 'blackjack') : hearts ? const _GenesisCardCover(game: 'kierki') : spider ? const _GenesisCardCover(game: 'spider') : freecell ? const _GenesisCardCover(game: 'freecell') : solitaire ? const _GenesisCardCover(game: 'solitaire') : crystals ? const _GenesisArcadeCover(game: 'crystals', fallback: CustomPaint(painter: _CrystalsCover(), child: SizedBox.expand())) : sling ? const _GenesisArcadeCover(game: 'slingshot', fallback: CustomPaint(painter: _SlingshotCover(), child: SizedBox.expand())) : maze ? const _GenesisArcadeCover(game: 'maze', fallback: CustomPaint(painter: _MazeCoverPainter(), child: SizedBox.expand())) : ski
                 ? _GenesisArcadeCover(game: 'skoki', fallback: Image.network('/assets/ski-cover.jpg', fit: BoxFit.cover))
                 : snake
                 ? _GenesisArcadeCover(game: 'snake', fallback: Image.network('/assets/snake-cover.png', fit: BoxFit.cover))
@@ -2066,12 +2081,13 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
       : index == 4 ? Icons.gamepad_outlined
-      : index == 14 ? Icons.track_changes : index == 13 ? Icons.casino_outlined : index == 12 ? Icons.favorite_outlined : index >= 9 ? Icons.style_outlined
+      : index == 15 ? Icons.grid_view_rounded : index == 14 ? Icons.track_changes : index == 13 ? Icons.casino_outlined : index == 12 ? Icons.favorite_outlined : index >= 9 ? Icons.style_outlined
       : index == 8 ? Icons.diamond_outlined : index == 7 ? Icons.track_changes : index == 6 ? Icons.route_outlined : Icons.downhill_skiing_outlined;
     final color = index == 2 ? const Color(0xFFFFB05A)
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     Future<void> open() async {
+      if (index == 15) { _showTetraFullscreen(); return; }
       if (index == 14) { _showDuckFullscreen(); return; }
       if (index == 13) { _showBlackjackFullscreen(); return; }
       if (index == 12) { _showHeartsFullscreen(); return; }
@@ -2210,7 +2226,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'], ['cards','offline'], ['cards','multiplayer'], ['cards','multiplayer'], ['arcade','shooter','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'], ['cards','offline'], ['cards','multiplayer'], ['cards','multiplayer'], ['arcade','shooter','offline'], ['puzzle','offline'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
