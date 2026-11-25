@@ -760,10 +760,11 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final source = event.source;
       final request = decoded['request'];
       if (source is! html.WindowBase || request is! String || request.length > 90 ||
-          !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-duck.html') ?? false))) return;
+          !(frames[duckView]?.contentWindow == source || purchaseFrames.entries.any((entry) => entry.value == duckView && entry.key.contentWindow == source))) return;
       Map<String, dynamic> response;
       try {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
+        await AgcBackend.ensureGameSession();
         final qr = decoded['action'] == 'qr_renew' || decoded['action'] == 'qr_revoke';
         final result = await AgcBackend.client.functions.invoke(qr ? 'game-invite' : 'duck-game', body: {
           'action': qr ? (decoded['action'] == 'qr_renew' ? 'renew' : 'revoke') : decoded['action'],
