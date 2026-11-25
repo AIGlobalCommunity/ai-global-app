@@ -21,7 +21,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
   String game = 'signal';
   DateTime day = DateTime.now();
   String get dayKey => '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
-  static const games = ['signal','defender','wolf','blocks','snake','ski','maze','slingshot','crystals','solitaire','freecell','spider','hearts','blackjack'];
+  static const games = ['signal','defender','wolf','blocks','snake','ski','maze','slingshot','crystals','solitaire','freecell','spider','hearts','blackjack','duck'];
   StreamSubscription<AuthState>? authSubscription;
 
   @override
@@ -77,7 +77,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
         final key = row['game_key']?.toString();
         final score = row['best_score'];
         if (id == null || key == null || score is! num || score < 0) continue;
-        if (!const ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider', 'hearts', 'blackjack'].contains(key)) continue;
+        if (!const ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider', 'hearts', 'blackjack', 'duck'].contains(key)) continue;
         final games = byPlayer.putIfAbsent(id, () => <String, int>{});
         final points = score.toInt();
         if (points > (games[key] ?? -1)) games[key] = points;
