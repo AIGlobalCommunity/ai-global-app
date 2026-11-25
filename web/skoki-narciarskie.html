@@ -32,7 +32,7 @@ function stored(key){try{return Number(localStorage.getItem(key))||0}catch{retur
 function persist(key,value){try{localStorage.setItem(key,String(value))}catch{}}
 const legacyStages=[0,6,12,18,24];
 let unlocked=Math.max(legacyStages[Math.max(0,Math.min(4,Math.floor(stored('ski-unlocked-stage'))))],Math.min(hills.length-1,Math.floor(stored('ski-tour-unlocked'))));
-let stage=unlocked,best=stored('ski-local-best'),takeoff=null,drag=0,gesture=null;
+let stage=0,best=stored('ski-local-best'),takeoff=null,drag=0,gesture=null;
 const difficulty=()=>stage/(hills.length-1);
 const target=()=>Math.ceil(hills[stage].hs*hills[stage].goal);
 const curvature=()=>.52+.34*difficulty()+.045*Math.sin(stage*2);
