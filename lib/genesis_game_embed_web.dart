@@ -2487,7 +2487,7 @@ class _GenesisArcadeCover extends StatelessWidget {
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final variant = compact ? 'kafelek' : mobile ? 'mobile' : 'desktop';
     final refreshed = const ['signal', 'defender', 'maze', 'slingshot', 'duck', 'snake'].contains(game);
-    final imagePath = '/assets/${game}_$variant.webp${refreshed ? '?v=20261125-2' : ''}';
+    final imagePath = '/assets/assets/${game}_$variant.webp${refreshed ? '?v=20261125-3' : ''}';
     final backup = switch (game) {
       'snake' => '/assets/snake-cover.png',
       'skoki' => '/assets/ski-cover.jpg',
@@ -2496,7 +2496,7 @@ class _GenesisArcadeCover extends StatelessWidget {
     return Image.network(imagePath,
       fit: BoxFit.cover, width: double.infinity, height: double.infinity,
       semanticLabel: 'Grafika gry $game',
-      errorBuilder: (_, __, ___) => backup != null
+      errorBuilder: (_, __, ___) => Image.network('/assets/${game}_$variant.webp', fit: BoxFit.cover, width: double.infinity, height: double.infinity, errorBuilder: (_, __, ___) => backup != null
         ? Image.network(backup, fit: BoxFit.cover, width: double.infinity,
             height: double.infinity,
             errorBuilder: (_, __, ___) => fallback ?? const Center(child: Icon(Icons.image_not_supported_outlined)))
@@ -2505,7 +2505,7 @@ class _GenesisArcadeCover extends StatelessWidget {
           colors: [Color(0xFF112B43), Color(0xFF133D5B)])),
         child: Center(child: Text(game.toUpperCase(),
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-      ),
+      )),
     );
   }
 }
