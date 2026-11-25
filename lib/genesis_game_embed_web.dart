@@ -711,8 +711,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       final source = event.source;
       final request = decoded['request'];
       if (source is! html.WindowBase || request is! String || request.length > 90 ||
-          !purchaseFrames.entries.any((entry) =>
-              entry.value == crystalsView && entry.key.contentWindow == source)) {
+          !(purchaseFrames.entries.any((entry) =>
+              entry.value == crystalsView && entry.key.contentWindow == source) ||
+            frames[crystalsView]?.contentWindow == source)) {
         return;
       }
       Map<String, dynamic> response;
@@ -720,6 +721,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) {
           throw StateError('Zaloguj się, aby używać GCO.');
         }
+        await AgcBackend.ensureGameSession();
         if (decoded['action'] == 'balance') {
           final result = await AgcBackend.client.rpc('agc_crystals_shop_status');
           if (result is! Map) throw StateError('Nieprawidłowy stan sklepu.');
