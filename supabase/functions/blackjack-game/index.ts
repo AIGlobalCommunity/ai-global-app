@@ -131,6 +131,9 @@ Deno.serve(async req=>{
    return reply({room:view(changed,user.id)});
   }
   if(seat<0)return fail('Nie jesteś uczestnikiem tego pokoju',403);
+  if(room.guest_host&&room.status!=='finished'&&Date.now()-Date.parse(room.updated_at||room.created_at)>60000){
+   await admin.from('agc_blackjack_rooms').update({updated_at:new Date().toISOString()}).eq('id',room.id);
+  }
   if(room.status==='playing'&&room.state?.phase&&['state','bet','hit','stand'].includes(action)){
    const s=room.state as Round;
    let changed=tick(s,seats,Date.now());
