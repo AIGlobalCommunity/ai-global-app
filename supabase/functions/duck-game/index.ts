@@ -15,7 +15,7 @@ Deno.serve(async req=>{
  const uid=user?user.id:null;
  const registered=Boolean(user&&!user.is_anonymous);
  const now=Date.now();
- const clean=(r:any,p:any)=>({id:r.id,status:r.status,start:r.started_at,serverTime:now,players:r.players.map((x:any)=>({id:x.id,name:x.name,score:x.score,guest:!x.uid})),me:p?.id,host:p?.id===r.players[0].id,targets:r.targets});
+ const clean=(r:any,p:any)=>({id:r.id,status:r.status,start:r.started_at,serverTime:now,players:r.players.map((x:any)=>({id:x.id,name:x.name,score:x.score,guest:!x.uid||(r.guest_host&&x.uid===r.host_id)})),me:p?.id,host:p?.id===r.players[0].id,targets:r.targets});
  if(a==='create'){
  if(!registered)return out({error:'Użyj opcji Utwórz pokój jako gość'},401);
  const key=token(),p={id:crypto.randomUUID(),uid,name:String(user?.user_metadata?.handle||'Gospodarz').slice(0,32),score:0};
@@ -42,7 +42,7 @@ Deno.serve(async req=>{
  const changed=await save({players:[...r.players,p]});return out({room:clean(changed,p),session});
  }
  if(!p)return out({error:'Brak dostępu'},403);
- if(r.guest_host&&r.status!=='finished')await db.from('agc_duck_rooms').update({updated_at:new Date().toISOString()}).eq('id',r.id);
+ if(r.guest_host&&r.status!=='finished'&&now-Date.parse(r.updated_at||r.created_at)>60000)await db.from('agc_duck_rooms').update({updated_at:new Date().toISOString()}).eq('id',r.id);
  if(a==='state'&&r.status==='playing'&&now-r.started_at>92000){const changed=await save({status:'finished'});return out({room:clean(changed,p)})}if(a==='state')return out({room:clean(r,p)});
  const host=uid===r.host_id&&Boolean(user?.is_anonymous)===Boolean(r.guest_host);if(a==='close'&&host){await save({status:'finished'});await db.from('agc_game_invite_links').update({revoked:true}).eq('game','duck').eq('room_id',r.id);return out({ok:true})}
  if(a==='invite'){
