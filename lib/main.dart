@@ -110,7 +110,6 @@ class _AgcHomeState extends State<AgcHome> {
             const AgcAccountPage(),
             if (selected == 5) const GenesisFinancialSupport() else const SizedBox.shrink(),
             if (selected == 6) GenesisWallet(key: ValueKey(AgcBackend.user?.id)) else const SizedBox.shrink(),
-            GenesisCompetitionPage(onRanking: () => setState(() => selected = 2), onGames: () => setState(() => selected = 1)),
           ],
         ),
       ),
@@ -136,7 +135,6 @@ class _AgcHomeState extends State<AgcHome> {
           label: GenesisLanguage.copy('Konto', 'Account')),
         NavigationDestination(icon: const Icon(Icons.volunteer_activism_outlined), label: GenesisLanguage.copy('Fundatorzy', 'Founders')),
         NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), label: GenesisLanguage.copy('Portfel','Wallet')),
-        const NavigationDestination(icon: Icon(Icons.military_tech_outlined), label: 'Konkurs'),
       ],
     ),
   );
