@@ -21,31 +21,6 @@ class GenesisGameTab extends StatefulWidget {
 }
 
 class _GenesisGameTabState extends State<GenesisGameTab> {
-  static const _competitionFacebook = 'https://www.facebook.com/thegenesisera';
-  void _competitionInfo() {
-    showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
-      title: const Text('ZASADY KONKURSU'),
-      content: const SingleChildScrollView(child: Text('80 zł dziennie: 50 zł / 20 zł / 10 zł.\n1. Zaloguj się i zaakceptuj regulamin w zakładce Konkurs.\n2. Pod postem konkursowym dotyczącym dnia rozgrywki wpisz swój nick. Post na kolejny dzień publikowany jest o 20:00.\n3. Możesz dobrowolnie udostępnić post.\n4. Graj i zdobywaj punkty od 00:00 do 23:59 czasu polskiego.\n5. Organizator weryfikuje wyniki i ogłasza laureatów na Facebooku.\nZapisy są zamknięte do oficjalnego startu.')),
-      actions: [
-        TextButton(onPressed: () => html.window.open(_competitionFacebook, '_blank', 'noopener,noreferrer'), child: const Text('POST NA FACEBOOKU')),
-        TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('ZAMKNIJ')),
-      ],
-    ));
-  }
-
-  Future<bool> _confirmPlayRules() async {
-    return await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      title: const Text('ZAGRAJ'),
-      content: const Text('Rozpoczęcie gry oznacza akceptację regulaminu konkursu. Aby uczestniczyć po jego starcie, skomentuj post dotyczący dnia rozgrywki swoim nickiem. Udostępnienie jest dobrowolne.'),
-      actions: [
-        TextButton(onPressed: _competitionInfo, child: const Text('ZASADY KONKURSU')),
-        TextButton(onPressed: () => html.window.open(_competitionFacebook, '_blank', 'noopener,noreferrer'), child: const Text('FACEBOOK')),
-        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('ANULUJ')),
-        FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('GRAJ')),
-      ],
-    )) ?? false;
-  }
-
   static bool registered = false;
   static const signalView = 'genesis-signal-html5-iframe';
   static const defenderView = 'genesis-defender-html5-iframe';
@@ -1804,7 +1779,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             GenesisLanguage.copy('Tarcze i naprawy', 'Shields and repairs')),
         ];
     Future<void> openGame() async {
-      if (!await _confirmPlayRules() || !mounted) return;
       try {
         html.window.localStorage['agc-game-owner-${signal ? 'signal' : 'defender'}'] =
           AgcBackend.user?.id ?? '';
@@ -1886,7 +1860,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                         icon: Icons.play_arrow_rounded,
                         label: GenesisLanguage.copy('ZAGRAJ', 'PLAY'),
                       ),
-                      IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
                       const SizedBox(width: 4),
                       _arcadeButton(
                         onPressed: () => _showRanking(index),
@@ -1955,7 +1928,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
     Future<void> openGame() async {
-      if (!await _confirmPlayRules() || !mounted) return;
       if (index == 14) { _showDuckFullscreen(); return; }
       if (blackjack) { _showBlackjackFullscreen(); return; }
       if (hearts) { _showHeartsFullscreen(); return; }
@@ -2070,7 +2042,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               Row(children: [
                 _arcadeButton(onPressed: openGame, primary: true, accent: accent,
                   icon: Icons.play_arrow_rounded, label: 'ZAGRAJ'),
-                IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
                 const SizedBox(width: 4),
                 _arcadeButton(onPressed: () => _showRanking(index),
                   primary: false, accent: accent,
@@ -2100,7 +2071,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     Future<void> open() async {
-      if (!await _confirmPlayRules() || !mounted) return;
       if (index == 14) { _showDuckFullscreen(); return; }
       if (index == 13) { _showBlackjackFullscreen(); return; }
       if (index == 12) { _showHeartsFullscreen(); return; }
@@ -2143,7 +2113,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   onPressed: () => _showRanking(index)),
                 IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_arrow_rounded),
                   onPressed: open),
-                IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
               ])
             : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 if (_cardCoverForIndex(index) != null) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisCardCover(game: _cardCoverForIndex(index)!, compact: true))) else if (_arcadeCoverKey(index) != null) ClipRRect(borderRadius: BorderRadius.circular(10), child: SizedBox(width: double.infinity, height: 105, child: _GenesisArcadeCover(game: _arcadeCoverKey(index)!, compact: true))) else Icon(icon, color: color, size: 45),
@@ -2156,7 +2125,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   _favoriteButton(index),
                   IconButton(tooltip: 'Zagraj', icon: const Icon(Icons.play_circle_fill),
                     onPressed: open),
-                IconButton(tooltip: 'Graj w konkursie', icon: const Icon(Icons.emoji_events), onPressed: _competitionInfo),
                   IconButton(tooltip: 'Ranking', icon: const Icon(Icons.emoji_events_outlined),
                     onPressed: () => _showRanking(index)),
                 ])),
