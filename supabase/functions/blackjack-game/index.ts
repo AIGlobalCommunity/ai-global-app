@@ -83,7 +83,7 @@ Deno.serve(async req=>{
   const admin=createClient(url,service,{auth:{persistSession:false}}),auth=createClient(url,anon,{auth:{persistSession:false}});
   const body=await req.json(),action=body.action;
   let user:any=jwt?(await auth.auth.getUser(jwt)).data.user:null;
-  if(!user||user.is_anonymous){
+  if(!user){
    if(!['state','hit','stand','leave','bet'].includes(action)||typeof body.session!=='string'||!/^[a-f0-9]{64}$/.test(body.session))return fail('Wymagane konto lub sesja gościa',401);
    const h=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.session))),x=>x.toString(16).padStart(2,'0')).join('');
    const {data:g}=await admin.from('agc_game_guest_sessions').select('id,nickname,invite_id').eq('session_hash',h).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
@@ -95,6 +95,7 @@ Deno.serve(async req=>{
   if(!['create','inbox','invite','accept','decline','start','state','hit','stand','next','finish','leave','close','bet'].includes(action))return fail('Nieznana operacja');
   const displayName=String(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').slice(0,32);
   if(action==='create'){
+   if(user.is_anonymous)return fail('Użyj wspólnego tworzenia pokoju gościa',401);
    if(!['ai','multiplayer'].includes(body.mode))return fail('Nieprawidłowy tryb');
    const {count:recentRooms}=await admin.from('agc_blackjack_rooms').select('id',{count:'exact',head:true}).eq('host_id',user.id).gte('created_at',new Date(Date.now()-600000).toISOString());
    if((recentRooms||0)>=8)return fail('Zbyt wiele pokoi. Spróbuj później.',429);
@@ -114,6 +115,8 @@ Deno.serve(async req=>{
   const roomId=body.room;if(typeof roomId!=='string'||!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(roomId))return fail('Nieprawidłowy identyfikator pokoju');
   const {data:room,error:roomError}=await admin.from('agc_blackjack_rooms').select('*').eq('id',roomId).single();
   if(roomError||!room)return fail('Pokój niedostępny',404);
+  if(room.guest_host&&room.host_id===user.id&&!user.is_anonymous)return fail('Sesja gospodarza nie jest anonimowa',403);
+  if(!room.guest_host&&user.is_anonymous)return fail('Sesja gościa nie jest gospodarzem',403);
   const seats=room.seats as Player[],seat=seats.findIndex(p=>p.id===user.id||p.guest_id===user.id);
   if(action==='accept'||action==='decline'){
    const {data:inv}=await admin.from('agc_blackjack_invites').select('*').eq('room_id',roomId).eq('recipient_id',user.id).eq('status','pending').maybeSingle();
@@ -158,6 +161,7 @@ Deno.serve(async req=>{
   }
   if(action==='invite'){
    if(room.host_id!==user.id||room.mode!=='multiplayer'||room.status!=='lobby')return fail('Tylko gospodarz może zapraszać przed rozpoczęciem');
+   if(user.is_anonymous)return fail('Do zapraszania po nicku lub e-mailu wymagane jest konto. Użyj QR.',403);
    const identity=String(body.identity||'').trim();
    if(identity.length<3||identity.length>254)return fail('Podaj nick lub e-mail');
    const {data:recipient,error:ie}=await admin.rpc('agc_hearts_resolve_invitee',{p_identity:identity});
