@@ -45,6 +45,7 @@ test('game-invite implements permissioned anonymous host and expiry controls',()
  assert.match(invite,/Boolean\(r\.guest_host\)!==Boolean\(user\.is_anonymous\)/);
  assert.match(invite,/1800000/);
  assert.match(invite,/throttle\(/);
+ assert.match(invite,/agc_multiplayer_reserved_nick/);
  assert.match(invite,/agc_join_duck_guest/);
  assert.match(invite,/agc_join_hearts_guest/);
  assert.match(invite,/agc_join_blackjack_guest/);
