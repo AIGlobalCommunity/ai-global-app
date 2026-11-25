@@ -779,6 +779,25 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       source.postMessage(jsonEncode({'type':'genesis-blackjack-result','request':request,...response}), html.window.location.origin);
       return;
     }
+    if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-duck-request') {
+      final source = event.source;
+      final request = decoded['request'];
+      if (source is! html.WindowBase || request is! String || request.length > 90 ||
+          !frames.values.any((f) => f.contentWindow == source && (f.src?.contains('genesis-duck.html') ?? false))) return;
+      Map<String, dynamic> response;
+      try {
+        if (AgcBackend.user == null || AgcBackend.user!.isAnonymous) throw StateError('Zaloguj się do The Genesis Era.');
+        final qr = decoded['action'] == 'qr_renew' || decoded['action'] == 'qr_revoke';
+        final result = await AgcBackend.client.functions.invoke(qr ? 'game-invite' : 'duck-game', body: {
+          'action': qr ? (decoded['action'] == 'qr_renew' ? 'renew' : 'revoke') : decoded['action'],
+          if (qr) 'game': 'duck',
+          for (final k in ['room','identity','nick','rules','target','x','y']) if (decoded.containsKey(k)) k: decoded[k],
+        });
+        response = Map<String,dynamic>.from(result.data as Map);
+      } catch (error) { response = {'error': error.toString()}; }
+      source.postMessage(jsonEncode({'type':'genesis-duck-result','request':request,...response}), html.window.location.origin);
+      return;
+    }
     if (decoded is Map<String, dynamic> && decoded['type'] == 'genesis-hearts-request') {
       final source = event.source;
       final request = decoded['request'];
