@@ -205,7 +205,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
               textAlign: TextAlign.center),
             const SizedBox(height: 10),
             Wrap(spacing: 8, children: [
-              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'daily': GenesisLanguage.copy('Dzienny','Daily'), 'verified': GenesisLanguage.copy('Konkurs','Competition')}.entries)
+              for (final entry in {'all': GenesisLanguage.copy('Ogólny','Overall'), 'daily': GenesisLanguage.copy('Dzienny','Daily')}.entries)
                 ChoiceChip(label: Text(entry.value), selected: mode == entry.key, onSelected: (_) => setState(() { mode = entry.key; future = _load(); })),
             ]),
             if (mode == 'game') DropdownButton<String>(value: game, isExpanded: true, items: [for (final key in games) DropdownMenuItem(value: key, child: Text(_gameName(key)))], onChanged: (value) { if (value != null) setState(() { game = value; future = _load(); }); }),
@@ -274,7 +274,7 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
                         ? ['🥇', '🥈', '🥉'][index]
                         : '${index + 1}'),
                     ),
-                    isThreeLine: (mode == 'daily' || mode == 'verified') && index < 3,
+                    isThreeLine: false,
                     title: Text(player.handle,
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                     subtitle: Column(
@@ -284,16 +284,6 @@ class _GenesisGlobalRankingState extends State<GenesisGlobalRanking> {
                         Text(GenesisLanguage.copy(
                           '${player.scores.length} gier · kliknij po szczegóły',
                           '${player.scores.length} games · tap for details')),
-                        if (mode == 'daily' && index < 3)
-                          Text(GenesisLanguage.copy(
-                            '🏆 Potencjalna nagroda: ${[50, 20, 10][index]} zł, jeśli spełniasz wymagania konkursu i wynik zostanie zatwierdzony.',
-                            '🏆 Potential prize: PLN ${[50, 20, 10][index]}, subject to contest eligibility and score verification.'),
-                            style: const TextStyle(color: Color(0xFFD8B66A), fontSize: 11)),
-                        if (mode == 'verified' && index < 3)
-                          Text(GenesisLanguage.copy(
-                            '🏆 Możesz wygrać ${[50, 20, 10][index]} zł, jeśli spełniasz wymagania konkursu i organizator zatwierdzi wynik.',
-                            '🏆 You could win PLN ${[50, 20, 10][index]} if you meet contest requirements and your result is approved.'),
-                            style: const TextStyle(color: Color(0xFFD8B66A), fontSize: 11)),
                       ],
                     ),
                     trailing: Column(
