@@ -92,7 +92,7 @@ Deno.serve(async(req)=>{
   const admin=createClient(url,service,{auth:{persistSession:false}}),auth=createClient(url,anon,{auth:{persistSession:false}});
   const body=await req.json(),action=body.action;
   let user:any=token?(await auth.auth.getUser(token)).data.user:null;
-  if(!user||user.is_anonymous){
+  if(!user){
    if(!['state','play','leave','pass'].includes(action)||typeof body.session!=='string'||!/^[a-f0-9]{64}$/.test(body.session))return bad('Zaloguj się',401);
    const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(body.session))),b=>b.toString(16).padStart(2,'0')).join('');
    const {data:g}=await admin.from('agc_game_guest_sessions').select('id,nickname,invite_id').eq('session_hash',hash).eq('revoked',false).gt('expires_at',new Date().toISOString()).maybeSingle();
@@ -104,6 +104,7 @@ Deno.serve(async(req)=>{
   if(!['create','invite','inbox','accept','decline','start','state','play','next','finish','close','leave','pass'].includes(action))return bad('Invalid action');
   const name=(user.user_metadata?.handle||user.email?.split('@')[0]||'Gracz').toString().slice(0,32);
   if(action==='create'){
+   if(user.is_anonymous)return bad('Użyj wspólnego tworzenia pokoju gościa',401);
    const mode=body.mode;if(!['ai','multiplayer'].includes(mode))return bad('Invalid mode');
    const {count:recent}=await admin.from('agc_hearts_rooms').select('id',{count:'exact',head:true}).eq('host_id',user.id).gte('created_at',new Date(Date.now()-600000).toISOString());
    if((recent||0)>=8)return bad('Zbyt wiele nowych pokoi. Spróbuj później.',429);
@@ -119,6 +120,8 @@ Deno.serve(async(req)=>{
   const roomId=body.room;if(typeof roomId!=='string'||!/^[0-9a-f-]{36}$/i.test(roomId))return bad('Invalid room');
   const {data:room,error:re}=await admin.from('agc_hearts_rooms').select('*').eq('id',roomId).single();
   if(re||!room)return bad('Room unavailable',404);
+  if(room.guest_host&&room.host_id===user.id&&!user.is_anonymous)return bad('Sesja gospodarza nie jest anonimowa',403);
+  if(!room.guest_host&&user.is_anonymous)return bad('Sesja gościa nie jest gospodarzem',403);
   const seats=room.seats as any[];
   const seat=seats.findIndex(x=>x.id===user.id||x.guest_id===user.id);
   if(action==='accept'||action==='decline'){
@@ -161,6 +164,7 @@ Deno.serve(async(req)=>{
   if(action==='state')return out({room:view(room,user.id)});
   if(action==='invite'){
    if(room.host_id!==user.id||room.mode!=='multiplayer'||room.status!=='lobby')return bad('Only lobby host can invite');
+   if(user.is_anonymous)return bad('Do zapraszania nickiem lub e-mailem użyj konta. Dla gości dostępny jest QR.',403);
    const identity=String(body.identity||'').trim();if(identity.length<3||identity.length>254)return bad('Podaj nick lub e-mail');
    const {data:recipient,error:ie}=await admin.rpc('agc_hearts_resolve_invitee',{p_identity:identity});if(ie)throw ie;
    if(!recipient||recipient===user.id)return bad('Nie można zaprosić wskazanego gracza');
