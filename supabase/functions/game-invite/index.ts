@@ -86,8 +86,9 @@ Deno.serve(async req=>{
  }
  if(a==='join_account'){
  if(!user||user.is_anonymous)return out({error:'Zaloguj się'},401);
- if(!await throttle(db,req,user.id,'join_account',25,160))return out({error:'Za dużo prób dołączania.'},429);
+
  if(!valid(b.invite)||b.rules!==true)return out({error:'Nieprawidłowe zaproszenie'},400);
+ if(!await throttle(db,req,user.id,'join_account',25,160))return out({error:'Za dużo prób dołączania.'},429);
  const name=String(user.user_metadata?.handle||user.user_metadata?.nickname||'Gracz '+user.id.slice(0,8)).trim().slice(0,32);
  const {data,error}=await db.rpc('agc_join_account_qr',{p_hash:await hash(b.invite),p_uid:user.id,p_nick:name});
  if(error)return out({error:error.message},409);
