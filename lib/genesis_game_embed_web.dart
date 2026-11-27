@@ -2224,6 +2224,14 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             );
           }),
           const SizedBox(height: 14),
+          if (categoryFilter == 'all' || categoryFilter == 'puzzle')
+            Card(child: ListTile(
+              leading: const Icon(Icons.security, color: gold, size: 36),
+              title: const Text('GENESIS CYBER WAR 2035'),
+              subtitle: Text(GenesisLanguage.copy('CTF PREMIUM • 10 GCO / misja', 'CTF PREMIUM • 10 GCO / mission')),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => html.window.open('/genesis-cyber-war.html', '_self'),
+            )),
           LayoutBuilder(builder: (context, constraints) {
             final cards = [
               _gameCard(
