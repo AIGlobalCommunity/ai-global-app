@@ -2183,7 +2183,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   onSelected: (_) => setState(() => gamesPerRow = count)),
             ]),
           const SizedBox(height: 12),
-          Wrap(spacing: 8, runSpacing: 8, children: [
+          SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
             for (final entry in [
               ('all', GenesisLanguage.copy('Wszystkie', 'All')),
               if(favoriteOwner != null) ('favorites', '⭐ Ulubione'),
@@ -2195,12 +2195,16 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ('multiplayer', 'Multiplayer'),
               ('offline', 'Offline'),
             ])
-              ChoiceChip(
-                label: Text(entry.$2),
+              Padding(padding: const EdgeInsets.only(right: 6), child: ChoiceChip(
+                label: Text(entry.$2, style: const TextStyle(fontSize: 12)),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                showCheckmark: false,
                 selected: categoryFilter == entry.$1,
                 onSelected: (_) => setState(() => categoryFilter = entry.$1),
-              ),
-          ]),
+              )),
+          ])),
           const SizedBox(height: 14),
           LayoutBuilder(builder: (context, constraints) {
             final cards = [
