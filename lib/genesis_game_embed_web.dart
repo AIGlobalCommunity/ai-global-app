@@ -2183,8 +2183,8 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
                   onSelected: (_) => setState(() => gamesPerRow = count)),
             ]),
           const SizedBox(height: 12),
-          SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
-            for (final entry in [
+          Builder(builder: (context) {
+            final entries = [
               ('all', GenesisLanguage.copy('Wszystkie', 'All')),
               if(favoriteOwner != null) ('favorites', '⭐ Ulubione'),
               ('puzzle', GenesisLanguage.copy('Łamigłówki', 'Puzzles')),
@@ -2194,17 +2194,35 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ('cards', GenesisLanguage.copy('Karciane', 'Card games')),
               ('multiplayer', 'Multiplayer'),
               ('offline', 'Offline'),
-            ])
-              Padding(padding: const EdgeInsets.only(right: 6), child: ChoiceChip(
-                label: Text(entry.$2, style: const TextStyle(fontSize: 12)),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                showCheckmark: false,
-                selected: categoryFilter == entry.$1,
-                onSelected: (_) => setState(() => categoryFilter = entry.$1),
-              )),
-          ])),
+
+            ];
+            final current = entries.firstWhere((entry) => entry.$1 == categoryFilter, orElse: () => entries.first);
+            return PopupMenuButton<String>(
+              tooltip: GenesisLanguage.copy('Wybierz kategorię', 'Choose category'),
+              onSelected: (value) => setState(() => categoryFilter = value),
+              itemBuilder: (context) => [
+                for (final entry in entries)
+                  PopupMenuItem<String>(
+                    value: entry.$1,
+                    child: Row(children: [
+                      Icon(entry.$1 == current.$1 ? Icons.check_circle_outline : Icons.circle_outlined, size: 18, color: entry.$1 == current.$1 ? gold : null),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(entry.$2)),
+                    ]),
+                  ),
+              ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(border: Border.all(color: gold.withOpacity(.45)), borderRadius: BorderRadius.circular(12)),
+                child: Row(children: [
+                  const Icon(Icons.filter_list, size: 20, color: gold),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(GenesisLanguage.copy('Kategoria: ', 'Category: ') + current.$2, overflow: TextOverflow.ellipsis)),
+                  const Icon(Icons.keyboard_arrow_down, color: gold),
+                ]),
+              ),
+            );
+          }),
           const SizedBox(height: 14),
           LayoutBuilder(builder: (context, constraints) {
             final cards = [
