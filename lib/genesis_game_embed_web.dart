@@ -272,7 +272,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(freecellView, 'genesis-freecell.html?embed=1&version=$buildVersion', 'GENESIS FREECELL');
       _register(spiderView, 'genesis-spider.html?embed=1&version=$buildVersion', 'GENESIS SPIDER');
       _register(heartsView, 'genesis-hearts.html?embed=1&version=$buildVersion', 'GENESIS KIERKI');
-      _register(ctfView, 'genesis-cyber-war.html?embed=1', 'GENESIS CYBER WAR 2035');
+      _register(ctfView, 'genesis-cyber-war.html?embed=1&version=$buildVersion&ui=2035r2', 'GENESIS CYBER WAR 2035');
       _register(tetraView, 'genesis-tetra.html?embed=1&version=$buildVersion', 'GENESIS TETRA');
       _register(duckView, 'genesis-duck.html?embed=1&version=$buildVersion', 'GENESIS DUCK HUNT');
       _register(blackjackView, 'genesis-blackjack.html?embed=1&version=$buildVersion', 'GENESIS BLACKJACK 21');
