@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: flutter-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -40,10 +44,26 @@ jobs:
         with:
           channel: stable
           flutter-version: '3.38.9'
+          cache: true
       - name: Initialize Android platform
         run: flutter create --platforms=android .
       - run: flutter pub get
-      - run: flutter build apk --debug
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build Android with bounded network retries
+        shell: bash
+        run: |
+          set -o pipefail
+          for delay in 0 60 180 300; do
+            sleep "$delay"
+            if flutter build apk --debug 2>&1 | tee "$RUNNER_TEMP/android-build.log"; then
+              exit 0
+            fi
+            if ! grep -Eqi '429|Too Many Requests|503 Service Unavailable|Connection timed out' "$RUNNER_TEMP/android-build.log"; then
+              exit 1
+            fi
+            echo "Transient dependency download failure; retrying with backoff."
+          done
+          exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: agc-android-debug
