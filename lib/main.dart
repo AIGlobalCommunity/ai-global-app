@@ -107,9 +107,8 @@ class _AgcHomeState extends State<AgcHome> {
             const GenesisGameTab(),
             GenesisGlobalRanking(active: selected == 2),
             _offlineInfo(),
-            const AgcAccountPage(),
+            if (selected == 4) _accountWithWallet() else const SizedBox.shrink(),
             if (selected == 5) const GenesisFinancialSupport() else const SizedBox.shrink(),
-            if (selected == 6) GenesisWallet(key: ValueKey(AgcBackend.user?.id)) else const SizedBox.shrink(),
           ],
         ),
       ),
@@ -134,9 +133,20 @@ class _AgcHomeState extends State<AgcHome> {
           icon: const Icon(Icons.person_outline),
           label: GenesisLanguage.copy('Konto', 'Account')),
         NavigationDestination(icon: const Icon(Icons.volunteer_activism_outlined), label: GenesisLanguage.copy('Fundatorzy', 'Founders')),
-        NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), label: GenesisLanguage.copy('Portfel','Wallet')),
       ],
     ),
+  );
+
+  Widget _accountWithWallet() => DefaultTabController(
+    key: ValueKey(AgcBackend.user?.id),
+    length: 2,
+    child: Column(children: [
+      TabBar(tabs: [
+        Tab(icon: const Icon(Icons.person_outline), text: GenesisLanguage.copy('Moje konto', 'My account')),
+        Tab(icon: const Icon(Icons.account_balance_wallet_outlined), text: GenesisLanguage.copy('Portfel GCO', 'GCO wallet')),
+      ]),
+      const Expanded(child: TabBarView(children: [AgcAccountPage(), GenesisWallet()])),
+    ]),
   );
 
   Widget _home() => Center(
