@@ -31,6 +31,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
   static const freecellView = 'genesis-freecell-html5-iframe';
   static const spiderView = 'genesis-spider-html5-iframe';
   static const heartsView = 'genesis-hearts-html5-iframe';
+  static const ctfView = 'genesis-ctf-html5-iframe';
   static const tetraView = 'genesis-tetra-html5-iframe';
   OverlayEntry? tetraOverlay;
   static const duckView = 'genesis-duck-html5-iframe';
@@ -67,9 +68,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     'AGC_BUILD_VERSION', defaultValue: 'DEV');
   static const buildDate = String.fromEnvironment(
     'AGC_BUILD_DATE', defaultValue: 'LOCAL');
-  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider', 'hearts', 'blackjack', 'duck', 'tetra'];
-  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL','GENESIS SPIDER','GENESIS KIERKI','GENESIS BLACKJACK 21','GENESIS DUCK HUNT','GENESIS TETRA'];
-  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView, spiderView, heartsView, blackjackView, duckView, tetraView];
+  static const gameKeys = ['signal', 'defender', 'wolf', 'blocks', 'snake', 'ski', 'maze', 'slingshot', 'crystals', 'solitaire', 'freecell', 'spider', 'hearts', 'blackjack', 'duck', 'tetra', 'ctf'];
+  static const titles = ['GENESIS SIGNAL','GENESIS DEFENDER','WILK I JAJKA','GENESIS BLOCKS','GENESIS SNAKE','SKOKI NARCIARSKIE','GENESIS MAZE','GENESIS SLINGSHOT','GENESIS CRYSTALS','GENESIS SOLITAIRE','GENESIS FREECELL','GENESIS SPIDER','GENESIS KIERKI','GENESIS BLACKJACK 21','GENESIS DUCK HUNT','GENESIS TETRA','GENESIS CYBER WAR 2035'];
+  static const gameViews = [signalView, defenderView, wolfView, blocksView, snakeView, skiView, mazeView, slingshotView, crystalsView, solitaireView, freecellView, spiderView, heartsView, blackjackView, duckView, tetraView, ctfView];
   Map<String, (int, int, bool?)> ratings = {};
   final voting = <int>{};
   int ratingRequest = 0;
@@ -271,6 +272,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       _register(freecellView, 'genesis-freecell.html?embed=1&version=$buildVersion', 'GENESIS FREECELL');
       _register(spiderView, 'genesis-spider.html?embed=1&version=$buildVersion', 'GENESIS SPIDER');
       _register(heartsView, 'genesis-hearts.html?embed=1&version=$buildVersion', 'GENESIS KIERKI');
+      _register(ctfView, 'genesis-cyber-war.html?embed=1', 'GENESIS CYBER WAR 2035');
       _register(tetraView, 'genesis-tetra.html?embed=1&version=$buildVersion', 'GENESIS TETRA');
       _register(duckView, 'genesis-duck.html?embed=1&version=$buildVersion', 'GENESIS DUCK HUNT');
       _register(blackjackView, 'genesis-blackjack.html?embed=1&version=$buildVersion', 'GENESIS BLACKJACK 21');
@@ -380,6 +382,9 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     );
   }
 
+  void _showCtfFullscreen() {
+    showDialog<void>(context: context, barrierDismissible: false, builder: (ctx) => Dialog.fullscreen(child: Column(children: [Align(alignment: Alignment.centerRight, child: IconButton(onPressed: () => Navigator.of(ctx).pop(), icon: const Icon(Icons.close))), const Expanded(child: HtmlElementView(viewType: ctfView))])));
+  }
   void _showTetraFullscreen() {
     if (!mounted || tetraOverlay != null) return;
     tetraOverlay = OverlayEntry(builder: (_) => const Positioned.fill(child: HtmlElementView(viewType: tetraView)));
@@ -1943,6 +1948,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     final accent = ski ? const Color(0xFF9DDDF6) : snake ? const Color(0xFF71F7C4) : wolf ? const Color(0xFFFFB05A) : const Color(0xFF39CBFF);
     final title = titles[index];
     Future<void> openGame() async {
+      if (index == 16) { _showCtfFullscreen(); return; }
       if (index == 15) { _showTetraFullscreen(); return; }
       if (index == 14) { _showDuckFullscreen(); return; }
       if (blackjack) { _showBlackjackFullscreen(); return; }
@@ -1960,7 +1966,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
         if (snake) { _showSnakeFullscreen(); } else if (wolf) { _showWolfFullscreen(); } else { _showBlocksFullscreen(); }
       });
     }
-    final features = index == 15 ? <(IconData, String)>[(Icons.grid_view_rounded, 'Spadające klocki i pełne linie'), (Icons.touch_app_outlined, 'Klawiatura i dotyk'), (Icons.speed_outlined, 'Rosnąca szybkość'), (Icons.emoji_events_outlined, 'Rekord lokalny')] : index == 14 ? <(IconData, String)>[(Icons.track_changes, 'Strzelanie do kaczek'), (Icons.touch_app_outlined, 'Mysz lub dotyk'), (Icons.speed_outlined, 'Rosnąca trudność'), (Icons.emoji_events_outlined, 'Rekord lokalny')] : blackjack ? <(IconData, String)>[(Icons.casino_outlined, 'Blackjack 21: pięć rozdań'),(Icons.smart_toy_outlined, 'Krupier i przeciwnicy AI'),(Icons.group_add_outlined, 'Zaproś do 10 osób po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwerowe rozdania, ruchy i ranking')] : hearts ? <(IconData, String)>[(Icons.favorite_outline, 'Klasyczne Kierki na 4 graczy'),(Icons.smart_toy_outlined, 'Graj przeciwko AI'),(Icons.group_add_outlined, 'Zaproś po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwer kontroluje rozdania i ruchy')] : spider ? <(IconData, String)>[(Icons.style_outlined, 'Pająk: 1, 2 lub 4 kolory'),(Icons.touch_app_outlined, '8 kompletnych sekwencji'),(Icons.save_outlined, 'Zapis i cofanie ruchów'),(Icons.verified_user_outlined, 'Serwer sprawdza ruchy i wynik')] : freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
+    final features = index == 16 ? <(IconData, String)>[(Icons.security, '10 pierwszych misji za darmo'), (Icons.lock_outline, 'Od misji 11: 10 GCO'), (Icons.terminal, 'Indywidualne flagi CTF'), (Icons.verified_user_outlined, 'Weryfikacja serwerowa')] : index == 15 ? <(IconData, String)>[(Icons.grid_view_rounded, 'Spadające klocki i pełne linie'), (Icons.touch_app_outlined, 'Klawiatura i dotyk'), (Icons.speed_outlined, 'Rosnąca szybkość'), (Icons.emoji_events_outlined, 'Rekord lokalny')] : index == 14 ? <(IconData, String)>[(Icons.track_changes, 'Strzelanie do kaczek'), (Icons.touch_app_outlined, 'Mysz lub dotyk'), (Icons.speed_outlined, 'Rosnąca trudność'), (Icons.emoji_events_outlined, 'Rekord lokalny')] : blackjack ? <(IconData, String)>[(Icons.casino_outlined, 'Blackjack 21: pięć rozdań'),(Icons.smart_toy_outlined, 'Krupier i przeciwnicy AI'),(Icons.group_add_outlined, 'Zaproś do 10 osób po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwerowe rozdania, ruchy i ranking')] : hearts ? <(IconData, String)>[(Icons.favorite_outline, 'Klasyczne Kierki na 4 graczy'),(Icons.smart_toy_outlined, 'Graj przeciwko AI'),(Icons.group_add_outlined, 'Zaproś po nicku lub e-mailu'),(Icons.verified_user_outlined, 'Serwer kontroluje rozdania i ruchy')] : spider ? <(IconData, String)>[(Icons.style_outlined, 'Pająk: 1, 2 lub 4 kolory'),(Icons.touch_app_outlined, '8 kompletnych sekwencji'),(Icons.save_outlined, 'Zapis i cofanie ruchów'),(Icons.verified_user_outlined, 'Serwer sprawdza ruchy i wynik')] : freecell ? <(IconData, String)>[(Icons.style_outlined, '52 karty i 4 wolne komórki'),(Icons.touch_app_outlined, 'Przenoś sekwencje kart'),(Icons.save_outlined, 'Cofanie i zapis partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : solitaire ? <(IconData, String)>[(Icons.style_outlined, 'Klasyczny pasjans Klondike'),(Icons.touch_app_outlined, 'Przeciągaj karty i cofaj ruchy'),(Icons.save_outlined, 'Zapis rozpoczętej partii'),(Icons.verified_user_outlined, 'Ranking po weryfikacji serwera')] : crystals ? <(IconData, String)>[(Icons.diamond_outlined, 'Połącz trzy kryształy'), (Icons.bolt, 'Specjalne moce'), (Icons.ac_unit, 'Rozbij lód'), (Icons.emoji_events_outlined, '100 poziomów')] : sling ? <(IconData, String)>[(Icons.track_changes, 'Celuj i niszcz wieże'), (Icons.bolt, '6 rodzajów pocisków'), (Icons.smart_toy_outlined, '30 misji z robotami'), (Icons.emoji_events_outlined, 'Pobij rekord')] : maze ? <(IconData, String)>[(Icons.route_outlined, 'Nowe labirynty na każdym poziomie'),(Icons.diamond_outlined, 'Zbieraj kryształy energii'),(Icons.smart_toy_outlined, 'Unikaj robotów ochrony'),(Icons.emoji_events_outlined, 'Pobij rekord')] : ski
       ? <(IconData, String)>[
           (Icons.landscape_outlined, '25 skoczni od HS 35 do HS 235'),
           (Icons.speed_outlined, 'Wybij się na końcu progu'),
@@ -2076,7 +2082,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
 
   Widget _compactGameCard(int index, {required bool listMode}) {
     final title = titles[index];
-    final icon = index == 0 ? Icons.hub_outlined
+    final icon = index == 16 ? Icons.security : index == 0 ? Icons.hub_outlined
       : index == 1 ? Icons.rocket_launch_outlined
       : index == 2 ? Icons.egg_outlined
       : index == 3 ? Icons.grid_view_rounded
@@ -2087,6 +2093,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
       : index == 4 ? const Color(0xFF71F7C4)
       : const Color(0xFF69CFFF);
     Future<void> open() async {
+      if (index == 16) { _showCtfFullscreen(); return; }
       if (index == 15) { _showTetraFullscreen(); return; }
       if (index == 14) { _showDuckFullscreen(); return; }
       if (index == 13) { _showBlackjackFullscreen(); return; }
@@ -2194,6 +2201,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ('cards', GenesisLanguage.copy('Karciane', 'Card games')),
               ('multiplayer', 'Multiplayer'),
               ('offline', 'Offline'),
+              ('ctf', 'CTF / Cyberbezpieczeństwo'),
 
             ];
             final current = entries.firstWhere((entry) => entry.$1 == categoryFilter, orElse: () => entries.first);
@@ -2224,14 +2232,6 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
             );
           }),
           const SizedBox(height: 14),
-          if (categoryFilter == 'all' || categoryFilter == 'puzzle')
-            Card(child: ListTile(
-              leading: const Icon(Icons.security, color: gold, size: 36),
-              title: const Text('GENESIS CYBER WAR 2035'),
-              subtitle: Text(GenesisLanguage.copy('CTF PREMIUM • 10 GCO / misja', 'CTF PREMIUM • 10 GCO / mission')),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => html.window.open('/genesis-cyber-war.html', '_self'),
-            )),
           LayoutBuilder(builder: (context, constraints) {
             final cards = [
               _gameCard(
@@ -2256,7 +2256,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
               ),
             ];
             const categories = [
-              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'], ['cards','offline'], ['cards','multiplayer'], ['cards','multiplayer'], ['arcade','shooter','offline'], ['puzzle','offline'],
+              ['puzzle'], ['shooter'], ['arcade','offline'], ['puzzle','offline'], ['arcade','offline'], ['sport','offline'], ['arcade','offline'], ['arcade','puzzle','offline'], ['puzzle','offline'], ['cards','offline'], ['cards','offline'], ['cards','offline'], ['cards','multiplayer'], ['cards','multiplayer'], ['arcade','shooter','offline'], ['puzzle','offline'], ['ctf','puzzle'],
             ];
             final indices = [
               for (var i = 0; i < gameKeys.length; i++)
@@ -2308,7 +2308,7 @@ class _GenesisGameTabState extends State<GenesisGameTab> {
     ),
     Expanded(child: ListView(padding: const EdgeInsets.all(18), children: const [
       Text('1. Udział w grach', style: TextStyle(fontWeight: FontWeight.bold)),
-      Text('Gry są dostępne bez opłat. Można grać bez logowania, ale wynik niezalogowanego gracza nie jest dodawany do rankingu online.'),
+      Text('Gry są dostępne bez opłat z wyjątkiem oznaczonych misji premium CTF. Można grać bez logowania, ale wynik niezalogowanego gracza nie jest dodawany do rankingu online.'),
       SizedBox(height: 14),
       Text('2. Konto i zapis wyniku', style: TextStyle(fontWeight: FontWeight.bold)),
       Text('Aby uczestniczyć w rankingu, zaloguj się na swoje konto THE GENESIS ERA przed rozpoczęciem gry. Zapis wymaga połączenia z internetem oraz potwierdzenia przez serwer. Wynik widoczny wyłącznie w grze lub na urządzeniu nie oznacza zapisu online.'),
