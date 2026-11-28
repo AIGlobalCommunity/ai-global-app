@@ -55,3 +55,32 @@ body[data-view=arena] main>section:not(#lab),body[data-view=campaign] main>secti
 #op0506 .wb-scroll tr:not(:first-child):hover,#op0506 .wb-scroll tr:focus{background:#23455b;outline:1px solid #6ccbc3}
 .op56-details{min-height:76px;white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;border:1px solid #314e62;background:#09131d;color:#a8ddca;font:12px/1.6 ui-monospace,monospace}
 @media(max-width:560px){#op0506{padding:9px}.op56-chart-row{grid-template-columns:70px minmax(0,1fr) 24px;gap:5px}#op0506 .wb-scroll th,#op0506 .wb-scroll td{padding:8px}}
+
+/* R16: dedicated packet investigator and Linux policy audit */
+#op0708[hidden]{display:none}
+#op0708{margin:14px 0 20px;padding:16px;background:#0a1b2a;border:1px solid #355a79;border-left:4px solid #6faaf4;border-radius:8px}
+#op0708[data-operation="8"]{background:#1b1b1b;border-left-color:#e6bb75}
+#op0708>small,.op78-console>small{color:#9bc9ed;font:11px ui-monospace,monospace;letter-spacing:.12em}
+.op78-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 18px;flex-wrap:wrap}
+.op78-heading strong{font-size:clamp(17px,2vw,25px);color:#ecf6fd}
+.op78-heading span{font:10px monospace;color:#9db6cd}
+.op78-bars{display:inline-grid;vertical-align:top;gap:7px;width:calc(50% - 7px);margin:0 7px 12px 0;padding:14px;min-height:170px;background:#101f2e;border:1px solid #30465b}
+.op78-bars>small{font:10px monospace;color:#9bc9ed}
+.op78-chartrow{display:grid;grid-template-columns:64px minmax(0,1fr) 45px;gap:8px;align-items:center;font:11px monospace}
+.op78-chartrow strong{text-align:right;color:#cce6fb}
+.op78-track{height:9px;overflow:hidden;background:#213448;border-radius:3px}
+.op78-fill{height:100%;background:linear-gradient(90deg,#355b91,#6da6f0)}
+#op0708[data-operation="8"] .op78-fill{background:linear-gradient(90deg,#936b31,#e2b96f)}
+.op78-controls{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+.op78-controls input{flex:1;min-width:180px}
+.op78-controls select{min-width:160px;color:#e9eef5;background:#1b2b3a;border:1px solid #355268;border-radius:5px;padding:10px}
+#op0708 .wb-scroll{max-height:340px}
+#op0708 .wb-scroll tr:not(:first-child){cursor:pointer}
+#op0708 .wb-scroll tr:not(:first-child):hover,#op0708 .wb-scroll tr:focus{background:#213d54;outline:1px solid #6faaf4}
+.op78-detail,.op78-output{margin:12px 0;max-height:260px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;background:#08121c;border:1px solid #30465b;color:#abd9ca;font:12px/1.5 ui-monospace,monospace}
+.op78-console{padding:12px 0}
+.op78-console form{max-width:100%;margin-top:6px}
+.op78-console input{flex:1}
+.op78-console button{font-weight:700}
+@media(max-width:720px){.op78-bars{display:grid;width:100%;margin:0 0 10px;min-height:100px}}
+@media(max-width:560px){#op0708{padding:9px}.op78-chartrow{grid-template-columns:54px minmax(0,1fr) 44px;gap:5px}#op0708 .wb-scroll th,#op0708 .wb-scroll td{padding:7px}#op0708 form{flex-wrap:wrap}}
