@@ -1,0 +1,21 @@
+name: Genesis NICE catalog import
+on:
+  push:
+    paths:
+      - '.github/workflows/genesis-nice-import.yml'
+      - 'scripts/import-genesis-frameworks.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and validate official catalog
+        run: python3 scripts/import-genesis-frameworks.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: genesis-nice-official
+          path: web/genesis-nice-official.json
+          if-no-files-found: error
