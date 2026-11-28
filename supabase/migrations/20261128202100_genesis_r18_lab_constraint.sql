@@ -1,0 +1,1 @@
+alter table agc_ctf_private.lab_state drop constraint lab_state_mission_check, add constraint lab_state_mission_check check (mission in (9,10,11,12));
