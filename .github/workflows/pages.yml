@@ -169,11 +169,15 @@ jobs:
             rsvg-convert -w 800 -h 500 web/assets/slingshot-cyber.svg -o /tmp/slingshot-cyber.png
             cwebp -quiet -q 90 /tmp/slingshot-cyber.png -o "build/web/assets/slingshot_${variant}.webp"
           done
+      - name: Publish First Signal campaign artwork
+        run: |
+          mkdir -p build/web/assets/cyber-war/first-signal
+          cp assets/cyber-war/first-signal/op-*.webp build/web/assets/cyber-war/first-signal/
       - name: Verify First Signal campaign artwork in Flutter bundle
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          root = Path('build/web/assets/assets/cyber-war/first-signal')
+          root = Path('build/web/assets/cyber-war/first-signal')
           for n in range(1, 26):
               image = root / f'op-{n:03}.webp'
               if not image.is_file():
