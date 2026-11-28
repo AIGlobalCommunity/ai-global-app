@@ -3,8 +3,7 @@ URL="https://csrc.nist.gov/csrc/media/Projects/cprt/documents/nice/v2-2-0_nf_com
 if len(sys.argv)>1:
     data=json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 else:
-    with urllib.request.urlopen(URL,timeout=90) as response:
-        data=json.load(response)
+    data=json.loads(pathlib.Path("web/genesis-nice-official.json").read_text(encoding="utf-8"))
 assert data["documents"][0]["version"]=="2.2.0"
 elements=data["elements"]
 index={e["element_identifier"]:e for e in elements}
@@ -23,3 +22,10 @@ out=pathlib.Path("web/genesis-nice-official.json")
 out.parent.mkdir(parents=True,exist_ok=True)
 out.write_text(json.dumps(data,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
 print("NICE 2.2.0:",dict(counts),"role-TKS links",sum(map(len,links.values())))
+
+ecsf=json.loads(pathlib.Path("web/genesis-ecsf-official.json").read_text(encoding="utf-8"))
+assert len(ecsf["roles"])==12
+assert len({r["id"] for r in ecsf["roles"]})==12
+for r in ecsf["roles"]:
+    assert r["title"] and all(r[k] for k in ("tasks","knowledge","skills"))
+print("ECSF v1: 12 complete roles")
