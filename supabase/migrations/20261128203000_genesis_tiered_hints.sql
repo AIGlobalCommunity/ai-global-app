@@ -15,12 +15,7 @@ insert into agc_ctf_private.assistance(member_id,mission) values(me,p_mission) o
 select * into a from agc_ctf_private.assistance where member_id=me and mission=p_mission;
 m:=(p_mission-1)%10+1; flag:='GENESIS{'||substr(r.secret,1,8+p_mission/4)||'}';
 if p_action='hint_status' then return jsonb_build_object('levels',coalesce((select jsonb_agg(level order by level) from agc_ctf_private.hint_purchase where member_id=me and arena=false and mission=p_mission),'[]'::jsonb)); end if;
-if p_action='hint' or p_action ~ '^hint[1-4]
-if p_action='review' then
-if not r.solved and not exists(select 1 from auth.users u where u.id=me and lower(u.email)='mpiw123@gmail.com') then raise exception 'Omówienie dostępne po zaliczeniu flagi'; end if;
-return jsonb_build_object('text','1. scan; 2. connect soc; 3. cat /logs/audit.log; 4. połącz się z hostem wskazanym w logu i odczytaj plik w /evidence; 5. '||hints[m]||' 6. Prześlij flagę: '||flag);
-end if; raise exception 'Nieznana operacja'; end $function$
- then
+if p_action='hint' or p_action ~ '^hint[1-4]$' then
 lvl:=case when p_action='hint' then 1 else right(p_action,1)::int end;
 cost:=(array[1,2,3,5])[lvl];
 select exists(select 1 from agc_ctf_private.hint_purchase where member_id=me and arena=false and mission=p_mission and level=lvl) into bought;
@@ -56,12 +51,7 @@ insert into agc_ctf_private.arena_assistance(member_id,mission) values(me,p_miss
 select * into a from agc_ctf_private.arena_assistance where member_id=me and mission=p_mission;
 m:=(p_mission-1)%10+1; flag:='GENESIS{'||substr(r.secret,1,8+p_mission/4)||'}';
 if p_action='hint_status' then return jsonb_build_object('levels',coalesce((select jsonb_agg(level order by level) from agc_ctf_private.hint_purchase where member_id=me and arena=true and mission=p_mission),'[]'::jsonb)); end if;
-if p_action='hint' or p_action ~ '^hint[1-4]
-if p_action='review' then
-if not r.solved and not exists(select 1 from auth.users u where u.id=me and lower(u.email)='mpiw123@gmail.com') then raise exception 'Omówienie dostępne po zaliczeniu flagi'; end if;
-return jsonb_build_object('text','1. scan; 2. connect soc; 3. cat /logs/audit.log; 4. połącz się z hostem wskazanym w logu i odczytaj plik w /evidence; 5. '||hints[m]||' 6. Prześlij flagę: '||flag);
-end if; raise exception 'Nieznana operacja'; end $function$
- then
+if p_action='hint' or p_action ~ '^hint[1-4]$' then
 lvl:=case when p_action='hint' then 1 else right(p_action,1)::int end;
 cost:=(array[1,2,3,5])[lvl];
 select exists(select 1 from agc_ctf_private.hint_purchase where member_id=me and arena=true and mission=p_mission and level=lvl) into bought;
