@@ -39,11 +39,10 @@ jobs:
           flutter test
       - name: Build production site at thegenesisera.com
         run: flutter build web --release --base-href / --pwa-strategy=none --dart-define=AGC_BUILD_VERSION=${GITHUB_SHA::8} --dart-define=AGC_BUILD_DATE=$(date -u +%Y%m%d-%H%M)
-      - name: Import official NICE catalog
-        continue-on-error: true
+      - name: Validate and publish complete NICE and ECSF catalogs
         run: |
           python3 scripts/import-genesis-frameworks.py
-          cp web/genesis-nice-official.json build/web/genesis-nice-official.json
+          cp web/genesis-nice-official.json web/genesis-ecsf-official.json build/web/
       - name: Set browser tab title and Genesis favicon
         run: |
           cp assets/agc_genesis_ai_vector.svg build/web/favicon.svg
