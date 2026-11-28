@@ -1,0 +1,24 @@
+name: Genesis Cyber War Web Checks
+on:
+  push:
+    branches: [main, 'feat/cyber-war-*']
+    paths:
+      - 'web/genesis-cyber-*'
+      - 'scripts/test-cyber-war.mjs'
+      - '.github/workflows/genesis-cyber-war-check.yml'
+      - 'supabase/migrations/*genesis_cyber*'
+  pull_request:
+    paths:
+      - 'web/genesis-cyber-*'
+      - 'scripts/test-cyber-war.mjs'
+jobs:
+  cyber-war-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/test-cyber-war.mjs
