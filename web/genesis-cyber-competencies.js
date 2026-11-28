@@ -11,7 +11,9 @@ const catalog={
 7:['Network Anomaly',['DC','NO'],['IR'],['DE.CM','DE.AE'],['Analiza protokołów','Filtrowanie pakietów','Korelacja przepływów']],
 8:['Configuration Audit',['SS'],['CI'],['PR.PS','PR.AA'],['Audyt konfiguracji Linux','Ocena uprawnień','Porównanie z polityką bezpieczeństwa']],
 9:['Classified Report',['TA'],['CTI'],['DE.AE','RS.AN'],['Ocena wiarygodności źródeł','Analiza metadanych dokumentów','Rekonstrukcja chronologii']],
-10:['Fragmented Signal',['DF','DE'],['DF'],['RS.AN'],['Analiza HEX i offsetów','Weryfikacja integralności','Rekonstrukcja bloków']]
+10:['Fragmented Signal',['DF','DE'],['DF'],['RS.AN'],['Analiza HEX i offsetów','Weryfikacja integralności','Rekonstrukcja bloków']],
+11:['Phantom Identity',['DC','IR'],['IR','CI'],['PR.AA','DE.AE','RS.AN'],['Korelacja zdarzeń IAM','Analiza MFA i zmian ról','Reakcja na naruszenie tożsamości']],
+12:['Malware Autopsy',['DF','DE','IR'],['DF','IR'],['DE.AE','RS.AN'],['Analiza statycznych raportów','Identyfikacja IOC','Ocena reakcji na incydent']]
 };
 const $=id=>document.getElementById(id);
 function el(tag,value,cls){const x=document.createElement(tag);if(value!==undefined)x.textContent=value;if(cls)x.className=cls;return x}
