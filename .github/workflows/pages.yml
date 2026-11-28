@@ -211,3 +211,20 @@ jobs:
       - id: deployment
         name: Deploy public preview
         uses: actions/deploy-pages@v4
+      - name: Confirm live Cyber War R16 and specialist assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            html=$(curl -fsSL --max-time 20 -H 'Cache-Control: no-cache' "https://thegenesisera.com/genesis-cyber-war.html?build=${GITHUB_SHA}" || true)
+            op56=$(curl -fsSL --max-time 20 "https://thegenesisera.com/genesis-cyber-op0506.js?build=${GITHUB_SHA}" || true)
+            op78=$(curl -fsSL --max-time 20 "https://thegenesisera.com/genesis-cyber-op0708.js?build=${GITHUB_SHA}" || true)
+            if grep -q 'UI R16' <<< "$html" && grep -q 'GenesisEvidence' <<< "$op56" && grep -q 'GenesisAdvanced' <<< "$op78"; then
+              echo "LIVE VERIFIED: Genesis Cyber War R16 + OP005/006 + OP007/008"
+              exit 0
+            fi
+            echo "Public site not yet serving this build (attempt $attempt)"
+            sleep 10
+          done
+          echo "ERROR: published site did not expose expected R16 assets" >&2
+          exit 1
