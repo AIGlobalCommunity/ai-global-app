@@ -98,7 +98,8 @@ jobs:
           root = Path('build/web').resolve()
           names = ('genesis-game', 'genesis-defender', 'genesis-wolf-eggs',
                    'genesis-blocks', 'genesis-snake', 'skoki-narciarskie',
-                   'genesis-maze', 'genesis-slingshot', 'genesis-crystals')
+                   'genesis-maze', 'genesis-slingshot', 'genesis-crystals',
+                   'genesis-cyber-war')
           class Scripts(HTMLParser):
               def __init__(self):
                   super().__init__()
@@ -147,7 +148,7 @@ jobs:
                   if not any(code.strip() and 'src' not in attrs for attrs, code in parser.blocks):
                       raise SystemExit(f'Missing inline game logic: {name}')
           PY
-          echo "All nine HTML5 games bundled and JavaScript syntax verified"
+          echo "All HTML5 games including Genesis Cyber War bundled and JavaScript syntax verified"
       - name: Verify bundled AGC artwork
         run: |
           test -s build/web/assets/assets/agc_cosmic_background_hd.svg
