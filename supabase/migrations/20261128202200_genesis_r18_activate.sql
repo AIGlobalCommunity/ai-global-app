@@ -1,0 +1,1 @@
+update agc_ctf_private.operation_catalog set ready=true where mission in (11,12);
